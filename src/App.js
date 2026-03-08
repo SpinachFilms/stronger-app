@@ -184,6 +184,7 @@ const GlobalStyles = () => (
     @keyframes spin    { to{transform:rotate(360deg)} }
     @keyframes slideIn { from{transform:translateY(100%)} to{transform:translateY(0)} }
     @keyframes slideRight { from{transform:translateX(60px);opacity:0} to{transform:translateX(0);opacity:1} }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-10px)} 40%,80%{transform:translateX(10px)} }
     .fu  { animation:fadeUp 0.45s ease both; }
     .fu1 { animation:fadeUp 0.45s 0.08s ease both; }
     .fu2 { animation:fadeUp 0.45s 0.16s ease both; }
@@ -249,10 +250,17 @@ const Label = ({text}) => (
 );
 
 /* ─── PIN numpad ─── */
-const PinDots = ({count}) => (
-  <div style={{display:"flex",gap:16,justifyContent:"center",margin:"32px 0"}}>
+const PinDots = ({count, error, shake}) => (
+  <div style={{display:"flex",gap:16,justifyContent:"center",margin:"32px 0",animation:shake?"shake 0.4s ease":undefined}}>
     {[0,1,2,3].map(i=>(
-      <div key={i} style={{width:16,height:16,borderRadius:99,background:i<count?"var(--lime)":"var(--line2)",transition:"background .15s"}} />
+      <div key={i} style={{
+        width:18,height:18,borderRadius:99,
+        background: error
+          ? (i<count ? "var(--red)" : "rgba(255,59,48,0.25)")
+          : (i<count ? "var(--lime)" : "var(--line2)"),
+        transition:"background .15s",
+        boxShadow: i<count && !error ? "0 0 8px rgba(200,241,53,0.6)" : "none",
+      }} />
     ))}
   </div>
 );
@@ -297,7 +305,11 @@ export default function App() {
   const [pinEntry, setPinEntry]   = useState(""); // digits being typed on PIN screen
   const [pinAttempts, setPinAttempts] = useState(0);
   const [pinError, setPinError]   = useState("");
-  const [newPIN, setNewPIN]       = useState(""); // PIN creation during onboarding
+  const [pinShake, setPinShake]   = useState(false); // shake animation on wrong PIN
+  const [newPIN, setNewPIN]       = useState(""); // PIN creation during onboarding (field 1)
+  const [confirmPin, setConfirmPin] = useState(""); // PIN confirmation during onboarding (field 2)
+  const [pinMatchError, setPinMatchError] = useState(""); // inline error for PIN mismatch
+  const [splashLoginError, setSplashLoginError] = useState(""); // inline error on splash Log In
 
   // Room / partner
   const [roomCode, setRoomCode]                 = useState("");
@@ -325,10 +337,7 @@ export default function App() {
   const [aiText, setAiText]               = useState("");
   const [aiLoading, setAiLoading]         = useState(false);
   const [completedSets, setCompletedSets] = useState({});
-  const [messages, setMessages]           = useState([
-    {from:"them", text:"Finished bench! 💪", t:"3m"},
-    {from:"them", text:"Not sure about my squat depth 🤔", t:"1m"},
-  ]);
+  const [messages, setMessages]           = useState([]);
   const [showLogout, setShowLogout] = useState(false);
   const [workoutHistory, setWorkoutHistory] = useState([]);
   const workoutStartRef = useRef(null);
@@ -348,32 +357,40 @@ export default function App() {
 
     setWorkoutHistory(savedHistory);
 
-    if (savedProfile && savedCode) {
+    if (savedProfile) {
       setProfile(savedProfile);
-      setRoomCode(savedCode);
-      setRoomRole(savedRole);
       setPinHash(savedPIN);
 
-      const room = getRoom(savedCode);
-      if (room) {
-        const partner = savedRole === "partner" ? room.host : room.partner;
-        if (partner) {
-          setPartnerProfile(partner);
-          setRoutine(savedRoutine || buildRoutine(savedProfile, partner));
+      if (savedCode) {
+        setRoomCode(savedCode);
+        setRoomRole(savedRole);
+        const room = getRoom(savedCode);
+        if (room) {
+          const partner = savedRole === "partner" ? room.host : room.partner;
+          if (partner) {
+            setPartnerProfile(partner);
+            setRoutine(savedRoutine || buildRoutine(savedProfile, partner));
+          } else {
+            setRoutine(savedRoutine || buildRoutine(savedProfile));
+            if (savedRole === "host") setWaitingForPartner(true);
+          }
         } else {
           setRoutine(savedRoutine || buildRoutine(savedProfile));
-          if (savedRole === "host") setWaitingForPartner(true);
         }
-        setAiSummary(savedSummary || "Welcome back! Your routine is loaded.");
+      } else {
+        setRoutine(savedRoutine || buildRoutine(savedProfile));
+      }
 
-        // If PIN is set, show PIN screen; else go home
-        if (savedPIN) {
-          setScreen("pin");
-        } else {
-          setScreen("home");
-        }
+      setAiSummary(savedSummary || "Welcome back! Your routine is loaded.");
+
+      // Profile exists — skip splash, show PIN screen (PIN is always set now)
+      if (savedPIN) {
+        setScreen("pin");
+      } else {
+        setScreen("home");
       }
     }
+    // No profile → stay on splash (default state)
   }, []);
 
   /* ─── Save profile to LS whenever it changes ─── */
@@ -562,13 +579,16 @@ export default function App() {
     if (next.length === 4) {
       const h = await hashPIN(next);
       if (h === pinHash) {
-        setPinEntry(""); setPinError(""); setPinAttempts(0);
+        setPinEntry(""); setPinError(""); setPinAttempts(0); setPinShake(false);
         setScreen("home");
       } else {
         const attempts = pinAttempts + 1;
         setPinAttempts(attempts);
+        // Trigger shake animation
+        setPinShake(true);
+        setTimeout(() => setPinShake(false), 450);
         if (attempts >= 3) {
-          setPinError("Too many attempts. Tap 'Forgot PIN?' to reset.");
+          setPinError("Too many attempts.");
         } else {
           setPinError(`Wrong PIN. ${3 - attempts} attempt${3-attempts===1?"":"s"} left.`);
         }
@@ -581,11 +601,39 @@ export default function App() {
     setPinEntry(p => p.slice(0,-1));
   };
 
-  /* ─── Onboarding PIN creation handlers ─── */
-  const handleNewPINDigit = (d) => {
-    if (newPIN.length < 4) setNewPIN(p => p + d);
-  };
-  const handleNewPINDelete = () => setNewPIN(p => p.slice(0,-1));
+  /* ─── Keyboard support for PIN screen (desktop) ─── */
+  useEffect(() => {
+    if (screen !== "pin") return;
+    const onKey = async (e) => {
+      if (pinAttempts >= 3) return;
+      if (e.key >= "0" && e.key <= "9") {
+        const next = pinEntry + e.key;
+        setPinEntry(next);
+        if (next.length === 4) {
+          const h = await hashPIN(next);
+          if (h === pinHash) {
+            setPinEntry(""); setPinError(""); setPinAttempts(0); setPinShake(false);
+            setScreen("home");
+          } else {
+            const attempts = pinAttempts + 1;
+            setPinAttempts(attempts);
+            setPinShake(true);
+            setTimeout(() => setPinShake(false), 450);
+            if (attempts >= 3) {
+              setPinError("Too many attempts.");
+            } else {
+              setPinError(`Wrong PIN. ${3 - attempts} attempt${3-attempts===1?"":"s"} left.`);
+            }
+            setTimeout(() => setPinEntry(""), 500);
+          }
+        }
+      } else if (e.key === "Backspace") {
+        setPinEntry(p => p.slice(0,-1));
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [screen, pinEntry, pinAttempts, pinHash]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const finishOnboarding = async () => {
     LS.set("strongerProfile", profile);
@@ -594,6 +642,7 @@ export default function App() {
       setPinHash(h);
       LS.setRaw("strongerPIN", h);
     }
+    setConfirmPin("");
     generateRoutine();
   };
 
@@ -602,37 +651,60 @@ export default function App() {
   /* ════════════════════════
      PIN SCREEN
   ════════════════════════ */
+  const resetAndGoSplash = () => {
+    clearStorage();
+    setProfile({name:"",age:"",weight:"",height:"",sex:"",goal:"",level:"",daysPerWeek:"3",equipment:[],injuries:""});
+    setPinHash(""); setPinEntry(""); setPinAttempts(0); setPinError(""); setPinShake(false);
+    setRoomCode(""); setRoomRole(""); setPartnerProfile(null);
+    setRoutine(null); setAiSummary(""); setNewPIN(""); setConfirmPin("");
+    setScreen("splash");
+  };
+
   if (screen === "pin") return (
     <>
       <GlobalStyles />
-      <div style={{background:"var(--black)",minHeight:"100vh",maxWidth:430,margin:"0 auto",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"32px 28px",textAlign:"center"}}>
-        <div className="fu" style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.9,marginBottom:8}}>
-          WELCOME<br />BACK
+      <div style={{background:"#000",minHeight:"100vh",maxWidth:430,margin:"0 auto",display:"flex",flexDirection:"column",padding:"0 28px",position:"relative"}}>
+        {/* STRONGER logo — small, top center */}
+        <div style={{paddingTop:"max(env(safe-area-inset-top),32px)",textAlign:"center"}}>
+          <span style={{fontFamily:"var(--font-display)",fontSize:20,letterSpacing:6,color:"rgba(255,255,255,0.2)"}}>STRONGER</span>
         </div>
-        <div className="fu1" style={{fontFamily:"var(--font-cond)",fontSize:12,letterSpacing:3,color:"var(--gray)",marginBottom:4}}>
-          {(profile.name||"ATHLETE").toUpperCase()}
+
+        {/* Main centered content */}
+        <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
+          <div className="fu" style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:4,color:"var(--gray)",marginBottom:10}}>
+            WELCOME BACK
+          </div>
+          <div className="fu1" style={{fontFamily:"var(--font-display)",fontSize:64,lineHeight:0.88,marginBottom:4}}>
+            {(profile.name||"ATHLETE").toUpperCase()}
+          </div>
+
+          <PinDots count={pinEntry.length} error={pinAttempts >= 3} shake={pinShake} />
+
+          <div style={{minHeight:22,marginBottom:20}}>
+            {pinError && (
+              <div style={{fontFamily:"var(--font-cond)",fontSize:12,letterSpacing:1,color:"var(--red)"}}>{pinError}</div>
+            )}
+          </div>
+
+          {/* Numpad — always visible, disabled after 3 attempts */}
+          <Numpad onDigit={handlePinDigit} onDelete={handlePinDelete} />
+
+          {/* After 3 wrong attempts: show prominent reset button */}
+          {pinAttempts >= 3 ? (
+            <div style={{marginTop:32,width:"100%"}}>
+              <Btn full variant="red-soft" onClick={resetAndGoSplash}>
+                Forgot PIN? Reset Everything
+              </Btn>
+            </div>
+          ) : (
+            <button
+              onClick={resetAndGoSplash}
+              style={{background:"none",border:"none",fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray2)",marginTop:32,cursor:"pointer"}}
+            >
+              FORGOT PIN?
+            </button>
+          )}
         </div>
-        <div className="fu2" style={{fontFamily:"var(--font-body)",fontSize:14,color:"var(--gray)",marginBottom:8}}>
-          Enter your PIN to continue
-        </div>
-        <PinDots count={pinEntry.length} />
-        {pinError && (
-          <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--red)",marginBottom:16}}>{pinError}</div>
-        )}
-        <Numpad onDigit={handlePinDigit} onDelete={handlePinDelete} />
-        <button
-          onClick={() => {
-            clearStorage();
-            setProfile({name:"",age:"",weight:"",height:"",sex:"",goal:"",level:"",daysPerWeek:"3",equipment:[],injuries:""});
-            setPinHash(""); setPinEntry(""); setPinAttempts(0); setPinError("");
-            setRoomCode(""); setRoomRole(""); setPartnerProfile(null);
-            setRoutine(null); setAiSummary("");
-            setScreen("splash");
-          }}
-          style={{background:"none",border:"none",fontFamily:"var(--font-cond)",fontSize:12,letterSpacing:2,color:"var(--gray2)",marginTop:28,cursor:"pointer"}}
-        >
-          FORGOT PIN?
-        </button>
       </div>
     </>
   );
@@ -656,33 +728,40 @@ export default function App() {
             <p style={{fontFamily:"var(--font-body)",fontSize:16,color:"var(--gray)",marginTop:18,lineHeight:1.55}}>AI-powered strength training<br/>built for two. Train together,<br/>get stronger together.</p>
           </div>
           <div className="fu1" style={{display:"flex",flexDirection:"column",gap:12}}>
-            <Btn full onClick={()=>{setScreen("onboarding");setOnboardStep(0);}}>Build My Profile</Btn>
+            <Btn full onClick={()=>{setSplashLoginError("");setScreen("onboarding");setOnboardStep(0);}}>Create Account</Btn>
             <Btn full variant="ghost" onClick={()=>{
-              const savedProfile = LS.get("strongerProfile");
-              const savedCode    = LS.raw("strongerRoomCode");
-              const savedRole    = LS.raw("strongerRoomRole")||"host";
-              const savedPIN     = LS.raw("strongerPIN")||"";
-              if (savedProfile && savedCode) {
-                setProfile(savedProfile);
-                setRoomCode(savedCode);
-                setRoomRole(savedRole);
+              const savedPIN = LS.raw("strongerPIN");
+              if (savedPIN) {
+                // Profile and PIN exist — load everything and go to PIN screen
+                const savedProfile = LS.get("strongerProfile");
+                const savedCode    = LS.raw("strongerRoomCode");
+                const savedRole    = LS.raw("strongerRoomRole")||"host";
+                setProfile(savedProfile || {name:"",age:"",weight:"",height:"",sex:"",goal:"",level:"",daysPerWeek:"3",equipment:[],injuries:""});
                 setPinHash(savedPIN);
-                const room = getRoom(savedCode);
-                if (room) {
-                  const partner = savedRole==="partner"?room.host:room.partner;
-                  if (partner) { setPartnerProfile(partner); setRoutine(LS.get("strongerRoutine")||buildRoutine(savedProfile,partner)); }
-                  else { setRoutine(LS.get("strongerRoutine")||buildRoutine(savedProfile)); if (savedRole==="host") setWaitingForPartner(true); }
+                if (savedCode) {
+                  setRoomCode(savedCode);
+                  setRoomRole(savedRole);
+                  const room = getRoom(savedCode);
+                  if (room) {
+                    const partner = savedRole==="partner"?room.host:room.partner;
+                    if (partner) { setPartnerProfile(partner); setRoutine(LS.get("strongerRoutine")||buildRoutine(savedProfile,partner)); }
+                    else { setRoutine(LS.get("strongerRoutine")||buildRoutine(savedProfile)); if (savedRole==="host") setWaitingForPartner(true); }
+                  } else {
+                    setRoutine(LS.get("strongerRoutine")||buildRoutine(savedProfile));
+                  }
+                } else {
+                  setRoutine(LS.get("strongerRoutine")||buildRoutine(savedProfile));
                 }
                 setAiSummary(LS.raw("strongerAiSummary")||"Welcome back! Your routine is loaded.");
-                setScreen(savedPIN ? "pin" : "home");
+                setSplashLoginError("");
+                setScreen("pin");
               } else {
-                const demo = {name:"Alex",age:"28",weight:"80",height:"178",sex:"Male",goal:"Build muscle",level:"intermediate",daysPerWeek:"3",equipment:["Full gym"],injuries:""};
-                setProfile(demo);
-                setRoutine(buildRoutine(demo));
-                setAiSummary("Demo mode — your Push/Pull/Legs routine is loaded and ready.");
-                setScreen("home");
+                setSplashLoginError("No account found. Please create an account first.");
               }
             }}>Log In</Btn>
+            {splashLoginError && (
+              <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--red)",textAlign:"center",marginTop:4}}>{splashLoginError}</div>
+            )}
           </div>
           <p className="fu2" style={{fontFamily:"var(--font-body)",fontSize:11,color:"var(--gray2)",textAlign:"center",marginTop:20,lineHeight:1.7}}>
             Progress photos stored on-device only<br/>Never shared · Never AI-accessed
@@ -753,16 +832,50 @@ export default function App() {
         <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>WHO<br/>ARE<br/>YOU?</div>
         <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:24}}>Just you here. Your partner creates their own profile separately.</p>
         <Input label="YOUR NAME" placeholder="Alex" value={profile.name} onChange={v=>p("name",v)} />
-        <div style={{marginTop:8}}>
-          <Label text="SET A 4-DIGIT PIN (OPTIONAL)" />
-          <p style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray2)",marginBottom:12,lineHeight:1.5}}>Protects your profile when you hand off your phone.</p>
-          <PinDots count={newPIN.length} />
-          <Numpad onDigit={handleNewPINDigit} onDelete={handleNewPINDelete}/>
-          {newPIN.length===4 && (
-            <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--lime)",textAlign:"center",marginTop:12}}>✓ PIN SET</div>
-          )}
-          {newPIN.length>0 && newPIN.length<4 && (
-            <button onClick={()=>setNewPIN("")} style={{background:"none",border:"none",color:"var(--gray2)",fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:1,cursor:"pointer",display:"block",margin:"8px auto 0"}}>SKIP PIN</button>
+        <div style={{marginTop:16}}>
+          <Label text="CREATE A 4-DIGIT PIN" />
+          <p style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray2)",marginBottom:14,lineHeight:1.5}}>Protects your profile when you hand off your phone.</p>
+          <div style={{marginBottom:14}}>
+            <input
+              type="password"
+              inputMode="numeric"
+              maxLength={4}
+              placeholder="• • • •"
+              value={newPIN}
+              onChange={e=>{
+                const v = e.target.value.replace(/\D/g,"").slice(0,4);
+                setNewPIN(v);
+                setPinMatchError("");
+              }}
+              style={{
+                width:"100%",background:"var(--card)",border:"1.5px solid var(--line2)",
+                borderRadius:12,padding:"14px 16px",fontFamily:"var(--font-body)",
+                fontSize:24,letterSpacing:8,color:"var(--white)",textAlign:"center",
+              }}
+            />
+          </div>
+          <Label text="CONFIRM PIN" />
+          <div style={{marginBottom:6}}>
+            <input
+              type="password"
+              inputMode="numeric"
+              maxLength={4}
+              placeholder="• • • •"
+              value={confirmPin}
+              onChange={e=>{
+                const v = e.target.value.replace(/\D/g,"").slice(0,4);
+                setConfirmPin(v);
+                setPinMatchError("");
+              }}
+              style={{
+                width:"100%",background:"var(--card)",border:`1.5px solid ${pinMatchError?"var(--red)":"var(--line2)"}`,
+                borderRadius:12,padding:"14px 16px",fontFamily:"var(--font-body)",
+                fontSize:24,letterSpacing:8,color:"var(--white)",textAlign:"center",
+              }}
+            />
+          </div>
+          {pinMatchError && (
+            <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--red)",marginTop:6}}>{pinMatchError}</div>
           )}
         </div>
       </div>,
@@ -898,10 +1011,20 @@ export default function App() {
           {!isPartnerStep && (
             <div style={{padding:"20px 24px 40px"}}>
               {onboardStep===0
-                ? <Btn full onClick={()=>{if(profile.name.trim())nextStep();}}>Continue</Btn>
-                : onboardStep===4
-                  ? <Btn full onClick={nextStep}>Continue</Btn>
-                  : <Btn full onClick={nextStep}>Continue</Btn>
+                ? <Btn full onClick={()=>{
+                    if (!profile.name.trim()) return;
+                    if (newPIN.length !== 4 || !/^\d{4}$/.test(newPIN)) {
+                      setPinMatchError("PIN must be exactly 4 digits.");
+                      return;
+                    }
+                    if (newPIN !== confirmPin) {
+                      setPinMatchError("PINs don't match");
+                      return;
+                    }
+                    setPinMatchError("");
+                    nextStep();
+                  }}>Continue</Btn>
+                : <Btn full onClick={nextStep}>Continue</Btn>
               }
             </div>
           )}
