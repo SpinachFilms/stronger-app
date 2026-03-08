@@ -291,25 +291,44 @@ const Numpad = ({onDigit, onDelete}) => {
    MAIN APP
 ════════════════════════════════════════════ */
 export default function App() {
-  const [screen, setScreen]           = useState("splash");
-  const [onboardStep, setOnboardStep] = useState(0);
+  // ── localStorage helpers (defined first so lazy initialisers can use them) ──
+  const getSaved = (key, fallback) => {
+    try {
+      const val = localStorage.getItem(key);
+      return val ? JSON.parse(val) : fallback;
+    } catch { return fallback; }
+  };
 
-  const [profile, setProfile] = useState({
-    name:"", age:"", weight:"", height:"",
-    sex:"", goal:"", level:"",
-    daysPerWeek:"3", equipment:[], injuries:"",
+  // ── Initial screen: determined from localStorage before first render ──
+  const [screen, setScreen] = useState(() => {
+    try {
+      const prof = localStorage.getItem("str_profile");
+      const pin  = localStorage.getItem("str_pin");
+      if (prof && pin) return "pin";
+      if (prof)        return "home"; // profile but no PIN (legacy / edge case)
+      return "splash";
+    } catch { return "splash"; }
   });
 
-  // PIN auth
-  const [pinHash, setPinHash]     = useState("");
-  const [pinEntry, setPinEntry]   = useState(""); // digits being typed on PIN screen
+  const [onboardStep, setOnboardStep] = useState(0);
+
+  // ── Persisted state — initialised directly from localStorage ──
+  const [profile, setProfile]             = useState(() => getSaved("str_profile", null));
+  const [routine, setRoutine]             = useState(() => getSaved("str_routine", null));
+  const [aiSummary, setAiSummary]         = useState(() => getSaved("str_summary", ""));
+  const [pinHash, setPinHash]             = useState(() => getSaved("str_pin", null));
+  const [workoutHistory, setWorkoutHistory] = useState(() => getSaved("str_history", []));
+  const [messages, setMessages]           = useState(() => getSaved("str_messages", []));
+
+  // PIN auth (session-only state)
+  const [pinEntry, setPinEntry]       = useState("");
   const [pinAttempts, setPinAttempts] = useState(0);
-  const [pinError, setPinError]   = useState("");
-  const [pinShake, setPinShake]   = useState(false); // shake animation on wrong PIN
-  const [newPIN, setNewPIN]       = useState(""); // PIN creation during onboarding (field 1)
-  const [confirmPin, setConfirmPin] = useState(""); // PIN confirmation during onboarding (field 2)
-  const [pinMatchError, setPinMatchError] = useState(""); // inline error for PIN mismatch
-  const [splashLoginError, setSplashLoginError] = useState(""); // inline error on splash Log In
+  const [pinError, setPinError]       = useState("");
+  const [pinShake, setPinShake]       = useState(false);
+  const [newPIN, setNewPIN]           = useState("");
+  const [confirmPin, setConfirmPin]   = useState("");
+  const [pinMatchError, setPinMatchError]   = useState("");
+  const [splashLoginError, setSplashLoginError] = useState("");
 
   // Room / partner
   const [roomCode, setRoomCode]                 = useState("");
@@ -320,9 +339,7 @@ export default function App() {
   const [waitingForPartner, setWaitingForPartner] = useState(false);
   const [copied, setCopied]                     = useState(false);
 
-  // Routine
-  const [routine, setRoutine]         = useState(null);
-  const [aiSummary, setAiSummary]     = useState("");
+  // Routine (non-persisted UI state)
   const [regenerating, setRegenerating] = useState(false);
 
   // Workout UI
@@ -337,79 +354,43 @@ export default function App() {
   const [aiText, setAiText]               = useState("");
   const [aiLoading, setAiLoading]         = useState(false);
   const [completedSets, setCompletedSets] = useState({});
-  const [messages, setMessages]           = useState([]);
-  const [showLogout, setShowLogout] = useState(false);
-  const [workoutHistory, setWorkoutHistory] = useState([]);
+  const [showLogout, setShowLogout]       = useState(false);
   const workoutStartRef = useRef(null);
   const timerRef = useRef(null);
 
-  const p = (k, v) => setProfile(prev => ({...prev, [k]:v}));
+  // null-safe profile updater (profile starts null before onboarding)
+  const p = (k, v) => setProfile(prev => ({...(prev || {}), [k]: v}));
 
-  /* ─── Restore session on mount ─── */
+  /* ─── Restore room/partner session on mount (profile/routine/pin already in state) ─── */
   useEffect(() => {
-    const savedProfile = LS.get("strongerProfile");
-    const savedCode    = LS.raw("strongerRoomCode");
-    const savedRole    = LS.raw("strongerRoomRole") || "host";
-    const savedPIN     = LS.raw("strongerPIN") || "";
-    const savedRoutine = LS.get("strongerRoutine");
-    const savedSummary = LS.raw("strongerAiSummary") || "";
-    const savedHistory = LS.get("strongerHistory") || [];
-
-    setWorkoutHistory(savedHistory);
-
-    if (savedProfile) {
-      setProfile(savedProfile);
-      setPinHash(savedPIN);
-
-      if (savedCode) {
-        setRoomCode(savedCode);
-        setRoomRole(savedRole);
-        const room = getRoom(savedCode);
-        if (room) {
-          const partner = savedRole === "partner" ? room.host : room.partner;
-          if (partner) {
-            setPartnerProfile(partner);
-            setRoutine(savedRoutine || buildRoutine(savedProfile, partner));
-          } else {
-            setRoutine(savedRoutine || buildRoutine(savedProfile));
-            if (savedRole === "host") setWaitingForPartner(true);
-          }
+    const savedCode = LS.raw("strongerRoomCode");
+    const savedRole = LS.raw("strongerRoomRole") || "host";
+    if (savedCode && profile) {
+      setRoomCode(savedCode);
+      setRoomRole(savedRole);
+      const room = getRoom(savedCode);
+      if (room) {
+        const partner = savedRole === "partner" ? room.host : room.partner;
+        if (partner) {
+          setPartnerProfile(partner);
+          // rebuild routine with partner if we don't have one saved
+          if (!routine) setRoutine(buildRoutine(profile, partner));
         } else {
-          setRoutine(savedRoutine || buildRoutine(savedProfile));
+          if (savedRole === "host") setWaitingForPartner(true);
         }
-      } else {
-        setRoutine(savedRoutine || buildRoutine(savedProfile));
-      }
-
-      setAiSummary(savedSummary || "Welcome back! Your routine is loaded.");
-
-      // Profile exists — skip splash, show PIN screen (PIN is always set now)
-      if (savedPIN) {
-        setScreen("pin");
-      } else {
-        setScreen("home");
       }
     }
-    // No profile → stay on splash (default state)
-  }, []);
+    // Ensure routine exists for returning users with profile but no saved routine
+    if (profile && !routine) setRoutine(buildRoutine(profile));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ─── Save profile to LS whenever it changes ─── */
-  useEffect(() => {
-    if (profile.name) LS.set("strongerProfile", profile);
-  }, [profile]);
-
-  /* ─── Save routine/summary to LS ─── */
-  useEffect(() => {
-    if (routine) LS.set("strongerRoutine", routine);
-  }, [routine]);
-  useEffect(() => {
-    if (aiSummary) LS.setRaw("strongerAiSummary", aiSummary);
-  }, [aiSummary]);
-
-  /* ─── Save history to LS ─── */
-  useEffect(() => {
-    if (workoutHistory.length > 0) LS.set("strongerHistory", workoutHistory);
-  }, [workoutHistory]);
+  /* ─── Persist state to localStorage whenever it changes (str_* keys) ─── */
+  useEffect(() => { if (profile) localStorage.setItem("str_profile", JSON.stringify(profile)); }, [profile]);
+  useEffect(() => { if (routine) localStorage.setItem("str_routine", JSON.stringify(routine)); }, [routine]);
+  useEffect(() => { if (aiSummary) localStorage.setItem("str_summary", JSON.stringify(aiSummary)); }, [aiSummary]);
+  useEffect(() => { if (pinHash)  localStorage.setItem("str_pin",     JSON.stringify(pinHash)); },  [pinHash]);
+  useEffect(() => { localStorage.setItem("str_history",  JSON.stringify(workoutHistory)); }, [workoutHistory]);
+  useEffect(() => { localStorage.setItem("str_messages", JSON.stringify(messages)); }, [messages]);
 
   /* ─── Poll for partner joining ─── */
   useEffect(() => {
@@ -508,7 +489,7 @@ export default function App() {
           system:"You are an elite strength coach. Write a 2-sentence routine summary. Be encouraging, specific, reference goals and level. No markdown.",
           messages:[{
             role:"user",
-            content:`Athlete: ${profile.name||"Alex"}, ${profile.age}y, ${profile.weight}kg, goal: ${profile.goal||"build muscle"}, level: ${profile.level||"intermediate"}, ${profile.daysPerWeek} days/week${resolvedPartner?`\nPartner: ${resolvedPartner.name||"Partner"}, ${resolvedPartner.weight}kg, goal: ${resolvedPartner.goal||"—"}, level: ${resolvedPartner.level||"—"}`:""}`,
+            content:`Athlete: ${profile.name||"You"}, ${profile.age}y, ${profile.weight}kg, goal: ${profile.goal||"build muscle"}, level: ${profile.level||"intermediate"}, ${profile.daysPerWeek} days/week${resolvedPartner?`\nPartner: ${resolvedPartner.name||"Partner"}, ${resolvedPartner.weight}kg, goal: ${resolvedPartner.goal||"—"}, level: ${resolvedPartner.level||"—"}`:""}`,
           }],
         }),
       });
@@ -544,7 +525,6 @@ export default function App() {
 
   const handleInvite = () => {
     const code = genCode();
-    LS.set("strongerProfile", profile);
     createRoom(code, profile);
     setRoomCode(code);
     setRoomRole("host");
@@ -556,7 +536,6 @@ export default function App() {
     if (!code) { setJoinError("Please enter a room code."); return; }
     const result = joinRoom(code, profile);
     if (!result) { setJoinError("Code not found. Check the code and try again."); return; }
-    LS.set("strongerProfile", profile);
     setRoomCode(code);
     setRoomRole("partner");
     setPartnerProfile(result.host);
@@ -636,11 +615,9 @@ export default function App() {
   }, [screen, pinEntry, pinAttempts, pinHash]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const finishOnboarding = async () => {
-    LS.set("strongerProfile", profile);
     if (newPIN.length === 4) {
       const h = await hashPIN(newPIN);
-      setPinHash(h);
-      LS.setRaw("strongerPIN", h);
+      setPinHash(h); // auto-saved to str_pin via useEffect
     }
     setConfirmPin("");
     generateRoutine();
@@ -652,11 +629,11 @@ export default function App() {
      PIN SCREEN
   ════════════════════════ */
   const resetAndGoSplash = () => {
-    clearStorage();
-    setProfile({name:"",age:"",weight:"",height:"",sex:"",goal:"",level:"",daysPerWeek:"3",equipment:[],injuries:""});
-    setPinHash(""); setPinEntry(""); setPinAttempts(0); setPinError(""); setPinShake(false);
+    localStorage.clear();
+    setProfile(null); setPinHash(null); setRoutine(null); setAiSummary(""); setWorkoutHistory([]); setMessages([]);
+    setPinEntry(""); setPinAttempts(0); setPinError(""); setPinShake(false);
     setRoomCode(""); setRoomRole(""); setPartnerProfile(null);
-    setRoutine(null); setAiSummary(""); setNewPIN(""); setConfirmPin("");
+    setNewPIN(""); setConfirmPin("");
     setScreen("splash");
   };
 
@@ -728,31 +705,18 @@ export default function App() {
             <p style={{fontFamily:"var(--font-body)",fontSize:16,color:"var(--gray)",marginTop:18,lineHeight:1.55}}>AI-powered strength training<br/>built for two. Train together,<br/>get stronger together.</p>
           </div>
           <div className="fu1" style={{display:"flex",flexDirection:"column",gap:12}}>
-            <Btn full onClick={()=>{setSplashLoginError("");setScreen("onboarding");setOnboardStep(0);}}>Create Account</Btn>
+            <Btn full onClick={()=>{
+              setSplashLoginError("");
+              // Initialize empty profile so onboarding forms aren't null-unsafe
+              if (!profile) setProfile({name:"",age:"",weight:"",height:"",sex:"",goal:"",level:"",daysPerWeek:"3",equipment:[],injuries:""});
+              setScreen("onboarding");
+              setOnboardStep(0);
+            }}>Create Account</Btn>
             <Btn full variant="ghost" onClick={()=>{
-              const savedPIN = LS.raw("strongerPIN");
-              if (savedPIN) {
-                // Profile and PIN exist — load everything and go to PIN screen
-                const savedProfile = LS.get("strongerProfile");
-                const savedCode    = LS.raw("strongerRoomCode");
-                const savedRole    = LS.raw("strongerRoomRole")||"host";
-                setProfile(savedProfile || {name:"",age:"",weight:"",height:"",sex:"",goal:"",level:"",daysPerWeek:"3",equipment:[],injuries:""});
-                setPinHash(savedPIN);
-                if (savedCode) {
-                  setRoomCode(savedCode);
-                  setRoomRole(savedRole);
-                  const room = getRoom(savedCode);
-                  if (room) {
-                    const partner = savedRole==="partner"?room.host:room.partner;
-                    if (partner) { setPartnerProfile(partner); setRoutine(LS.get("strongerRoutine")||buildRoutine(savedProfile,partner)); }
-                    else { setRoutine(LS.get("strongerRoutine")||buildRoutine(savedProfile)); if (savedRole==="host") setWaitingForPartner(true); }
-                  } else {
-                    setRoutine(LS.get("strongerRoutine")||buildRoutine(savedProfile));
-                  }
-                } else {
-                  setRoutine(LS.get("strongerRoutine")||buildRoutine(savedProfile));
-                }
-                setAiSummary(LS.raw("strongerAiSummary")||"Welcome back! Your routine is loaded.");
+              // profile and pinHash are already in state (lazy-loaded from str_* keys on startup)
+              if (profile && pinHash) {
+                // Ensure routine exists (may have been cleared in state but not localStorage)
+                if (!routine) setRoutine(buildRoutine(profile));
                 setSplashLoginError("");
                 setScreen("pin");
               } else {
@@ -1505,16 +1469,16 @@ export default function App() {
                 Your routine and partner connection are saved in this browser.
               </p>
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                {/* Regular logout: return to splash, keep all data so PIN login still works */}
                 <Btn full onClick={()=>{setShowLogout(false);setScreen("splash");}}>Log Out</Btn>
+                {/* Full erase: clear everything and restart from scratch */}
                 <Btn variant="red-soft" full onClick={()=>{
-                  clearStorage();
-                  setProfile({name:"",age:"",weight:"",height:"",sex:"",goal:"",level:"",daysPerWeek:"3",equipment:[],injuries:""});
-                  setPinHash(""); setNewPIN("");
-                  setRoomCode(""); setRoomRole(""); setPartnerProfile(null);
-                  setRoutine(null); setAiSummary(""); setWaitingForPartner(false);
-                  setWorkoutHistory([]);
+                  localStorage.clear();
+                  setProfile(null); setPinHash(null); setRoutine(null); setAiSummary(""); setWorkoutHistory([]); setMessages([]);
+                  setNewPIN(""); setConfirmPin("");
+                  setRoomCode(""); setRoomRole(""); setPartnerProfile(null); setWaitingForPartner(false);
                   setShowLogout(false); setScreen("splash");
-                }}>Log Out & Clear Everything</Btn>
+                }}>Log Out &amp; Erase Everything</Btn>
                 <Btn variant="ghost" full onClick={()=>setShowLogout(false)}>Cancel</Btn>
               </div>
             </div>
