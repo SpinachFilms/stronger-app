@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { supabase } from "./supabase";
 
 /* ─── Utilities ─── */
 const hashPIN = async (pin) => {
@@ -19,13 +20,6 @@ const playBeep = () => {
   } catch {}
 };
 
-const LS = {
-  get: (k, fb = null) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch { return fb; } },
-  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
-  raw: (k) => localStorage.getItem(k),
-  setRaw: (k, v) => localStorage.setItem(k, v),
-  remove: (k) => localStorage.removeItem(k),
-};
 
 /* ─── Room code system ─── */
 const genCode = () => {
@@ -33,30 +27,6 @@ const genCode = () => {
   let code = "STR-";
   for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
   return code;
-};
-const createRoom = (code, profile) => {
-  const room = { host: profile, partner: null, createdAt: Date.now() };
-  LS.set(`strongerRoom_${code}`, room);
-  LS.setRaw("strongerRoomCode", code);
-  LS.setRaw("strongerRoomRole", "host");
-  return room;
-};
-const joinRoom = (code, profile) => {
-  try {
-    const room = LS.get(`strongerRoom_${code}`);
-    if (!room) return null;
-    room.partner = profile;
-    LS.set(`strongerRoom_${code}`, room);
-    LS.setRaw("strongerRoomCode", code);
-    LS.setRaw("strongerRoomRole", "partner");
-    return room;
-  } catch { return null; }
-};
-const getRoom = (code) => LS.get(`strongerRoom_${code}`);
-const clearStorage = () => {
-  const code = LS.raw("strongerRoomCode");
-  if (code) LS.remove(`strongerRoom_${code}`);
-  ["strongerProfile","strongerRoomCode","strongerRoomRole","strongerPIN","strongerRoutine","strongerAiSummary","strongerHistory"].forEach(k => LS.remove(k));
 };
 
 /* ─── Routine builder (2–6 days) ─── */
@@ -357,30 +327,70 @@ export default function App() {
   const [showLogout, setShowLogout]       = useState(false);
   const workoutStartRef = useRef(null);
   const timerRef = useRef(null);
+  const supaSubRef = useRef(null); // Supabase realtime subscription
+
+  // Active workout session (persisted across navigation)
+  const [activeSession, setActiveSession] = useState(() => getSaved("str_active_session", null));
+  // Toast notification (e.g. auto-expire message)
+  const [toast, setToast] = useState(null);
+  // Conflict dialog: non-null when user taps a day card while a session exists
+  const [conflictPendingDayIdx, setConflictPendingDayIdx] = useState(null);
+  // Supabase room slot ("a" = host, "b" = partner)
+  const [userSlot, setUserSlot] = useState(() => localStorage.getItem("str_user_slot") || "a");
 
   // null-safe profile updater (profile starts null before onboarding)
   const p = (k, v) => setProfile(prev => ({...(prev || {}), [k]: v}));
 
-  /* ─── Restore room/partner session on mount (profile/routine/pin already in state) ─── */
+  /* ─── Restore session + auto-expire check on mount ─── */
   useEffect(() => {
-    const savedCode = LS.raw("strongerRoomCode");
-    const savedRole = LS.raw("strongerRoomRole") || "host";
-    if (savedCode && profile) {
-      setRoomCode(savedCode);
-      setRoomRole(savedRole);
-      const room = getRoom(savedCode);
-      if (room) {
-        const partner = savedRole === "partner" ? room.host : room.partner;
-        if (partner) {
-          setPartnerProfile(partner);
-          // rebuild routine with partner if we don't have one saved
-          if (!routine) setRoutine(buildRoutine(profile, partner));
-        } else {
-          if (savedRole === "host") setWaitingForPartner(true);
+    // 1. Auto-expire active workout session if > 60 min idle
+    const session = getSaved("str_active_session", null);
+    if (session?.isActive) {
+      const minutesIdle = (Date.now() - session.lastActivityAt) / 60000;
+      if (minutesIdle > 60) {
+        // Save partial history entry before clearing
+        const expiredDay = routine?.[session.dayIdx];
+        if (expiredDay) {
+          const entry = {
+            date: new Date().toLocaleDateString("en-US", {month:"short", day:"numeric"}),
+            dayName: expiredDay.name,
+            totalSets: Object.keys(session.completedSets || {}).length,
+            duration: Math.max(1, Math.round((session.lastActivityAt - session.startedAt) / 60000)),
+            exercises: expiredDay.exercises.length,
+          };
+          setWorkoutHistory(prev => [entry, ...prev].slice(0, 20));
         }
+        localStorage.removeItem("str_active_session");
+        setActiveSession(null);
+        setToast("Your workout from earlier was automatically ended after 60 minutes of inactivity.");
+        setTimeout(() => setToast(null), 6000);
       }
     }
-    // Ensure routine exists for returning users with profile but no saved routine
+
+    // 2. Restore Supabase room if one was saved
+    const savedCode = localStorage.getItem("str_room_code");
+    const savedSlot = localStorage.getItem("str_user_slot") || "a";
+    if (savedCode && profile) {
+      setRoomCode(savedCode);
+      setUserSlot(savedSlot);
+      supabase.from("rooms").select("*").eq("room_code", savedCode).single()
+        .then(({ data }) => {
+          if (!data) return;
+          const partner = savedSlot === "a" ? data.user_b : data.user_a;
+          if (partner) {
+            setPartnerProfile(partner);
+            if (!routine) setRoutine(buildRoutine(profile, partner));
+            // Restore messages
+            if (data.messages?.length) setMessages(data.messages);
+          } else if (savedSlot === "a") {
+            setWaitingForPartner(true);
+          }
+          // Subscribe for live partner join + messages
+          subscribeToRoom(savedCode, savedSlot);
+        });
+    }
+
+    // 3. Ensure routine exists for returning users
     if (profile && !routine) setRoutine(buildRoutine(profile));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -392,19 +402,20 @@ export default function App() {
   useEffect(() => { localStorage.setItem("str_history",  JSON.stringify(workoutHistory)); }, [workoutHistory]);
   useEffect(() => { localStorage.setItem("str_messages", JSON.stringify(messages)); }, [messages]);
 
-  /* ─── Poll for partner joining ─── */
+  /* ─── Auto-save active workout session whenever key state changes ─── */
   useEffect(() => {
-    if (!waitingForPartner || !roomCode) return;
-    const interval = setInterval(() => {
-      const room = getRoom(roomCode);
-      if (room?.partner) {
-        setPartnerProfile(room.partner);
-        setWaitingForPartner(false);
-        setRoutine(buildRoutine(profile, room.partner));
-      }
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [waitingForPartner, roomCode, profile]);
+    if (!workoutStartRef.current) return;
+    const session = {
+      isActive: true,
+      dayIdx, exIdx, setNum, completedSets,
+      startedAt: workoutStartRef.current,
+      lastActivityAt: Date.now(),
+      restMax,
+    };
+    localStorage.setItem("str_active_session", JSON.stringify(session));
+    setActiveSession(session);
+  }, [dayIdx, exIdx, setNum, completedSets]); // eslint-disable-line react-hooks/exhaustive-deps
+
 
   /* ─── Rest timer with beep ─── */
   useEffect(() => {
@@ -523,24 +534,41 @@ export default function App() {
     setRegenerating(false);
   };
 
-  const handleInvite = () => {
+  const handleInvite = async () => {
     const code = genCode();
-    createRoom(code, profile);
-    setRoomCode(code);
-    setRoomRole("host");
-    setWaitingForPartner(true);
+    try {
+      await supabase.from("rooms").insert({ room_code: code, user_a: profile, user_b: null, messages: [] });
+      localStorage.setItem("str_room_code", code);
+      localStorage.setItem("str_user_slot", "a");
+      setRoomCode(code);
+      setUserSlot("a");
+      setWaitingForPartner(true);
+      subscribeToRoom(code, "a", profile);
+    } catch (e) {
+      console.error("Failed to create room:", e);
+    }
   };
 
-  const handleJoin = () => {
+  const handleJoin = async () => {
     const code = joinInput.trim().toUpperCase();
     if (!code) { setJoinError("Please enter a room code."); return; }
-    const result = joinRoom(code, profile);
-    if (!result) { setJoinError("Code not found. Check the code and try again."); return; }
-    setRoomCode(code);
-    setRoomRole("partner");
-    setPartnerProfile(result.host);
-    setJoinError("");
-    generateRoutine(result.host);
+    try {
+      const { data } = await supabase.from("rooms").select("*").eq("room_code", code).single();
+      if (!data) { setJoinError("Code not found. Check the code and try again."); return; }
+      if (data.user_b) { setJoinError("Room is full. Ask your partner for a new code."); return; }
+      await supabase.from("rooms").update({ user_b: profile }).eq("room_code", code);
+      const hostProfile = data.user_a;
+      localStorage.setItem("str_room_code", code);
+      localStorage.setItem("str_user_slot", "b");
+      setRoomCode(code);
+      setUserSlot("b");
+      setPartnerProfile(hostProfile);
+      setJoinError("");
+      subscribeToRoom(code, "b", profile);
+      generateRoutine(hostProfile);
+    } catch (e) {
+      setJoinError("Could not join room. Check the code and try again.");
+    }
   };
 
   const handleCopyLink = () => {
@@ -548,6 +576,95 @@ export default function App() {
       setCopied(true);
       setTimeout(()=>setCopied(false), 2000);
     });
+  };
+
+  /* ─── Supabase realtime subscription ─── */
+  const subscribeToRoom = (code, slot, userProfile) => {
+    if (supaSubRef.current) supaSubRef.current.unsubscribe();
+    supaSubRef.current = supabase
+      .channel(`room:${code}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "rooms", filter: `room_code=eq.${code}` }, (payload) => {
+        const data = payload.new;
+        const partner = slot === "a" ? data.user_b : data.user_a;
+        if (partner) {
+          setPartnerProfile(partner);
+          setWaitingForPartner(false);
+          setRoutine(prev => prev || buildRoutine(userProfile, partner));
+        }
+        if (data.messages?.length) setMessages(data.messages);
+      })
+      .subscribe();
+  };
+
+  /* ─── Active session helpers ─── */
+  const clearActiveSession = () => {
+    localStorage.removeItem("str_active_session");
+    setActiveSession(null);
+    workoutStartRef.current = null;
+  };
+
+  const startWorkout = (idx) => {
+    const now = Date.now();
+    setDayIdx(idx);
+    setExIdx(0);
+    setSetNum(1);
+    setCompletedSets({});
+    setResting(false);
+    if (timerRef.current) clearInterval(timerRef.current);
+    workoutStartRef.current = now;
+    const session = { isActive:true, dayIdx:idx, exIdx:0, setNum:1, completedSets:{}, startedAt:now, lastActivityAt:now, restMax:90, resting:false, restSecondsLeft:0 };
+    localStorage.setItem("str_active_session", JSON.stringify(session));
+    setActiveSession(session);
+    setScreen("workout");
+  };
+
+  const resumeWorkout = () => {
+    if (!activeSession) return;
+    const { dayIdx:dIdx, exIdx:eIdx, setNum:sNum, completedSets:cs, startedAt, restMax:rm, resting:wasResting, restSecondsLeft, lastActivityAt } = activeSession;
+    setDayIdx(dIdx);
+    setExIdx(eIdx);
+    setSetNum(sNum);
+    setCompletedSets(cs || {});
+    workoutStartRef.current = startedAt;
+    setRestMax(rm || 90);
+    if (wasResting && restSecondsLeft > 0) {
+      const elapsed = Math.round((Date.now() - lastActivityAt) / 1000);
+      const remaining = Math.max(0, restSecondsLeft - elapsed);
+      if (remaining > 0) { startRest(remaining); }
+    }
+    setConflictPendingDayIdx(null);
+    setScreen("workout");
+  };
+
+  const navigateHomeFromWorkout = () => {
+    if (workoutStartRef.current) {
+      const session = { isActive:true, dayIdx, exIdx, setNum, completedSets, startedAt:workoutStartRef.current, lastActivityAt:Date.now(), restMax, resting, restSecondsLeft:resting?restSec:0 };
+      localStorage.setItem("str_active_session", JSON.stringify(session));
+      setActiveSession(session);
+    }
+    if (timerRef.current) clearInterval(timerRef.current);
+    setResting(false);
+    setSheet(null);
+    setScreen("home");
+  };
+
+  const endWorkoutNow = () => {
+    const currentDay = routine?.[dayIdx];
+    if (currentDay && workoutStartRef.current) {
+      const entry = {
+        date: new Date().toLocaleDateString("en-US", {month:"short", day:"numeric"}),
+        dayName: currentDay.name,
+        totalSets: Object.keys(completedSets).length,
+        duration: Math.max(1, Math.round((Date.now() - workoutStartRef.current) / 60000)),
+        exercises: currentDay.exercises.length,
+      };
+      setWorkoutHistory(prev => [entry, ...prev].slice(0, 20));
+    }
+    if (timerRef.current) clearInterval(timerRef.current);
+    setResting(false);
+    setSheet(null);
+    clearActiveSession();
+    setScreen("home");
   };
 
   /* ─── PIN screen handlers ─── */
@@ -1008,7 +1125,7 @@ export default function App() {
         <GlobalStyles/>
         <div style={{background:"var(--black)",minHeight:"100vh",maxWidth:430,margin:"0 auto",display:"flex",flexDirection:"column"}}>
           <div style={{padding:"16px 20px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-            <button onClick={()=>setScreen("home")} style={{background:"var(--card)",border:"none",borderRadius:10,width:38,height:38,color:"var(--white)",fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>←</button>
+            <button onClick={navigateHomeFromWorkout} style={{background:"var(--card)",border:"none",borderRadius:10,width:38,height:38,color:"var(--white)",fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>←</button>
             <div style={{textAlign:"center"}}>
               <div style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:3,color:accentColor}}>{day.name}</div>
               <div style={{fontFamily:"var(--font-cond)",fontWeight:600,fontSize:13,color:"var(--gray)"}}>{exIdx+1} / {day.exercises.length}</div>
@@ -1114,15 +1231,23 @@ export default function App() {
                         </div>
                       </div>
                       <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
-                        {messages.map((m,i)=>(
-                          <div key={i} style={{alignSelf:m.from==="them"?"flex-start":"flex-end",background:m.from==="them"?"var(--card)":accentColor,borderRadius:m.from==="them"?"4px 14px 14px 14px":"14px 4px 14px 14px",padding:"10px 14px",maxWidth:"78%"}}>
-                            <div style={{fontFamily:"var(--font-body)",fontSize:14,color:m.from==="them"?"var(--white)":"var(--black)"}}>{m.text}</div>
-                          </div>
-                        ))}
+                        {messages.map((m,i)=>{
+                          const isMe = m.slot ? m.slot===userSlot : m.from==="me";
+                          return (
+                            <div key={i} style={{alignSelf:isMe?"flex-end":"flex-start",background:isMe?accentColor:"var(--card)",borderRadius:isMe?"14px 4px 14px 14px":"4px 14px 14px 14px",padding:"10px 14px",maxWidth:"78%"}}>
+                              <div style={{fontFamily:"var(--font-body)",fontSize:14,color:isMe?"var(--black)":"var(--white)"}}>{m.text}</div>
+                            </div>
+                          );
+                        })}
                       </div>
                       <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
                         {["✅ Set done!","❓ Form check?","💪 Let's go!","⏸️ Break"].map(t=>(
-                          <button key={t} onClick={()=>setMessages(m=>[...m,{from:"me",text:t}])} style={{background:"var(--dark)",border:"1px solid var(--line)",borderRadius:99,padding:"8px 14px",fontFamily:"var(--font-body)",fontSize:12,color:"var(--white)",cursor:"pointer"}}>{t}</button>
+                          <button key={t} onClick={async ()=>{
+                            const newMsg = {slot:userSlot,text:t,ts:Date.now()};
+                            const updated = [...messages, newMsg];
+                            setMessages(updated);
+                            if (roomCode) await supabase.from("rooms").update({messages:updated}).eq("room_code",roomCode);
+                          }} style={{background:"var(--dark)",border:"1px solid var(--line)",borderRadius:99,padding:"8px 14px",fontFamily:"var(--font-body)",fontSize:12,color:"var(--white)",cursor:"pointer"}}>{t}</button>
                         ))}
                       </div>
                     </>
@@ -1137,11 +1262,11 @@ export default function App() {
                 )}
                 {sheet==="emergency" && <>
                   <div style={{fontFamily:"var(--font-display)",fontSize:42,color:"var(--red)",marginBottom:8}}>STOP?</div>
-                  <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:24}}>Always okay to stop. Your safety comes first.</p>
+                  <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:24}}>Your progress is saved. You can always come back.</p>
                   <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                    <Btn variant="red-soft" full onClick={()=>{setSheet("ai");fetchAI(`I need to stop during ${ex.name} due to discomfort. What should I do right now?`);}}>GET AI ADVICE FIRST</Btn>
-                    <Btn variant="red" full onClick={()=>{setSheet(null);setScreen("home");}}>END WORKOUT</Btn>
-                    <Btn variant="ghost" full onClick={()=>setSheet(null)}>KEEP GOING</Btn>
+                    <Btn variant="dark" full onClick={navigateHomeFromWorkout}>Resume Later</Btn>
+                    <Btn variant="red" full onClick={endWorkoutNow}>End Workout Now</Btn>
+                    <Btn variant="ghost" full onClick={()=>setSheet(null)}>Keep Going</Btn>
                   </div>
                 </>}
                 {sheet==="complete" && (
@@ -1162,7 +1287,7 @@ export default function App() {
                       ))}
                     </div>
                     <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                      <Btn full onClick={()=>{setSheet(null);setScreen("home");setExIdx(0);setSetNum(1);setCompletedSets({});workoutStartRef.current=null;}}>DONE</Btn>
+                      <Btn full onClick={()=>{clearActiveSession();setSheet(null);setScreen("home");setExIdx(0);setSetNum(1);setCompletedSets({});}}>DONE</Btn>
                     </div>
                   </div>
                 )}
@@ -1234,8 +1359,26 @@ export default function App() {
                 </div>
                 <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1,marginTop:6}}>WEEK 1 · {routine?.length||3} DAYS/WEEK PLAN</div>
               </div>
+              {activeSession?.isActive && (
+                <div className="fu" style={{background:"var(--card)",borderRadius:18,border:"1px solid rgba(200,241,53,.25)",borderLeft:"4px solid var(--lime)",padding:18,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                  <div>
+                    <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:4}}>ACTIVE SESSION</div>
+                    <div style={{fontFamily:"var(--font-display)",fontSize:24,lineHeight:1}}>{(routine?.[activeSession.dayIdx]?.name||"WORKOUT").toUpperCase()}</div>
+                    <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1,marginTop:2}}>{Object.keys(activeSession.completedSets||{}).length} SETS COMPLETED</div>
+                  </div>
+                  <button onClick={resumeWorkout} style={{background:"var(--lime)",border:"none",borderRadius:12,padding:"12px 18px",fontFamily:"var(--font-cond)",fontWeight:800,fontSize:13,letterSpacing:2,color:"var(--black)",cursor:"pointer"}}>RESUME</button>
+                </div>
+              )}
               {(routine||[]).map((d,i)=>(
-                <div key={i} className="fu2" onClick={()=>{setDayIdx(i);setExIdx(0);setSetNum(1);setCompletedSets({});workoutStartRef.current=null;setScreen("workout");}}
+                <div key={i} className="fu2" onClick={()=>{
+                  if (activeSession?.isActive && activeSession.dayIdx !== i) {
+                    setConflictPendingDayIdx(i);
+                  } else if (activeSession?.isActive && activeSession.dayIdx === i) {
+                    resumeWorkout();
+                  } else {
+                    startWorkout(i);
+                  }
+                }}
                   style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,cursor:"pointer",position:"relative",overflow:"hidden"}}>
                   <div style={{position:"absolute",top:0,left:0,width:4,height:"100%",background:d.color}}/>
                   <div style={{paddingLeft:12}}>
@@ -1360,15 +1503,23 @@ export default function App() {
                   <div className="fu1" style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20}}>
                     <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:14}}>MESSAGES</div>
                     <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
-                      {messages.map((m,i)=>(
-                        <div key={i} style={{alignSelf:m.from==="them"?"flex-start":"flex-end",background:m.from==="them"?"var(--dark)":"var(--lime)",borderRadius:m.from==="them"?"4px 14px 14px 14px":"14px 4px 14px 14px",padding:"10px 14px",maxWidth:"78%"}}>
-                          <div style={{fontFamily:"var(--font-body)",fontSize:14,color:m.from==="them"?"var(--white)":"var(--black)"}}>{m.text}</div>
-                        </div>
-                      ))}
+                      {messages.map((m,i)=>{
+                        const isMe = m.slot ? m.slot===userSlot : m.from==="me";
+                        return (
+                          <div key={i} style={{alignSelf:isMe?"flex-end":"flex-start",background:isMe?"var(--lime)":"var(--dark)",borderRadius:isMe?"14px 4px 14px 14px":"4px 14px 14px 14px",padding:"10px 14px",maxWidth:"78%"}}>
+                            <div style={{fontFamily:"var(--font-body)",fontSize:14,color:isMe?"var(--black)":"var(--white)"}}>{m.text}</div>
+                          </div>
+                        );
+                      })}
                     </div>
                     <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
                       {["✅ Done!","❓ Form check?","💪 Let's go!","⏸️ Break","🏁 Almost!"].map(t=>(
-                        <button key={t} onClick={()=>setMessages(m=>[...m,{from:"me",text:t}])} style={{background:"var(--dark)",border:"1px solid var(--line)",borderRadius:99,padding:"8px 14px",fontFamily:"var(--font-body)",fontSize:12,color:"var(--white)",cursor:"pointer"}}>{t}</button>
+                        <button key={t} onClick={async ()=>{
+                          const newMsg = {slot:userSlot,text:t,ts:Date.now()};
+                          const updated = [...messages, newMsg];
+                          setMessages(updated);
+                          if (roomCode) await supabase.from("rooms").update({messages:updated}).eq("room_code",roomCode);
+                        }} style={{background:"var(--dark)",border:"1px solid var(--line)",borderRadius:99,padding:"8px 14px",fontFamily:"var(--font-body)",fontSize:12,color:"var(--white)",cursor:"pointer"}}>{t}</button>
                       ))}
                     </div>
                   </div>
@@ -1459,6 +1610,30 @@ export default function App() {
             </button>
           ))}
         </div>
+
+        {/* Toast notification */}
+        {toast && (
+          <div style={{position:"fixed",bottom:90,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 44px)",maxWidth:386,background:"#222",borderRadius:14,padding:"14px 18px",zIndex:100,boxShadow:"0 4px 24px rgba(0,0,0,.5)",border:"1px solid var(--line)"}}>
+            <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--white)",lineHeight:1.5}}>{toast}</div>
+          </div>
+        )}
+
+        {/* Conflict modal — tapped a different day while session active */}
+        {conflictPendingDayIdx !== null && (
+          <div onClick={()=>setConflictPendingDayIdx(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:50,backdropFilter:"blur(4px)"}}>
+            <div onClick={e=>e.stopPropagation()} style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"#181818",borderRadius:"24px 24px 0 0",padding:28,animation:"slideIn .3s cubic-bezier(.4,0,.2,1)"}}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:36,marginBottom:8}}>ACTIVE SESSION</div>
+              <p style={{fontFamily:"var(--font-body)",fontSize:14,color:"var(--gray)",lineHeight:1.6,marginBottom:24}}>
+                You have an unfinished <strong style={{color:"var(--white)"}}>{(routine?.[activeSession?.dayIdx]?.name||"workout").toUpperCase()}</strong>. What do you want to do?
+              </p>
+              <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                <Btn full onClick={resumeWorkout}>Resume Current Session</Btn>
+                <Btn variant="red-soft" full onClick={()=>{ endWorkoutNow(); startWorkout(conflictPendingDayIdx); }}>End It &amp; Start New</Btn>
+                <Btn variant="ghost" full onClick={()=>setConflictPendingDayIdx(null)}>Cancel</Btn>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Logout modal */}
         {showLogout && (
