@@ -547,6 +547,7 @@ export default function App() {
       subscribeToRoom(code, "a", profile);
     } catch (e) {
       console.error("Failed to create room:", e);
+      setJoinError("Could not create room. Check your connection and try again.");
     }
   };
 
