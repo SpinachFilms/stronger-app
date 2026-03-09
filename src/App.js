@@ -396,7 +396,7 @@ export default function App() {
             setWaitingForPartner(true);
           }
           // Subscribe for live partner join + messages
-          subscribeToRoom(savedCode, savedSlot);
+          subscribeToRoom(savedCode, savedSlot, profile);
         });
     }
 
@@ -499,6 +499,8 @@ export default function App() {
   /* ─── Sync active workout session to Supabase room on every set ─── */
   useEffect(() => {
     if (!roomCode || !supabase || !workoutStartRef.current || screen !== "workout") return;
+    // Only sync after at least one set has been completed — don't fire on initial startWorkout
+    if (Object.keys(completedSets).length === 0 && exIdx === 0 && setNum === 1) return;
     const curDay = routine?.[dayIdx];
     if (!curDay) return;
     const sessionData = {
