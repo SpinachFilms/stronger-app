@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { supabase } from "./supabase";
+import { supabase, isSupabaseConfigured } from "./supabase";
 
 /* ─── Utilities ─── */
 const hashPIN = async (pin) => {
@@ -308,6 +308,11 @@ export default function App() {
   const [joinError, setJoinError]               = useState("");
   const [waitingForPartner, setWaitingForPartner] = useState(false);
   const [copied, setCopied]                     = useState(false);
+  // Invite-link deep link state
+  const [joinCodeFromUrl, setJoinCodeFromUrl]   = useState("");
+  const [joinCodePartnerName, setJoinCodePartnerName] = useState("");
+  // Pending room join after auth (ref so it survives async flows)
+  const postAuthJoinCode = useRef("");
 
   // Routine (non-persisted UI state)
   const [regenerating, setRegenerating] = useState(false);
@@ -393,6 +398,33 @@ export default function App() {
     // 3. Ensure routine exists for returning users
     if (profile && !routine) setRoutine(buildRoutine(profile));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ─── Deep-link: detect /join/CODE in URL on app load ─── */
+  useEffect(() => {
+    const path = window.location.pathname;
+    const match = path.match(/\/join\/([A-Z0-9-]+)/);
+    if (!match) return;
+    const code = match[1];
+    window.history.replaceState({}, '', '/');
+    setJoinCodeFromUrl(code);
+    setScreen('join_room');
+    // Try to fetch partner name from Supabase
+    if (supabase) {
+      supabase.from("rooms").select("user_a").eq("room_code", code).single()
+        .then(({ data }) => {
+          if (data?.user_a?.name) setJoinCodePartnerName(data.user_a.name);
+        })
+        .catch(() => {});
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ─── Auto-join room after auth if user came via invite link ─── */
+  useEffect(() => {
+    if (screen !== "home" || !postAuthJoinCode.current) return;
+    const code = postAuthJoinCode.current;
+    postAuthJoinCode.current = "";
+    handleJoinWithCode(code);
+  }, [screen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ─── Persist state to localStorage whenever it changes (str_* keys) ─── */
   useEffect(() => { if (profile) localStorage.setItem("str_profile", JSON.stringify(profile)); }, [profile]);
@@ -554,7 +586,7 @@ export default function App() {
   const handleJoin = async () => {
     const code = joinInput.trim().toUpperCase();
     if (!code) { setJoinError("Please enter a room code."); return; }
-    if (!supabase) { setJoinError("Partner rooms require Supabase to be configured."); return; }
+    if (!supabase) { setJoinError("Live sync is offline. Share codes manually — your partner enters your code in the Partner tab."); return; }
     try {
       const { data } = await supabase.from("rooms").select("*").eq("room_code", code).single();
       if (!data) { setJoinError("Code not found. Check the code and try again."); return; }
@@ -571,6 +603,34 @@ export default function App() {
       generateRoutine(hostProfile);
     } catch (e) {
       setJoinError("Could not join room. Check the code and try again.");
+    }
+  };
+
+  const handleJoinWithCode = async (code) => {
+    if (!code) return;
+    if (!supabase) {
+      setJoinInput(code);
+      setTab("partner");
+      return;
+    }
+    try {
+      const { data } = await supabase.from("rooms").select("*").eq("room_code", code).single();
+      if (!data) { setJoinError("Code not found. Check the code and try again."); setTab("partner"); return; }
+      if (data.user_b) { setJoinError("Room is full. Ask your partner for a new code."); setTab("partner"); return; }
+      const currentProfile = JSON.parse(localStorage.getItem("str_profile") || "null") || profile;
+      await supabase.from("rooms").update({ user_b: currentProfile }).eq("room_code", code);
+      const hostProfile = data.user_a;
+      localStorage.setItem("str_room_code", code);
+      localStorage.setItem("str_user_slot", "b");
+      setRoomCode(code);
+      setUserSlot("b");
+      setPartnerProfile(hostProfile);
+      setJoinError("");
+      subscribeToRoom(code, "b", currentProfile);
+      generateRoutine(hostProfile);
+    } catch {
+      setJoinError("Could not join room. Check the code and try again.");
+      setTab("partner");
     }
   };
 
@@ -680,6 +740,7 @@ export default function App() {
       const h = await hashPIN(next);
       if (h === pinHash) {
         setPinEntry(""); setPinError(""); setPinAttempts(0); setPinShake(false);
+        if (joinCodeFromUrl) { postAuthJoinCode.current = joinCodeFromUrl; setJoinCodeFromUrl(""); }
         setScreen("home");
       } else {
         const attempts = pinAttempts + 1;
@@ -713,6 +774,7 @@ export default function App() {
           const h = await hashPIN(next);
           if (h === pinHash) {
             setPinEntry(""); setPinError(""); setPinAttempts(0); setPinShake(false);
+            if (joinCodeFromUrl) { postAuthJoinCode.current = joinCodeFromUrl; setJoinCodeFromUrl(""); }
             setScreen("home");
           } else {
             const attempts = pinAttempts + 1;
@@ -757,6 +819,67 @@ export default function App() {
     setNewPIN(""); setConfirmPin("");
     setScreen("splash");
   };
+
+  /* ════════════════════════
+     JOIN ROOM (invite link)
+  ════════════════════════ */
+  if (screen === "join_room") return (
+    <>
+      <GlobalStyles />
+      <div style={{background:"#000",minHeight:"100vh",maxWidth:430,margin:"0 auto",display:"flex",flexDirection:"column",padding:"0 28px",paddingTop:"max(env(safe-area-inset-top),48px)",paddingBottom:"max(env(safe-area-inset-bottom),32px)"}}>
+        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:4,color:"rgba(200,241,53,0.6)",marginBottom:32}}>STRONGER</div>
+
+        <div style={{fontFamily:"var(--font-cond)",fontSize:12,letterSpacing:4,color:"var(--gray)",marginBottom:8}}>
+          YOUR PARTNER INVITED YOU
+        </div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:72,lineHeight:0.85,marginBottom:24}}>
+          JOIN<br/>THE<br/>GYM.
+        </div>
+
+        <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:24,marginBottom:24,textAlign:"center"}}>
+          {joinCodePartnerName ? (
+            <div style={{fontFamily:"var(--font-cond)",fontSize:12,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>
+              {joinCodePartnerName.toUpperCase()} SHARED THIS CODE WITH YOU
+            </div>
+          ) : (
+            <div style={{fontFamily:"var(--font-cond)",fontSize:12,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>
+              ROOM CODE
+            </div>
+          )}
+          <div style={{fontFamily:"var(--font-display)",fontSize:52,color:"var(--lime)",letterSpacing:4,lineHeight:1}}>
+            {joinCodeFromUrl}
+          </div>
+        </div>
+
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <Btn full onClick={() => {
+            postAuthJoinCode.current = joinCodeFromUrl;
+            setJoinCodeFromUrl("");
+            if (!profile) setProfile({name:"",age:"",weight:"",height:"",sex:"",goal:"",level:"",daysPerWeek:"3",equipment:[],injuries:""});
+            setOnboardStep(0);
+            setScreen("onboarding");
+          }}>
+            JOIN &amp; CREATE ACCOUNT
+          </Btn>
+
+          {profile && pinHash && (
+            <Btn variant="ghost" full onClick={() => {
+              setScreen("pin");
+            }}>
+              JOIN EXISTING ACCOUNT
+            </Btn>
+          )}
+
+          <button
+            onClick={() => { setJoinCodeFromUrl(""); setScreen(profile && pinHash ? "pin" : "splash"); }}
+            style={{background:"none",border:"none",fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray2)",marginTop:4,cursor:"pointer",textAlign:"center"}}
+          >
+            SKIP FOR NOW
+          </button>
+        </div>
+      </div>
+    </>
+  );
 
   if (screen === "pin") return (
     <>
@@ -1460,10 +1583,19 @@ export default function App() {
                         <div style={{fontFamily:"var(--font-display)",fontSize:56,color:"var(--lime)",letterSpacing:4,marginBottom:16,lineHeight:1}}>{roomCode}</div>
                         <Btn full onClick={handleCopyLink} style={{marginBottom:10}}>{copied?"✓ Copied!":"Copy Invite Link"}</Btn>
                         <div style={{fontFamily:"var(--font-cond)",fontSize:10,color:"var(--gray2)",letterSpacing:1,marginBottom:16}}>stronnger.netlify.app/join/{roomCode}</div>
-                        <div style={{display:"flex",alignItems:"center",gap:8,justifyContent:"center"}}>
-                          <div style={{width:8,height:8,borderRadius:99,background:"var(--lime)",animation:"pulse 1.5s infinite"}}/>
-                          <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)"}}>WAITING FOR PARTNER...</span>
-                        </div>
+                        {isSupabaseConfigured ? (
+                          <div style={{display:"flex",alignItems:"center",gap:8,justifyContent:"center"}}>
+                            <div style={{width:8,height:8,borderRadius:99,background:"var(--lime)",animation:"pulse 1.5s infinite"}}/>
+                            <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)"}}>WAITING FOR PARTNER...</span>
+                          </div>
+                        ) : (
+                          <div style={{background:"rgba(200,241,53,0.08)",border:"1px solid rgba(200,241,53,0.2)",borderRadius:12,padding:"14px 16px",textAlign:"left",marginTop:4}}>
+                            <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:6}}>HOW TO CONNECT</div>
+                            <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",lineHeight:1.6}}>
+                              Share your code <span style={{color:"var(--lime)",fontWeight:700}}>{roomCode}</span> with your partner. They open the app, go to the Partner tab, and enter it manually.
+                            </div>
+                          </div>
+                        )}
                       </>
                     ) : (
                       <Btn full onClick={handleInvite}>Generate My Room Code</Btn>
