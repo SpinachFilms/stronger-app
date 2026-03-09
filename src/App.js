@@ -258,6 +258,54 @@ const Numpad = ({onDigit, onDelete}) => {
 };
 
 /* ════════════════════════════════════════════
+   FLOATING CHAT WINDOW (defined outside App so hooks are stable)
+════════════════════════════════════════════ */
+function ChatWindow({ partnerProfile, messages, userSlot, roomCode, setMessages }) {
+  const [kbOffset, setKbOffset] = useState(0);
+  useEffect(() => {
+    if (!window.visualViewport) return;
+    const onResize = () => {
+      const hidden = window.innerHeight - window.visualViewport.height;
+      setKbOffset(Math.max(0, hidden));
+    };
+    window.visualViewport.addEventListener("resize", onResize);
+    return () => window.visualViewport.removeEventListener("resize", onResize);
+  }, []);
+  const sendMsg = async (text) => {
+    const newMsg = { slot: userSlot, text, ts: Date.now() };
+    const updated = [...messages, newMsg];
+    setMessages(updated);
+    if (roomCode && supabase) await supabase.from("rooms").update({ messages: updated }).eq("room_code", roomCode);
+  };
+  return (
+    <div style={{position:"fixed",bottom:82+kbOffset,right:"calc(50% - 215px + 16px)",width:300,background:"#181818",borderRadius:18,border:"1px solid var(--line)",boxShadow:"0 8px 40px rgba(0,0,0,.6)",zIndex:59,display:"flex",flexDirection:"column",maxHeight:340,overflow:"hidden"}}>
+      <div style={{padding:"12px 14px 8px",borderBottom:"1px solid var(--line)",display:"flex",alignItems:"center",gap:8}}>
+        <div style={{width:8,height:8,borderRadius:99,background:"#30d158",animation:"pulse 2s infinite"}}/>
+        <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--white)"}}>{(partnerProfile.name||"PARTNER").toUpperCase()}</span>
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:"10px 12px",display:"flex",flexDirection:"column",gap:6}}>
+        {messages.length === 0 && (
+          <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",textAlign:"center",padding:"12px 0"}}>No messages yet</div>
+        )}
+        {messages.map((m,i)=>{
+          const isMe = m.slot ? m.slot===userSlot : m.from==="me";
+          return (
+            <div key={i} style={{alignSelf:isMe?"flex-end":"flex-start",background:isMe?"var(--lime)":"var(--dark)",borderRadius:isMe?"12px 3px 12px 12px":"3px 12px 12px 12px",padding:"8px 12px",maxWidth:"85%"}}>
+              <div style={{fontFamily:"var(--font-body)",fontSize:13,color:isMe?"var(--black)":"var(--white)"}}>{m.text}</div>
+            </div>
+          );
+        })}
+      </div>
+      <div style={{padding:"8px 10px",borderTop:"1px solid var(--line)",display:"flex",flexWrap:"wrap",gap:6}}>
+        {["Done!","Form check?","Let's go!","Break","Almost!","You got this!"].map(t=>(
+          <button key={t} onClick={()=>sendMsg(t)} style={{background:"var(--dark)",border:"1px solid var(--line)",borderRadius:99,padding:"7px 12px",fontFamily:"var(--font-body)",fontSize:11,color:"var(--white)",cursor:"pointer"}}>{t}</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════
    MAIN APP
 ════════════════════════════════════════════ */
 export default function App() {
@@ -513,10 +561,12 @@ export default function App() {
       color: curDay.color,
     };
     const col = userSlot === "a" ? "user_a" : "user_b";
-    supabase.from("rooms")
-      .update({ [col]: { ...profile, _activeSession: sessionData } })
-      .eq("room_code", roomCode)
-      .catch(() => {});
+    try {
+      supabase.from("rooms")
+        .update({ [col]: { ...(profile || {}), _activeSession: sessionData } })
+        .eq("room_code", roomCode)
+        .catch(() => {});
+    } catch {}
   }, [completedSets, exIdx, setNum]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const startRest = (s) => { setRestMax(s); setRestSec(s); setResting(true); };
@@ -724,9 +774,13 @@ export default function App() {
         if (partner) {
           setPartnerProfile(partner); // _activeSession and _lastWorkout embedded here
           setWaitingForPartner(false);
-          setRoutine(prev => prev || buildRoutine(userProfile, partner));
+          // Don't rebuild routine during an active workout — it would replace the
+          // current routine mid-session and can cause day/ex to become undefined.
+          if (!workoutStartRef.current) {
+            setRoutine(prev => prev || buildRoutine(userProfile || {}, partner));
+          }
         }
-        if (data.messages?.length) setMessages(data.messages);
+        if (Array.isArray(data.messages) && data.messages.length) setMessages(data.messages);
       })
       .subscribe();
   };
@@ -2052,69 +2106,15 @@ export default function App() {
         )}
 
         {/* ── Floating chat window ── */}
-        {chatOpen && partnerProfile && (() => {
-          // visualViewport keyboard shift
-          const ChatWindow = () => {
-            const [kbOffset, setKbOffset] = useState(0);
-            useEffect(() => {
-              if (!window.visualViewport) return;
-              const onResize = () => {
-                const hidden = window.innerHeight - window.visualViewport.height;
-                setKbOffset(Math.max(0, hidden));
-              };
-              window.visualViewport.addEventListener("resize", onResize);
-              return () => window.visualViewport.removeEventListener("resize", onResize);
-            }, []);
-            const sendMsg = async (text) => {
-              const newMsg = { slot: userSlot, text, ts: Date.now() };
-              const updated = [...messages, newMsg];
-              setMessages(updated);
-              if (roomCode && supabase) await supabase.from("rooms").update({ messages: updated }).eq("room_code", roomCode);
-            };
-            return (
-              <div style={{
-                position:"fixed",
-                bottom: 82 + kbOffset,
-                right:"calc(50% - 215px + 16px)",
-                width: 300,
-                background:"#181818",
-                borderRadius:18,
-                border:"1px solid var(--line)",
-                boxShadow:"0 8px 40px rgba(0,0,0,.6)",
-                zIndex:59,
-                display:"flex", flexDirection:"column",
-                maxHeight:340,
-                overflow:"hidden",
-              }}>
-                <div style={{padding:"12px 14px 8px",borderBottom:"1px solid var(--line)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8}}>
-                    <div style={{width:8,height:8,borderRadius:99,background:"#30d158",animation:"pulse 2s infinite"}}/>
-                    <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--white)"}}>{(partnerProfile.name||"PARTNER").toUpperCase()}</span>
-                  </div>
-                </div>
-                <div style={{flex:1,overflowY:"auto",padding:"10px 12px",display:"flex",flexDirection:"column",gap:6}}>
-                  {messages.length === 0 && (
-                    <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",textAlign:"center",padding:"12px 0"}}>No messages yet</div>
-                  )}
-                  {messages.map((m,i)=>{
-                    const isMe = m.slot ? m.slot===userSlot : m.from==="me";
-                    return (
-                      <div key={i} style={{alignSelf:isMe?"flex-end":"flex-start",background:isMe?"var(--lime)":"var(--dark)",borderRadius:isMe?"12px 3px 12px 12px":"3px 12px 12px 12px",padding:"8px 12px",maxWidth:"85%"}}>
-                        <div style={{fontFamily:"var(--font-body)",fontSize:13,color:isMe?"var(--black)":"var(--white)"}}>{m.text}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div style={{padding:"8px 10px",borderTop:"1px solid var(--line)",display:"flex",flexWrap:"wrap",gap:6}}>
-                  {["Done!","Form check?","Let's go!","Break","Almost!","You got this!"].map(t=>(
-                    <button key={t} onClick={()=>sendMsg(t)} style={{background:"var(--dark)",border:"1px solid var(--line)",borderRadius:99,padding:"7px 12px",fontFamily:"var(--font-body)",fontSize:11,color:"var(--white)",cursor:"pointer"}}>{t}</button>
-                  ))}
-                </div>
-              </div>
-            );
-          };
-          return <ChatWindow />;
-        })()}
+        {chatOpen && partnerProfile && (
+          <ChatWindow
+            partnerProfile={partnerProfile}
+            messages={messages}
+            userSlot={userSlot}
+            roomCode={roomCode}
+            setMessages={setMessages}
+          />
+        )}
 
       </div>
     </>
