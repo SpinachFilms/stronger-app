@@ -370,7 +370,7 @@ export default function App() {
     // 2. Restore Supabase room if one was saved
     const savedCode = localStorage.getItem("str_room_code");
     const savedSlot = localStorage.getItem("str_user_slot") || "a";
-    if (savedCode && profile) {
+    if (savedCode && profile && supabase) {
       setRoomCode(savedCode);
       setUserSlot(savedSlot);
       supabase.from("rooms").select("*").eq("room_code", savedCode).single()
@@ -536,6 +536,7 @@ export default function App() {
 
   const handleInvite = async () => {
     const code = genCode();
+    if (!supabase) { setRoomCode(code); setWaitingForPartner(true); return; }
     try {
       await supabase.from("rooms").insert({ room_code: code, user_a: profile, user_b: null, messages: [] });
       localStorage.setItem("str_room_code", code);
@@ -552,6 +553,7 @@ export default function App() {
   const handleJoin = async () => {
     const code = joinInput.trim().toUpperCase();
     if (!code) { setJoinError("Please enter a room code."); return; }
+    if (!supabase) { setJoinError("Partner rooms require Supabase to be configured."); return; }
     try {
       const { data } = await supabase.from("rooms").select("*").eq("room_code", code).single();
       if (!data) { setJoinError("Code not found. Check the code and try again."); return; }
@@ -580,6 +582,7 @@ export default function App() {
 
   /* ─── Supabase realtime subscription ─── */
   const subscribeToRoom = (code, slot, userProfile) => {
+    if (!supabase) return;
     if (supaSubRef.current) supaSubRef.current.unsubscribe();
     supaSubRef.current = supabase
       .channel(`room:${code}`)
@@ -1246,7 +1249,7 @@ export default function App() {
                             const newMsg = {slot:userSlot,text:t,ts:Date.now()};
                             const updated = [...messages, newMsg];
                             setMessages(updated);
-                            if (roomCode) await supabase.from("rooms").update({messages:updated}).eq("room_code",roomCode);
+                            if (roomCode && supabase) await supabase.from("rooms").update({messages:updated}).eq("room_code",roomCode);
                           }} style={{background:"var(--dark)",border:"1px solid var(--line)",borderRadius:99,padding:"8px 14px",fontFamily:"var(--font-body)",fontSize:12,color:"var(--white)",cursor:"pointer"}}>{t}</button>
                         ))}
                       </div>
@@ -1518,7 +1521,7 @@ export default function App() {
                           const newMsg = {slot:userSlot,text:t,ts:Date.now()};
                           const updated = [...messages, newMsg];
                           setMessages(updated);
-                          if (roomCode) await supabase.from("rooms").update({messages:updated}).eq("room_code",roomCode);
+                          if (roomCode && supabase) await supabase.from("rooms").update({messages:updated}).eq("room_code",roomCode);
                         }} style={{background:"var(--dark)",border:"1px solid var(--line)",borderRadius:99,padding:"8px 14px",fontFamily:"var(--font-body)",fontSize:12,color:"var(--white)",cursor:"pointer"}}>{t}</button>
                       ))}
                     </div>
