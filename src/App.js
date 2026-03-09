@@ -343,6 +343,11 @@ export default function App() {
   // Supabase room slot ("a" = host, "b" = partner)
   const [userSlot, setUserSlot] = useState(() => localStorage.getItem("str_user_slot") || "a");
 
+  // Chat / messaging UI
+  const [chatOpen, setChatOpen]           = useState(false);
+  const [chatLastOpenedAt, setChatLastOpenedAt] = useState(() => Date.now());
+  const [partnerElapsedSecs, setPartnerElapsedSecs] = useState(0);
+
   // null-safe profile updater (profile starts null before onboarding)
   const p = (k, v) => setProfile(prev => ({...(prev || {}), [k]: v}));
 
@@ -467,6 +472,51 @@ export default function App() {
     return () => clearInterval(timerRef.current);
   }, [resting]);
 
+  /* ─── Partner training elapsed timer ─── */
+  const partnerActiveSession = partnerProfile?._activeSession || null;
+  useEffect(() => {
+    if (!partnerActiveSession?.startedAt) { setPartnerElapsedSecs(0); return; }
+    const tick = () => setPartnerElapsedSecs(Math.floor((Date.now() - partnerActiveSession.startedAt) / 1000));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [partnerActiveSession?.startedAt]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ─── Vibrate + unread count when new message arrives ─── */
+  const unreadCount = messages.filter(m => {
+    const isPartner = m.slot ? m.slot !== userSlot : m.from !== "me";
+    return isPartner && m.ts > chatLastOpenedAt;
+  }).length;
+  useEffect(() => {
+    if (messages.length === 0) return;
+    const last = messages[messages.length - 1];
+    const isPartner = last.slot ? last.slot !== userSlot : last.from !== "me";
+    if (isPartner && !chatOpen) {
+      navigator.vibrate && navigator.vibrate(100);
+    }
+  }, [messages.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ─── Sync active workout session to Supabase room on every set ─── */
+  useEffect(() => {
+    if (!roomCode || !supabase || !workoutStartRef.current || screen !== "workout") return;
+    const curDay = routine?.[dayIdx];
+    if (!curDay) return;
+    const sessionData = {
+      dayIdx, exIdx, setNum, completedSets,
+      startedAt: workoutStartRef.current,
+      exerciseName: curDay.exercises[exIdx]?.name || "",
+      dayName: curDay.name,
+      totalExercises: curDay.exercises.length,
+      currentWeight: curDay.exercises[exIdx]?.wA || "",
+      color: curDay.color,
+    };
+    const col = userSlot === "a" ? "user_a" : "user_b";
+    supabase.from("rooms")
+      .update({ [col]: { ...profile, _activeSession: sessionData } })
+      .eq("room_code", roomCode)
+      .catch(() => {});
+  }, [completedSets, exIdx, setNum]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const startRest = (s) => { setRestMax(s); setRestSec(s); setResting(true); };
   const skipRest  = () => { clearInterval(timerRef.current); setResting(false); setRestSec(0); };
 
@@ -490,14 +540,33 @@ export default function App() {
         ? Math.round((Date.now() - workoutStartRef.current) / 60000)
         : 45;
       const totalSets = day.exercises.reduce((a, e) => a + e.sets, 0);
+      const totalVolume = Math.round(day.exercises.reduce((sum, e) => {
+        const w = parseFloat(e.wA) || 0;
+        const reps = parseInt((e.reps||"8").split("–")[0]) || 8;
+        return sum + e.sets * reps * w;
+      }, 0));
+      const maxWeight = Math.max(...day.exercises.map(e => parseFloat(e.wA) || 0));
       const entry = {
+        id: Date.now(),
         date: new Date().toLocaleDateString("en-US", {month:"short", day:"numeric"}),
+        dayOfWeek: new Date().toLocaleDateString("en-US", {weekday:"short"}),
         dayName: day.name,
         totalSets,
         duration: durationMin,
         exercises: day.exercises.length,
+        totalVolume,
+        maxWeight,
+        color: day.color,
       };
       setWorkoutHistory(prev => [entry, ...prev].slice(0, 20));
+      // Clear active session in Supabase
+      if (roomCode && supabase) {
+        const col = userSlot === "a" ? "user_a" : "user_b";
+        supabase.from("rooms")
+          .update({ [col]: { ...profile, _activeSession: null, _lastWorkout: entry } })
+          .eq("room_code", roomCode)
+          .catch(() => {});
+      }
       setSheet("complete");
     }
   };
@@ -651,7 +720,7 @@ export default function App() {
         const data = payload.new;
         const partner = slot === "a" ? data.user_b : data.user_a;
         if (partner) {
-          setPartnerProfile(partner);
+          setPartnerProfile(partner); // _activeSession and _lastWorkout embedded here
           setWaitingForPartner(false);
           setRoutine(prev => prev || buildRoutine(userProfile, partner));
         }
@@ -715,14 +784,32 @@ export default function App() {
   const endWorkoutNow = () => {
     const currentDay = routine?.[dayIdx];
     if (currentDay && workoutStartRef.current) {
+      const durationMin = Math.max(1, Math.round((Date.now() - workoutStartRef.current) / 60000));
+      const totalVolume = Math.round(currentDay.exercises.reduce((sum, e) => {
+        const w = parseFloat(e.wA) || 0;
+        const reps = parseInt((e.reps||"8").split("–")[0]) || 8;
+        return sum + e.sets * reps * w;
+      }, 0));
       const entry = {
+        id: Date.now(),
         date: new Date().toLocaleDateString("en-US", {month:"short", day:"numeric"}),
+        dayOfWeek: new Date().toLocaleDateString("en-US", {weekday:"short"}),
         dayName: currentDay.name,
         totalSets: Object.keys(completedSets).length,
-        duration: Math.max(1, Math.round((Date.now() - workoutStartRef.current) / 60000)),
+        duration: durationMin,
         exercises: currentDay.exercises.length,
+        totalVolume,
+        maxWeight: Math.max(...currentDay.exercises.map(e => parseFloat(e.wA) || 0)),
+        color: currentDay.color,
       };
       setWorkoutHistory(prev => [entry, ...prev].slice(0, 20));
+      if (roomCode && supabase) {
+        const col = userSlot === "a" ? "user_a" : "user_b";
+        supabase.from("rooms")
+          .update({ [col]: { ...profile, _activeSession: null, _lastWorkout: entry } })
+          .eq("room_code", roomCode)
+          .catch(() => {});
+      }
     }
     if (timerRef.current) clearInterval(timerRef.current);
     setResting(false);
@@ -1368,7 +1455,7 @@ export default function App() {
                         })}
                       </div>
                       <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-                        {["✅ Set done!","❓ Form check?","💪 Let's go!","⏸️ Break"].map(t=>(
+                        {["Set done!","Form check?","Let's go!","Break"].map(t=>(
                           <button key={t} onClick={async ()=>{
                             const newMsg = {slot:userSlot,text:t,ts:Date.now()};
                             const updated = [...messages, newMsg];
@@ -1380,7 +1467,6 @@ export default function App() {
                     </>
                   ) : (
                     <div style={{textAlign:"center",padding:"20px 0"}}>
-                      <div style={{fontSize:40,marginBottom:12}}>🔗</div>
                       <div style={{fontFamily:"var(--font-display)",fontSize:32,marginBottom:8}}>NO PARTNER YET</div>
                       <p style={{fontFamily:"var(--font-body)",fontSize:14,color:"var(--gray)",lineHeight:1.6,marginBottom:20}}>Share your room code from the Partner tab to connect.</p>
                       <Btn variant="ghost" full onClick={()=>setSheet(null)}>CLOSE</Btn>
@@ -1445,12 +1531,14 @@ export default function App() {
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             {partnerProfile && (
-              <div style={{display:"flex",alignItems:"center",gap:5,background:"rgba(48,209,88,.08)",borderRadius:99,padding:"5px 11px",border:"1px solid rgba(48,209,88,.18)"}}>
+              <button onClick={()=>setTab("partner")} style={{display:"flex",alignItems:"center",gap:5,background:"rgba(48,209,88,.08)",borderRadius:99,padding:"5px 11px",border:"1px solid rgba(48,209,88,.18)",cursor:"pointer"}}>
                 <div style={{width:7,height:7,borderRadius:99,background:"#30d158",animation:"pulse 2s infinite"}}/>
                 <span style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"#30d158"}}>{(partnerProfile.name||"PARTNER").toUpperCase()}</span>
-              </div>
+              </button>
             )}
-            <button onClick={()=>setShowLogout(true)} style={{background:"var(--card)",border:"none",borderRadius:10,width:34,height:34,color:"var(--gray)",fontSize:13,cursor:"pointer"}}>⏻</button>
+            <button onClick={()=>setShowLogout(true)} style={{background:"var(--card)",border:"none",borderRadius:10,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </button>
           </div>
         </div>
 
@@ -1482,7 +1570,7 @@ export default function App() {
                   ))}
                 </div>
                 <div style={{fontFamily:"var(--font-display)",fontSize:40,lineHeight:0.9}}>
-                  {workoutHistory.length>0?`${workoutHistory.length} WORKOUT${workoutHistory.length>1?"S":""} 🔥`:"START YOUR FIRST 💪"}
+                  {workoutHistory.length>0?`${workoutHistory.length} WORKOUT${workoutHistory.length>1?"S":""}`:"START YOUR FIRST"}
                 </div>
                 <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1,marginTop:6}}>WEEK 1 · {routine?.length||3} DAYS/WEEK PLAN</div>
               </div>
@@ -1515,7 +1603,9 @@ export default function App() {
                         <div style={{fontFamily:"var(--font-display)",fontSize:30,lineHeight:0.95,marginBottom:5}}>{d.name.toUpperCase()}</div>
                         <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)"}}>{d.tag}</div>
                       </div>
-                      <div style={{background:d.color,borderRadius:99,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>{["🏋️","💪","🦵","🔄","🏃","🧘"][i]||"🏋️"}</div>
+                      <div style={{background:d.color,borderRadius:99,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--black)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+                      </div>
                     </div>
                     <div style={{marginTop:12,display:"flex",gap:16}}>
                       <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>{d.exercises.length} EXERCISES</span>
@@ -1572,7 +1662,6 @@ export default function App() {
               {!partnerProfile ? (
                 <>
                   <div className="fu" style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:28,textAlign:"center"}}>
-                    <div style={{fontSize:44,marginBottom:14}}>🔗</div>
                     <div style={{fontFamily:"var(--font-display)",fontSize:36,lineHeight:0.9,marginBottom:10}}>PARTNER NOT<br/>CONNECTED</div>
                     <p style={{fontFamily:"var(--font-body)",fontSize:14,color:"var(--gray)",lineHeight:1.6,marginBottom:24}}>
                       Share your room code so your partner can join, or enter their code below.
@@ -1615,126 +1704,257 @@ export default function App() {
                     {joinError && <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--red)",marginTop:8}}>{joinError}</div>}
                   </div>
                 </>
-              ) : (
-                <>
-                  <div className="fu" style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",overflow:"hidden"}}>
-                    <div style={{padding:"20px 20px 0",display:"flex",alignItems:"center",gap:14}}>
-                      <div style={{width:52,height:52,borderRadius:99,background:"var(--lime)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-display)",fontSize:24,color:"var(--black)"}}>{(partnerProfile.name||"?").slice(0,2).toUpperCase()}</div>
-                      <div>
-                        <div style={{fontFamily:"var(--font-display)",fontSize:28}}>{(partnerProfile.name||"PARTNER").toUpperCase()}</div>
-                        <div style={{display:"flex",alignItems:"center",gap:6}}>
-                          <div style={{width:7,height:7,borderRadius:99,background:"#30d158",animation:"pulse 2s infinite"}}/>
-                          <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"#30d158"}}>CONNECTED</span>
+              ) : (() => {
+                const pSession = partnerProfile._activeSession;
+                const pLastWorkout = partnerProfile._lastWorkout;
+                const fmtElapsed = (s) => {
+                  const m = Math.floor(s / 60);
+                  const sec = s % 60;
+                  return `${m}:${String(sec).padStart(2,"0")}`;
+                };
+                const completedExCount = pSession
+                  ? [...new Set(Object.keys(pSession.completedSets||{}).map(k=>k.split("-")[0]))].length
+                  : 0;
+                const sendQuickMsg = async (text) => {
+                  const newMsg = {slot:userSlot, text, ts:Date.now()};
+                  const updated = [...messages, newMsg];
+                  setMessages(updated);
+                  if (roomCode && supabase) await supabase.from("rooms").update({messages:updated}).eq("room_code",roomCode);
+                };
+                return (
+                  <>
+                    {/* Partner header */}
+                    <div className="fu" style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20}}>
+                      <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:16}}>
+                        <div style={{width:52,height:52,borderRadius:99,background:"var(--lime)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-display)",fontSize:24,color:"var(--black)",flexShrink:0}}>{(partnerProfile.name||"?").slice(0,2).toUpperCase()}</div>
+                        <div style={{flex:1}}>
+                          <div style={{fontFamily:"var(--font-display)",fontSize:28,lineHeight:1}}>{(partnerProfile.name||"PARTNER").toUpperCase()}</div>
+                          {pSession ? (
+                            <div style={{display:"flex",alignItems:"center",gap:6,marginTop:4}}>
+                              <div style={{width:7,height:7,borderRadius:99,background:"#30d158",animation:"pulse 1.5s infinite"}}/>
+                              <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"#30d158"}}>TRAINING NOW</span>
+                            </div>
+                          ) : (
+                            <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",marginTop:4}}>NOT TRAINING RIGHT NOW</div>
+                          )}
                         </div>
                       </div>
-                    </div>
-                    <div style={{margin:"16px 20px 20px",background:"var(--black)",borderRadius:12,padding:16}}>
-                      <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"var(--gray)",marginBottom:6}}>PARTNER PROFILE</div>
-                      <div style={{fontFamily:"var(--font-display)",fontSize:22}}>{(partnerProfile.goal||"—").toUpperCase()}</div>
-                      <div style={{fontFamily:"var(--font-cond)",fontSize:12,color:"var(--gray)",marginTop:4}}>
-                        {partnerProfile.level?.toUpperCase()||"—"} · {partnerProfile.weight?`${partnerProfile.weight}KG`:"—"}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="fu1" style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20}}>
-                    <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:14}}>MESSAGES</div>
-                    <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
-                      {messages.map((m,i)=>{
-                        const isMe = m.slot ? m.slot===userSlot : m.from==="me";
-                        return (
-                          <div key={i} style={{alignSelf:isMe?"flex-end":"flex-start",background:isMe?"var(--lime)":"var(--dark)",borderRadius:isMe?"14px 4px 14px 14px":"4px 14px 14px 14px",padding:"10px 14px",maxWidth:"78%"}}>
-                            <div style={{fontFamily:"var(--font-body)",fontSize:14,color:isMe?"var(--black)":"var(--white)"}}>{m.text}</div>
+
+                      {pSession ? (
+                        /* ── Active session view ── */
+                        <div>
+                          <div style={{fontFamily:"var(--font-display)",fontSize:42,lineHeight:0.9,marginBottom:8,color:pSession.color||"var(--lime)"}}>{(pSession.exerciseName||"TRAINING").toUpperCase()}</div>
+                          {/* Exercise progress */}
+                          <div style={{marginBottom:12}}>
+                            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
+                              <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)"}}>EXERCISES</span>
+                              <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:1,color:"var(--white)"}}>{completedExCount} / {pSession.totalExercises}</span>
+                            </div>
+                            <div style={{height:4,background:"var(--line)",borderRadius:99}}>
+                              <div style={{height:"100%",borderRadius:99,background:pSession.color||"var(--lime)",width:`${(completedExCount/(pSession.totalExercises||1))*100}%`,transition:"width .4s"}}/>
+                            </div>
                           </div>
-                        );
-                      })}
+                          {/* Set progress dots */}
+                          <div style={{marginBottom:12}}>
+                            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                              <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)"}}>CURRENT SET</span>
+                              <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--white)"}}>{pSession.setNum} / {routine?.[pSession.dayIdx]?.exercises[pSession.exIdx]?.sets||"?"}</span>
+                            </div>
+                            <div style={{display:"flex",gap:5}}>
+                              {Array.from({length: routine?.[pSession.dayIdx]?.exercises[pSession.exIdx]?.sets||4}).map((_,i)=>(
+                                <div key={i} style={{width:10,height:10,borderRadius:99,background:i<pSession.setNum-1?"var(--lime)":"var(--line)",border:`1.5px solid ${i<pSession.setNum-1?"var(--lime)":"var(--line2)"}`}}/>
+                              ))}
+                            </div>
+                          </div>
+                          <div style={{display:"flex",gap:10,marginBottom:16}}>
+                            <div style={{flex:1,background:"var(--dark)",borderRadius:12,padding:"10px 14px",textAlign:"center"}}>
+                              <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--gray)",marginBottom:3}}>WEIGHT</div>
+                              <div style={{fontFamily:"var(--font-display)",fontSize:22,color:"var(--white)"}}>{pSession.currentWeight||"—"}</div>
+                            </div>
+                            <div style={{flex:1,background:"var(--dark)",borderRadius:12,padding:"10px 14px",textAlign:"center"}}>
+                              <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--gray)",marginBottom:3}}>ELAPSED</div>
+                              <div style={{fontFamily:"var(--font-display)",fontSize:22,color:"var(--lime)"}}>{fmtElapsed(partnerElapsedSecs)}</div>
+                            </div>
+                          </div>
+                          <Btn full onClick={()=>sendQuickMsg("You've got this!")}>Cheer them on</Btn>
+                        </div>
+                      ) : (
+                        /* ── Idle view ── */
+                        <div>
+                          {pLastWorkout ? (
+                            <div style={{background:"var(--dark)",borderRadius:12,padding:14,marginBottom:14}}>
+                              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:6}}>LAST WORKOUT</div>
+                              <div style={{fontFamily:"var(--font-display)",fontSize:24,marginBottom:4,color:pLastWorkout.color||"var(--lime)"}}>{(pLastWorkout.dayName||"").toUpperCase()}</div>
+                              <div style={{display:"flex",gap:14}}>
+                                <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>{pLastWorkout.date}</span>
+                                <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>{pLastWorkout.duration}m</span>
+                                <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>{pLastWorkout.totalSets} sets</span>
+                                {pLastWorkout.totalVolume ? <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>{pLastWorkout.totalVolume?.toLocaleString()}kg vol</span> : null}
+                              </div>
+                            </div>
+                          ) : (
+                            <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",marginBottom:14}}>No workouts logged yet.</div>
+                          )}
+                          <Btn full onClick={()=>sendQuickMsg("Ready to train?")}>Train together?</Btn>
+                        </div>
+                      )}
                     </div>
-                    <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-                      {["✅ Done!","❓ Form check?","💪 Let's go!","⏸️ Break","🏁 Almost!"].map(t=>(
-                        <button key={t} onClick={async ()=>{
-                          const newMsg = {slot:userSlot,text:t,ts:Date.now()};
-                          const updated = [...messages, newMsg];
-                          setMessages(updated);
-                          if (roomCode && supabase) await supabase.from("rooms").update({messages:updated}).eq("room_code",roomCode);
-                        }} style={{background:"var(--dark)",border:"1px solid var(--line)",borderRadius:99,padding:"8px 14px",fontFamily:"var(--font-body)",fontSize:12,color:"var(--white)",cursor:"pointer"}}>{t}</button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="fu2" style={{background:"var(--lime)",borderRadius:18,padding:20}}>
-                    <div style={{fontFamily:"var(--font-display)",fontSize:34,color:"var(--black)",lineHeight:0.9,marginBottom:8}}>JOINT<br/>TRAINING</div>
-                    <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"rgba(0,0,0,.6)",marginBottom:16}}>Same exercises. Your weights. Synced.</div>
-                    <button onClick={()=>{setDayIdx(0);setExIdx(0);setSetNum(1);workoutStartRef.current=null;setScreen("workout");}} style={{background:"var(--black)",border:"none",borderRadius:12,padding:"13px 22px",fontFamily:"var(--font-cond)",fontWeight:800,fontSize:13,letterSpacing:3,color:"var(--lime)",cursor:"pointer"}}>START SESSION</button>
-                  </div>
-                </>
-              )}
+                  </>
+                );
+              })()}
             </div>
           )}
 
-          {/* PROGRESS */}
-          {tab==="progress" && (
-            <div style={{display:"flex",flexDirection:"column",gap:14}}>
-              <div className="fu" style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,display:"flex",gap:14,alignItems:"flex-start"}}>
-                <div style={{fontSize:26,flexShrink:0}}>🔒</div>
-                <div>
-                  <div style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:1,marginBottom:4}}>PRIVATE BY DESIGN</div>
-                  <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",lineHeight:1.6}}>Photos on-device only. No cloud. No AI. Yours forever.</div>
-                </div>
-              </div>
+          {/* PROGRESS — Strava-style feed */}
+          {tab==="progress" && (() => {
+            // Storage warning
+            const storageBytes = JSON.stringify(localStorage).length * 2;
+            const storageMB = storageBytes / (1024 * 1024);
 
-              {/* Workout history */}
-              {workoutHistory.length>0 ? (
-                <div className="fu1" style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20}}>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:14}}>RECENT WORKOUTS</div>
-                  {workoutHistory.slice(0,5).map((h,i)=>(
-                    <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 0",borderBottom:i<Math.min(workoutHistory.length,5)-1?"1px solid var(--line)":"none"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:12}}>
-                        <div style={{width:40,height:40,borderRadius:10,background:"var(--dark)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>
-                          {["🏋️","💪","🦵","🔄","🏃","🧘"][i%6]}
-                        </div>
-                        <div>
-                          <div style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:14}}>{h.dayName}</div>
-                          <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>{h.date} · {h.totalSets} sets</div>
-                        </div>
-                      </div>
-                      <div style={{fontFamily:"var(--font-display)",fontSize:20,color:"var(--lime)"}}>{h.duration}m</div>
+            // Stats
+            const totalWorkouts = workoutHistory.length;
+            const totalVolume   = workoutHistory.reduce((s,h) => s + (h.totalVolume||0), 0);
+            const streak = (() => {
+              if (!workoutHistory.length) return 0;
+              const dates = workoutHistory.map(h => new Date(h.date + " 2025").toDateString());
+              let count = 0;
+              const d = new Date();
+              while (true) {
+                if (dates.includes(d.toDateString())) { count++; d.setDate(d.getDate()-1); }
+                else if (count === 0) { d.setDate(d.getDate()-1); if (count === 0 && new Date() - d > 86400000*2) break; break; }
+                else break;
+              }
+              return count;
+            })();
+
+            const statCards = [
+              { label:"WORKOUTS", value: totalWorkouts, unit:"" },
+              { label:"TOTAL VOLUME", value: totalVolume >= 1000 ? `${(totalVolume/1000).toFixed(1)}k` : totalVolume, unit:"kg" },
+              { label:"STREAK", value: streak, unit:" days" },
+            ];
+
+            const handlePhoto = (workoutId) => {
+              const input = document.createElement("input");
+              input.type = "file"; input.accept = "image/*"; input.capture = "environment";
+              input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                  try {
+                    localStorage.setItem(`str_photo_${workoutId}`, ev.target.result);
+                    // Force re-render by updating a dummy state
+                    setWorkoutHistory(prev => [...prev]);
+                  } catch { alert("Storage full — remove older photos first."); }
+                };
+                reader.readAsDataURL(file);
+              };
+              input.click();
+            };
+
+            const shareWorkout = (h) => {
+              const text = `${h.dayName} — ${h.totalVolume ? (h.totalVolume/1000).toFixed(1)+"t total volume" : h.totalSets+" sets"}`;
+              if (navigator.share) {
+                navigator.share({ title:"Stronger", text, url:"https://stronnger.netlify.app" }).catch(()=>{});
+              } else {
+                navigator.clipboard.writeText(text).catch(()=>{});
+              }
+            };
+
+            return (
+              <div style={{display:"flex",flexDirection:"column",gap:14}}>
+                {storageMB > 4 && (
+                  <div style={{background:"rgba(255,159,10,.12)",border:"1px solid rgba(255,159,10,.3)",borderRadius:14,padding:"12px 16px"}}>
+                    <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"#FF9F0A",marginBottom:3}}>STORAGE WARNING</div>
+                    <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",lineHeight:1.5}}>Storage almost full — consider removing older photos.</div>
+                  </div>
+                )}
+
+                {/* Summary stats */}
+                <div className="fu" style={{display:"flex",gap:10}}>
+                  {statCards.map(({label,value,unit})=>(
+                    <div key={label} style={{flex:1,background:"var(--card)",borderRadius:14,border:"1px solid var(--line)",padding:"14px 10px",textAlign:"center"}}>
+                      <div style={{fontFamily:"var(--font-display)",fontSize:26,color:"var(--lime)",lineHeight:1}}>{value}{unit}</div>
+                      <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--gray)",marginTop:4}}>{label}</div>
                     </div>
                   ))}
                 </div>
-              ) : (
-                <div className="fu1" style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:28,textAlign:"center"}}>
-                  <div style={{fontSize:40,marginBottom:12}}>📊</div>
-                  <div style={{fontFamily:"var(--font-display)",fontSize:28,marginBottom:8}}>NO WORKOUTS YET</div>
-                  <p style={{fontFamily:"var(--font-body)",fontSize:14,color:"var(--gray)",lineHeight:1.6}}>Complete your first workout to see history here.</p>
-                </div>
-              )}
 
-              <div className="fu2" style={{display:"flex",gap:10}}>
-                {[["BEFORE","#FF9F0A"],["AFTER","var(--lime)"]].map(([l,c])=>(
-                  <div key={l} style={{flex:1,background:"var(--card)",borderRadius:18,border:`1px dashed ${c}55`,padding:24,textAlign:"center",cursor:"pointer"}}>
-                    <div style={{fontSize:30,marginBottom:8}}>📷</div>
-                    <div style={{fontFamily:"var(--font-display)",fontSize:22,color:c}}>{l}</div>
-                    <div style={{fontFamily:"var(--font-cond)",fontSize:10,color:"var(--gray)",letterSpacing:1,marginTop:4}}>TAP TO ADD</div>
+                {/* Workout feed */}
+                {workoutHistory.length === 0 ? (
+                  <div className="fu1" style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:28,textAlign:"center"}}>
+                    <div style={{fontFamily:"var(--font-display)",fontSize:28,marginBottom:8}}>NO WORKOUTS YET</div>
+                    <p style={{fontFamily:"var(--font-body)",fontSize:14,color:"var(--gray)",lineHeight:1.6}}>Complete your first workout to see your journal here.</p>
                   </div>
-                ))}
-              </div>
-
-              {workoutHistory.length>0 && (
-                <div className="fu3" style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20}}>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:14}}>WORKOUTS THIS MONTH</div>
-                  <div style={{display:"flex",alignItems:"flex-end",gap:6,height:80}}>
-                    {workoutHistory.slice(0,7).reverse().map((h,i,arr)=>{
-                      const maxDur = Math.max(...arr.map(x=>x.duration));
-                      return (
-                        <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-                          <div style={{width:"100%",height:`${Math.max(8,(h.duration/maxDur)*70)}px`,background:i===arr.length-1?"var(--lime)":"#2a2a2a",borderRadius:"4px 4px 0 0"}}/>
-                          <div style={{fontFamily:"var(--font-cond)",fontSize:9,color:i===arr.length-1?"var(--lime)":"var(--gray2)",letterSpacing:1}}>{h.date.split(" ")[1]||h.date}</div>
+                ) : workoutHistory.map((h, i) => {
+                  const photoKey = `str_photo_${h.id||i}`;
+                  const photo = localStorage.getItem(photoKey);
+                  return (
+                    <div key={h.id||i} className={`fu${i+1}`} style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",overflow:"hidden"}}>
+                      {/* Card header */}
+                      <div style={{padding:"16px 18px 12px",display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                        <div>
+                          <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"var(--gray)",marginBottom:2}}>
+                            {h.dayOfWeek ? `${h.dayOfWeek} · ` : ""}{h.date}
+                          </div>
+                          <div style={{fontFamily:"var(--font-display)",fontSize:34,lineHeight:0.9,color:h.color||"var(--white)"}}>{(h.dayName||"WORKOUT").toUpperCase()}</div>
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+                        <div style={{fontFamily:"var(--font-display)",fontSize:28,color:"var(--lime)"}}>{h.duration}m</div>
+                      </div>
+                      {/* Stats row */}
+                      <div style={{display:"flex",gap:0,borderTop:"1px solid var(--line)",borderBottom:photo?"1px solid var(--line)":"none"}}>
+                        {[
+                          ["SETS", h.totalSets],
+                          ["EXERCISES", h.exercises],
+                          ["MAX WT", h.maxWeight ? `${h.maxWeight}kg` : "—"],
+                          ["VOLUME", h.totalVolume ? `${h.totalVolume>=1000?(h.totalVolume/1000).toFixed(1)+"k":h.totalVolume}kg` : "—"],
+                        ].map(([l,v],si)=>(
+                          <div key={l} style={{flex:1,padding:"10px 8px",textAlign:"center",borderRight:si<3?"1px solid var(--line)":"none"}}>
+                            <div style={{fontFamily:"var(--font-display)",fontSize:16,color:"var(--white)"}}>{v}</div>
+                            <div style={{fontFamily:"var(--font-cond)",fontSize:8,letterSpacing:1.5,color:"var(--gray)",marginTop:2}}>{l}</div>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Photo section */}
+                      {photo ? (
+                        <div style={{position:"relative"}}>
+                          <img src={photo} alt="workout" style={{width:"100%",aspectRatio:"16/9",objectFit:"cover",display:"block"}}/>
+                          <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(0,0,0,.75) 0%,transparent 50%)",display:"flex",flexDirection:"column",justifyContent:"flex-end",padding:"14px 16px"}}>
+                            <div style={{fontFamily:"var(--font-display)",fontSize:22,color:"white"}}>{(h.dayName||"").toUpperCase()}</div>
+                            <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"rgba(255,255,255,.7)"}}>
+                              {h.date}{h.maxWeight?` · ${h.maxWeight}kg max`:""}
+                            </div>
+                          </div>
+                          <div style={{position:"absolute",top:10,right:10,display:"flex",gap:8}}>
+                            <button
+                              onClick={()=>shareWorkout(h)}
+                              style={{background:"rgba(0,0,0,.55)",border:"none",borderRadius:99,padding:"7px 14px",fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"white",cursor:"pointer",backdropFilter:"blur(8px)"}}
+                            >SHARE</button>
+                            <button
+                              onClick={()=>{localStorage.removeItem(photoKey);setWorkoutHistory(p=>[...p]);}}
+                              style={{background:"rgba(0,0,0,.55)",border:"none",borderRadius:99,padding:"7px 10px",fontFamily:"var(--font-cond)",fontSize:11,color:"rgba(255,255,255,.6)",cursor:"pointer",backdropFilter:"blur(8px)"}}
+                            >✕</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={()=>handlePhoto(h.id||i)}
+                          style={{width:"100%",background:"transparent",border:"none",borderTop:"1px dashed var(--line2)",padding:"12px 18px",display:"flex",alignItems:"center",gap:10,cursor:"pointer"}}
+                        >
+                          <div style={{width:32,height:32,borderRadius:99,background:"var(--dark)",border:"1px solid var(--line2)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
+                            </svg>
+                          </div>
+                          <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)"}}>ADD PHOTO</span>
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Bottom nav — safe area aware */}
@@ -1795,6 +2015,105 @@ export default function App() {
             </div>
           </div>
         )}
+        {/* ── Floating chat bubble (only when partner connected) ── */}
+        {partnerProfile && (
+          <button
+            onClick={() => { setChatOpen(o => !o); if (!chatOpen) setChatLastOpenedAt(Date.now()); }}
+            style={{
+              position:"fixed",
+              bottom:82, right:"calc(50% - 215px + 16px)",
+              width:52, height:52,
+              background:"var(--lime)", border:"none", borderRadius:99,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              cursor:"pointer", zIndex:60,
+              boxShadow:"0 4px 20px rgba(200,241,53,.35)",
+              fontSize:22,
+            }}
+          >
+            {chatOpen ? "×" : (
+              <>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--black)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                {unreadCount > 0 && (
+                  <div style={{
+                    position:"absolute", top:-4, right:-4,
+                    width:18, height:18, borderRadius:99,
+                    background:"#ff3b30", border:"2px solid var(--black)",
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                    fontFamily:"var(--font-cond)", fontWeight:900, fontSize:10, color:"white",
+                  }}>{unreadCount > 9 ? "9+" : unreadCount}</div>
+                )}
+              </>
+            )}
+          </button>
+        )}
+
+        {/* ── Floating chat window ── */}
+        {chatOpen && partnerProfile && (() => {
+          // visualViewport keyboard shift
+          const ChatWindow = () => {
+            const [kbOffset, setKbOffset] = useState(0);
+            useEffect(() => {
+              if (!window.visualViewport) return;
+              const onResize = () => {
+                const hidden = window.innerHeight - window.visualViewport.height;
+                setKbOffset(Math.max(0, hidden));
+              };
+              window.visualViewport.addEventListener("resize", onResize);
+              return () => window.visualViewport.removeEventListener("resize", onResize);
+            }, []);
+            const sendMsg = async (text) => {
+              const newMsg = { slot: userSlot, text, ts: Date.now() };
+              const updated = [...messages, newMsg];
+              setMessages(updated);
+              if (roomCode && supabase) await supabase.from("rooms").update({ messages: updated }).eq("room_code", roomCode);
+            };
+            return (
+              <div style={{
+                position:"fixed",
+                bottom: 82 + kbOffset,
+                right:"calc(50% - 215px + 16px)",
+                width: 300,
+                background:"#181818",
+                borderRadius:18,
+                border:"1px solid var(--line)",
+                boxShadow:"0 8px 40px rgba(0,0,0,.6)",
+                zIndex:59,
+                display:"flex", flexDirection:"column",
+                maxHeight:340,
+                overflow:"hidden",
+              }}>
+                <div style={{padding:"12px 14px 8px",borderBottom:"1px solid var(--line)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <div style={{width:8,height:8,borderRadius:99,background:"#30d158",animation:"pulse 2s infinite"}}/>
+                    <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--white)"}}>{(partnerProfile.name||"PARTNER").toUpperCase()}</span>
+                  </div>
+                </div>
+                <div style={{flex:1,overflowY:"auto",padding:"10px 12px",display:"flex",flexDirection:"column",gap:6}}>
+                  {messages.length === 0 && (
+                    <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",textAlign:"center",padding:"12px 0"}}>No messages yet</div>
+                  )}
+                  {messages.map((m,i)=>{
+                    const isMe = m.slot ? m.slot===userSlot : m.from==="me";
+                    return (
+                      <div key={i} style={{alignSelf:isMe?"flex-end":"flex-start",background:isMe?"var(--lime)":"var(--dark)",borderRadius:isMe?"12px 3px 12px 12px":"3px 12px 12px 12px",padding:"8px 12px",maxWidth:"85%"}}>
+                        <div style={{fontFamily:"var(--font-body)",fontSize:13,color:isMe?"var(--black)":"var(--white)"}}>{m.text}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{padding:"8px 10px",borderTop:"1px solid var(--line)",display:"flex",flexWrap:"wrap",gap:6}}>
+                  {["Done!","Form check?","Let's go!","Break","Almost!","You got this!"].map(t=>(
+                    <button key={t} onClick={()=>sendMsg(t)} style={{background:"var(--dark)",border:"1px solid var(--line)",borderRadius:99,padding:"7px 12px",fontFamily:"var(--font-body)",fontSize:11,color:"var(--white)",cursor:"pointer"}}>{t}</button>
+                  ))}
+                </div>
+              </div>
+            );
+          };
+          return <ChatWindow />;
+        })()}
+
       </div>
     </>
   );
