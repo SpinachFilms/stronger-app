@@ -3,5 +3,7 @@
   publish   = "build"
 
 [build.environment]
-  NODE_VERSION = "18"
-  CI           = "false"
+  NODE_VERSION                = "18"
+  CI                          = "false"
+  REACT_APP_SUPABASE_URL      = "https://ojrmfwusbilzntlgnajl.supabase.co"
+  REACT_APP_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qcm1md3VzYmlsem50bGduYWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwMTIyNzMsImV4cCI6MjA4ODU4ODI3M30.IFj4-lDyHJFxgXVVhQ6ZDEA3-BqINsTPcVsdxAEq10U"
