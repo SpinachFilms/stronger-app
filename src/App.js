@@ -29,6 +29,95 @@ const genCode = () => {
   return code;
 };
 
+/* ─── Exercise DB for equipment filtering ─── */
+const EXERCISE_DB = {
+  "Barbell Bench Press":    { equipment: ["barbell"], muscles: ["chest"] },
+  "Incline DB Press":       { equipment: ["dumbbells"], muscles: ["chest"] },
+  "Overhead Press":         { equipment: ["barbell"], muscles: ["shoulders"] },
+  "Lateral Raise":          { equipment: ["dumbbells"], muscles: ["shoulders"] },
+  "Tricep Pushdown":        { equipment: ["cables"], muscles: ["triceps"] },
+  "Deadlift":               { equipment: ["barbell"], muscles: ["back","hamstrings"] },
+  "Pull-Ups":               { equipment: ["bodyweight"], muscles: ["back"] },
+  "Seated Cable Row":       { equipment: ["cables"], muscles: ["back"] },
+  "Barbell Curl":           { equipment: ["barbell"], muscles: ["biceps"] },
+  "Face Pull":              { equipment: ["cables"], muscles: ["shoulders"] },
+  "Back Squat":             { equipment: ["barbell"], muscles: ["quads"] },
+  "Romanian Deadlift":      { equipment: ["barbell"], muscles: ["hamstrings","glutes"] },
+  "Leg Press":              { equipment: ["machine"], muscles: ["quads"] },
+  "Leg Curl":               { equipment: ["machine"], muscles: ["hamstrings"] },
+  "Calf Raise":             { equipment: ["machine"], muscles: ["calves"] },
+  "EZ Bar Curl":            { equipment: ["barbell"], muscles: ["biceps"] },
+  "Skull Crushers":         { equipment: ["barbell"], muscles: ["triceps"] },
+  "Hammer Curl":            { equipment: ["dumbbells"], muscles: ["biceps"] },
+  "Cable Crunch":           { equipment: ["cables"], muscles: ["core"] },
+  "DB Bench Press":         { equipment: ["dumbbells"], muscles: ["chest"] },
+  "Bent-Over Row":          { equipment: ["barbell"], muscles: ["back"] },
+  "DB Shoulder Press":      { equipment: ["dumbbells"], muscles: ["shoulders"] },
+  "Front Squat":            { equipment: ["barbell"], muscles: ["quads"] },
+  "Hip Thrust":             { equipment: ["barbell"], muscles: ["glutes"] },
+  "Walking Lunges":         { equipment: ["dumbbells"], muscles: ["quads","glutes"] },
+  "Plank":                  { equipment: ["bodyweight"], muscles: ["core"] },
+  "Push-Ups":               { equipment: ["bodyweight"], muscles: ["chest"] },
+  "Dumbbell Press":         { equipment: ["dumbbells"], muscles: ["chest"] },
+  "Goblet Squat":           { equipment: ["dumbbells"], muscles: ["quads"] },
+  "Bulgarian Split Squat":  { equipment: ["dumbbells"], muscles: ["glutes","quads"] },
+  "Cable Fly":              { equipment: ["cables"], muscles: ["chest"] },
+  "Foam Rolling":           { equipment: ["bodyweight"], muscles: ["recovery"] },
+  "Hip Flexor Stretch":     { equipment: ["bodyweight"], muscles: ["recovery"] },
+  "Dead Bug":               { equipment: ["bodyweight"], muscles: ["core"] },
+  "Band Pull-Apart":        { equipment: ["bands"], muscles: ["shoulders"] },
+};
+
+const equipmentAllowed = (exerciseName, userEquipment) => {
+  if (!userEquipment || userEquipment.length === 0) return true;
+  if (userEquipment.includes("Full gym")) return true;
+  const db = EXERCISE_DB[exerciseName];
+  if (!db) return true;
+  const eq = db.equipment[0];
+  if (eq === "bodyweight") return true;
+  if (eq === "barbell" && (userEquipment.includes("Barbell + rack") || userEquipment.includes("Full gym"))) return true;
+  if (eq === "dumbbells" && (userEquipment.includes("Dumbbells only") || userEquipment.includes("Full gym"))) return true;
+  if (eq === "cables" && (userEquipment.includes("Cables") || userEquipment.includes("Full gym"))) return true;
+  if (eq === "machine" && (userEquipment.includes("Machines") || userEquipment.includes("Full gym"))) return true;
+  if (eq === "bands" && (userEquipment.includes("Resistance bands") || userEquipment.includes("Full gym"))) return true;
+  return false;
+};
+
+/* ─── Alternatives DB for exercise swap ─── */
+const ALTERNATIVES_DB = {
+  "Barbell Bench Press": ["Dumbbell Press","Push-Ups","Cable Chest Press"],
+  "Incline DB Press": ["Incline Barbell Press","Cable Flyes","Machine Press"],
+  "Overhead Press": ["DB Shoulder Press","Arnold Press","Machine Shoulder Press"],
+  "Lateral Raise": ["Cable Lateral Raise","Machine Lateral Raise","Upright Row"],
+  "Tricep Pushdown": ["Skull Crushers","Diamond Push-Ups","Overhead Tricep Extension"],
+  "Deadlift": ["Romanian Deadlift","Trap Bar Deadlift","Good Mornings"],
+  "Pull-Ups": ["Lat Pulldown","Assisted Pull-Ups","Band Pull-Ups"],
+  "Seated Cable Row": ["DB Row","T-Bar Row","Machine Row"],
+  "Barbell Curl": ["Dumbbell Curl","Cable Curl","Preacher Curl"],
+  "Face Pull": ["Band Pull-Apart","Rear Delt Fly","Cable Rear Delt"],
+  "Back Squat": ["Goblet Squat","Leg Press","Bulgarian Split Squat"],
+  "Romanian Deadlift": ["Leg Curl","Good Mornings","Nordic Curl"],
+  "Leg Press": ["Hack Squat","Belt Squat","Front Squat"],
+  "Leg Curl": ["Romanian Deadlift","Nordic Curl","Good Mornings"],
+  "Calf Raise": ["Seated Calf Raise","Single-Leg Calf Raise","Jump Rope"],
+  "Hip Thrust": ["Glute Bridge","Cable Kickback","Bulgarian Split Squat"],
+  "Walking Lunges": ["Reverse Lunges","Step-Ups","Split Squat"],
+};
+
+/* ─── Recovery tips for rest days ─── */
+const RECOVERY_TIPS = [
+  "Get 7–9 hours of sleep tonight — it's when your muscles actually grow.",
+  "Drink at least 2–3L of water today. Hydration speeds up recovery.",
+  "Eat enough protein (1.6–2.2g per kg bodyweight) even on rest days.",
+  "A 10-minute walk improves blood flow and reduces soreness.",
+  "Foam rolling for 5 minutes reduces muscle stiffness.",
+  "Your muscles grow on rest days, not during training. Rest is training.",
+  "Avoid alcohol — it significantly impairs muscle protein synthesis.",
+  "Stretch your hip flexors for 2 minutes each side if you sit a lot.",
+  "Magnesium before bed can improve sleep quality and recovery.",
+  "Light activity (yoga, walking) is better than complete inactivity.",
+];
+
 /* ─── Routine builder (2–6 days) ─── */
 const buildRoutine = (profile, partnerProfile = null) => {
   const level = profile.level || "intermediate";
@@ -38,93 +127,143 @@ const buildRoutine = (profile, partnerProfile = null) => {
   const wA    = (m) => `${Math.round(yw * m)}kg`;
   const wB    = (m) => pw ? `${Math.round(pw * m)}kg` : "— kg";
   const beg   = level === "beginner";
+  const equip = profile.equipment || [];
+  const splitPref = profile.splitPreference || "Balanced";
+  const prioMuscles = profile.priorityMuscles || [];
+  const trainingDays = profile.trainingDays || null;
 
-  const PUSH = {
-    label: "DAY 1", name: "Push Day", tag: "CHEST · SHOULDERS · TRIS", color: "#C8F135",
-    exercises: [
-      { name: "Barbell Bench Press", muscles: "CHEST",        sets: beg?3:4, reps: beg?"8–10":"6–8",  rest:90,  wA:wA(0.70), wB:wB(0.70), rpe:7 },
-      { name: "Incline DB Press",    muscles: "UPPER CHEST",  sets: 3,       reps: "10–12",            rest:75,  wA:wA(0.35), wB:wB(0.35), rpe:7 },
-      { name: "Overhead Press",      muscles: "SHOULDERS",    sets: 3,       reps: "8–10",             rest:75,  wA:wA(0.63), wB:wB(0.63), rpe:7 },
-      { name: "Lateral Raise",       muscles: "SIDE DELT",    sets: 3,       reps: "15–20",            rest:45,  wA:wA(0.15), wB:wB(0.15), rpe:6 },
-      { name: "Tricep Pushdown",     muscles: "TRICEPS",      sets: 3,       reps: "12–15",            rest:60,  wA:wA(0.44), wB:wB(0.44), rpe:6 },
-    ],
-  };
-  const PULL = {
-    label: "DAY 2", name: "Pull Day", tag: "BACK · BICEPS · REAR DELT", color: "#0A84FF",
-    exercises: [
-      { name: "Deadlift",         muscles: "POSTERIOR CHAIN", sets: beg?3:4, reps: beg?"6–8":"5–6", rest:120, wA:wA(1.10), wB:wB(1.10), rpe:8 },
-      { name: "Pull-Ups",         muscles: "LATS",            sets: 3,       reps: "6–10",           rest:90,  wA:"BW",     wB:"BW",     rpe:7 },
-      { name: "Seated Cable Row", muscles: "MID BACK",        sets: 3,       reps: "10–12",          rest:75,  wA:wA(0.69), wB:wB(0.69), rpe:7 },
-      { name: "Barbell Curl",     muscles: "BICEPS",          sets: 3,       reps: "10–12",          rest:60,  wA:wA(0.38), wB:wB(0.38), rpe:6 },
-      { name: "Face Pull",        muscles: "REAR DELT",       sets: 3,       reps: "15–20",          rest:45,  wA:wA(0.30), wB:wB(0.30), rpe:6 },
-    ],
-  };
-  const LEGS = {
-    label: "DAY 3", name: "Leg Day", tag: "QUADS · HAMSTRINGS · GLUTES", color: "#FF9F0A",
-    exercises: [
+  const filterEx = (exercises) => exercises.filter(e => equipmentAllowed(e.name, equip));
+
+  // Day label helper
+  const dayLabel = (idx) => trainingDays && trainingDays[idx] ? trainingDays[idx] : `DAY ${idx + 1}`;
+
+  // Priority muscle adjustments
+  const prioritizeGlutesHams = prioMuscles.includes("Glutes") || prioMuscles.includes("Hamstrings");
+  const prioritizeChestShoulders = prioMuscles.includes("Chest") || prioMuscles.includes("Shoulders");
+
+  const PUSH_EXERCISES_BASE = [
+    { name: "Barbell Bench Press", muscles: "CHEST",        sets: beg?3:4, reps: beg?"8–10":"6–8",  rest:90,  wA:wA(0.70), wB:wB(0.70), rpe:7 },
+    { name: "Incline DB Press",    muscles: "UPPER CHEST",  sets: 3,       reps: "10–12",            rest:75,  wA:wA(0.35), wB:wB(0.35), rpe:7 },
+    { name: "Overhead Press",      muscles: "SHOULDERS",    sets: 3,       reps: "8–10",             rest:75,  wA:wA(0.63), wB:wB(0.63), rpe:7 },
+    { name: "Lateral Raise",       muscles: "SIDE DELT",    sets: 3,       reps: "15–20",            rest:45,  wA:wA(0.15), wB:wB(0.15), rpe:6 },
+    { name: "Tricep Pushdown",     muscles: "TRICEPS",      sets: 3,       reps: "12–15",            rest:60,  wA:wA(0.44), wB:wB(0.44), rpe:6 },
+    ...(prioritizeChestShoulders ? [{ name: "Cable Fly", muscles: "CHEST", sets: 3, reps: "12–15", rest:60, wA:wA(0.30), wB:wB(0.30), rpe:6 }] : []),
+  ];
+
+  const LEGS_EXERCISES_BASE = (() => {
+    const priorityEx = prioritizeGlutesHams ? [
+      { name: "Hip Thrust",           muscles: "GLUTES",     sets: 4, reps: "10–12",  rest:75,  wA:wA(1.10), wB:wB(1.10), rpe:7 },
+      { name: "Romanian Deadlift",    muscles: "HAMSTRINGS", sets: 3, reps: "10–12",  rest:90,  wA:wA(0.94), wB:wB(0.94), rpe:7 },
+      { name: "Bulgarian Split Squat",muscles: "GLUTES/QUADS",sets:3, reps: "10–12",  rest:75,  wA:wA(0.25), wB:wB(0.25), rpe:7 },
+    ] : [];
+    const standardEx = [
       { name: "Back Squat",        muscles: "QUADS",      sets: beg?3:4, reps: beg?"8–10":"6–8", rest:120, wA:wA(0.90), wB:wB(0.90), rpe:8 },
       { name: "Romanian Deadlift", muscles: "HAMSTRINGS", sets: 3,       reps: "10–12",          rest:90,  wA:wA(0.94), wB:wB(0.94), rpe:7 },
       { name: "Leg Press",         muscles: "QUADS",      sets: 3,       reps: "12–15",          rest:75,  wA:wA(1.75), wB:wB(1.75), rpe:7 },
       { name: "Leg Curl",          muscles: "HAMSTRINGS", sets: 3,       reps: "12–15",          rest:60,  wA:wA(0.50), wB:wB(0.50), rpe:6 },
       { name: "Calf Raise",        muscles: "CALVES",     sets: 3,       reps: "15–20",          rest:45,  wA:wA(1.00), wB:wB(1.00), rpe:6 },
-    ],
+    ];
+    return prioritizeGlutesHams ? [...priorityEx, ...standardEx.filter(e => e.name !== "Romanian Deadlift")] : standardEx;
+  })();
+
+  const PUSH = {
+    label: dayLabel(0), name: "Push Day", tag: "CHEST · SHOULDERS · TRIS", color: "#C8F135",
+    exercises: filterEx(PUSH_EXERCISES_BASE),
+  };
+  const PULL = {
+    label: dayLabel(1), name: "Pull Day", tag: "BACK · BICEPS · REAR DELT", color: "#0A84FF",
+    exercises: filterEx([
+      { name: "Deadlift",         muscles: "POSTERIOR CHAIN", sets: beg?3:4, reps: beg?"6–8":"5–6", rest:120, wA:wA(1.10), wB:wB(1.10), rpe:8 },
+      { name: "Pull-Ups",         muscles: "LATS",            sets: 3,       reps: "6–10",           rest:90,  wA:"BW",     wB:"BW",     rpe:7 },
+      { name: "Seated Cable Row", muscles: "MID BACK",        sets: 3,       reps: "10–12",          rest:75,  wA:wA(0.69), wB:wB(0.69), rpe:7 },
+      { name: "Barbell Curl",     muscles: "BICEPS",          sets: 3,       reps: "10–12",          rest:60,  wA:wA(0.38), wB:wB(0.38), rpe:6 },
+      { name: "Face Pull",        muscles: "REAR DELT",       sets: 3,       reps: "15–20",          rest:45,  wA:wA(0.30), wB:wB(0.30), rpe:6 },
+    ]),
+  };
+  const LEGS = {
+    label: dayLabel(2), name: "Leg Day", tag: "QUADS · HAMSTRINGS · GLUTES", color: "#FF9F0A",
+    exercises: filterEx(LEGS_EXERCISES_BASE),
   };
   const ARMS = {
-    label: "DAY 4", name: "Arms & Core", tag: "BICEPS · TRICEPS · ABS", color: "#BF5AF2",
-    exercises: [
+    label: dayLabel(3), name: "Arms & Core", tag: "BICEPS · TRICEPS · ABS", color: "#BF5AF2",
+    exercises: filterEx([
       { name: "EZ Bar Curl",    muscles: "BICEPS",     sets: 4, reps: "10–12", rest:60, wA:wA(0.35), wB:wB(0.35), rpe:7 },
       { name: "Skull Crushers", muscles: "TRICEPS",    sets: 4, reps: "10–12", rest:60, wA:wA(0.30), wB:wB(0.30), rpe:7 },
       { name: "Hammer Curl",    muscles: "BRACHIALIS", sets: 3, reps: "12–15", rest:45, wA:wA(0.20), wB:wB(0.20), rpe:6 },
       { name: "Cable Crunch",   muscles: "ABS",        sets: 3, reps: "15–20", rest:45, wA:wA(0.44), wB:wB(0.44), rpe:6 },
-    ],
+    ]),
   };
   const UPPER = {
-    label: "DAY 4", name: "Upper Body", tag: "CHEST · BACK · SHOULDERS", color: "#FF375F",
-    exercises: [
+    label: dayLabel(3), name: "Upper Body", tag: "CHEST · BACK · SHOULDERS", color: "#FF375F",
+    exercises: filterEx([
       { name: "DB Bench Press",      muscles: "CHEST",     sets: 3, reps: "10–12", rest:75, wA:wA(0.40), wB:wB(0.40), rpe:7 },
       { name: "Bent-Over Row",       muscles: "BACK",      sets: 3, reps: "10–12", rest:75, wA:wA(0.75), wB:wB(0.75), rpe:7 },
       { name: "DB Shoulder Press",   muscles: "SHOULDERS", sets: 3, reps: "10–12", rest:60, wA:wA(0.28), wB:wB(0.28), rpe:7 },
       { name: "Tricep Pushdown",     muscles: "TRICEPS",   sets: 3, reps: "12–15", rest:45, wA:wA(0.40), wB:wB(0.40), rpe:6 },
-    ],
+    ]),
   };
   const LOWER2 = {
-    label: "DAY 5", name: "Lower Focus", tag: "QUADS · GLUTES · CORE", color: "#FF9F0A",
-    exercises: [
+    label: dayLabel(4), name: "Lower Focus", tag: "QUADS · GLUTES · CORE", color: "#FF9F0A",
+    exercises: filterEx([
       { name: "Front Squat",     muscles: "QUADS",  sets: 3, reps: "8–10",  rest:90, wA:wA(0.75), wB:wB(0.75), rpe:7 },
       { name: "Hip Thrust",      muscles: "GLUTES", sets: 4, reps: "10–12", rest:75, wA:wA(1.10), wB:wB(1.10), rpe:7 },
       { name: "Walking Lunges",  muscles: "QUADS",  sets: 3, reps: "12–14", rest:60, wA:wA(0.25), wB:wB(0.25), rpe:6 },
       { name: "Plank",           muscles: "CORE",   sets: 3, reps: "45–60s",rest:45, wA:"BW",     wB:"BW",     rpe:5 },
-    ],
+    ]),
   };
   const ACTIVE = {
-    label: "DAY 6", name: "Active Recovery", tag: "MOBILITY · CORE · STRETCH", color: "#30d158",
-    exercises: [
+    label: dayLabel(5), name: "Active Recovery", tag: "MOBILITY · CORE · STRETCH", color: "#30d158",
+    exercises: filterEx([
       { name: "Foam Rolling",        muscles: "FULL BODY", sets: 1, reps: "5–10 min", rest:0,  wA:"BW", wB:"BW", rpe:3 },
       { name: "Hip Flexor Stretch",  muscles: "HIPS",      sets: 3, reps: "30–45s",   rest:30, wA:"BW", wB:"BW", rpe:3 },
       { name: "Dead Bug",            muscles: "CORE",      sets: 3, reps: "10–12",    rest:30, wA:"BW", wB:"BW", rpe:4 },
       { name: "Band Pull-Apart",     muscles: "REAR DELT", sets: 3, reps: "20–25",    rest:30, wA:"BW", wB:"BW", rpe:4 },
-    ],
+    ]),
   };
+
+  // Full Body days for "Full body" split preference or 2-day routines
   const FULL_A = {
-    label: "DAY 1", name: "Full Body A", tag: "SQUAT · PRESS · ROW", color: "#C8F135",
-    exercises: [
+    label: dayLabel(0), name: "Full Body A", tag: "SQUAT · PRESS · ROW", color: "#C8F135",
+    exercises: filterEx([
       { name: "Back Squat",          muscles: "QUADS",     sets: beg?3:4, reps:"8–10", rest:90,  wA:wA(0.80), wB:wB(0.80), rpe:7 },
       { name: "Barbell Bench Press", muscles: "CHEST",     sets: 3,       reps:"8–10", rest:75,  wA:wA(0.65), wB:wB(0.65), rpe:7 },
       { name: "Bent-Over Row",       muscles: "BACK",      sets: 3,       reps:"8–10", rest:75,  wA:wA(0.65), wB:wB(0.65), rpe:7 },
       { name: "Overhead Press",      muscles: "SHOULDERS", sets: 3,       reps:"8–10", rest:60,  wA:wA(0.55), wB:wB(0.55), rpe:7 },
       { name: "Plank",               muscles: "CORE",      sets: 2,       reps:"45s",  rest:45,  wA:"BW",     wB:"BW",     rpe:5 },
-    ],
+    ]),
   };
   const FULL_B = {
-    label: "DAY 2", name: "Full Body B", tag: "HINGE · PRESS · PULL", color: "#0A84FF",
-    exercises: [
+    label: dayLabel(1), name: "Full Body B", tag: "HINGE · PRESS · PULL", color: "#0A84FF",
+    exercises: filterEx([
       { name: "Deadlift",        muscles: "POSTERIOR CHAIN", sets: beg?3:4, reps:"6–8",  rest:120, wA:wA(1.00), wB:wB(1.00), rpe:8 },
       { name: "Incline DB Press",muscles: "UPPER CHEST",     sets: 3,       reps:"10–12",rest:75,  wA:wA(0.32), wB:wB(0.32), rpe:7 },
       { name: "Pull-Ups",        muscles: "LATS",             sets: 3,       reps:"6–8",  rest:75,  wA:"BW",     wB:"BW",     rpe:7 },
       { name: "Goblet Squat",    muscles: "QUADS",            sets: 3,       reps:"12–15",rest:60,  wA:wA(0.30), wB:wB(0.30), rpe:6 },
       { name: "Tricep Pushdown", muscles: "TRICEPS",          sets: 3,       reps:"12–15",rest:45,  wA:wA(0.40), wB:wB(0.40), rpe:6 },
-    ],
+    ]),
   };
+
+  // Full body split generates FULL_A/FULL_B alternating
+  if (splitPref === "Full body") {
+    const fbDays = [];
+    for (let i = 0; i < days; i++) {
+      const base = i % 2 === 0 ? { ...FULL_A } : { ...FULL_B };
+      fbDays.push({ ...base, label: dayLabel(i) });
+    }
+    return fbDays;
+  }
+
+  // "More lower body" split
+  if (splitPref === "More lower body") {
+    const LOWER2_relabeled = { ...LOWER2, label: dayLabel(3) };
+    if (days === 4) return [PUSH, PULL, LEGS, LOWER2_relabeled];
+    if (days === 5) return [PUSH, PULL, LEGS, LOWER2_relabeled, { ...ACTIVE, label: dayLabel(4) }];
+  }
+
+  // "More upper body" split
+  if (splitPref === "More upper body") {
+    if (days === 4) return [PUSH, PULL, { ...UPPER, label: dayLabel(2) }, { ...ARMS, label: dayLabel(3) }];
+  }
 
   if (days === 2) return [FULL_A, FULL_B];
   if (days === 3) return [PUSH, PULL, LEGS];
@@ -172,6 +311,8 @@ const GlobalStyles = () => (
       color:var(--gray); background:var(--card); cursor:pointer; transition:all 0.18s;
     }
     .chip.active { border-color:var(--lime); color:var(--black); background:var(--lime); }
+    .chip:active { transform: scale(0.95); }
+    button:active { transform: scale(0.98); }
     .nav-btn {
       flex:1; background:none; border:none; cursor:pointer;
       font-family:var(--font-cond); font-weight:700; font-size:12px; letter-spacing:2.5px;
@@ -337,6 +478,8 @@ export default function App() {
   const [pinHash, setPinHash]             = useState(() => getSaved("str_pin", null));
   const [workoutHistory, setWorkoutHistory] = useState(() => getSaved("str_history", []));
   const [messages, setMessages]           = useState(() => getSaved("str_messages", []));
+  const [prs, setPrs]                     = useState(() => getSaved("str_prs", {}));
+  const [weightLog, setWeightLog]         = useState(() => getSaved("str_weight_log", []));
 
   // PIN auth (session-only state)
   const [pinEntry, setPinEntry]       = useState("");
@@ -395,6 +538,27 @@ export default function App() {
   const [chatOpen, setChatOpen]           = useState(false);
   const [chatLastOpenedAt, setChatLastOpenedAt] = useState(() => Date.now());
   const [partnerElapsedSecs, setPartnerElapsedSecs] = useState(0);
+
+  // Feature 2 — Goal conflict card
+  const [goalConflict, setGoalConflict] = useState(null);
+  const [goalConflictTimer, setGoalConflictTimer] = useState(null);
+
+  // Feature 4A — PR notification
+  const [prNotification, setPrNotification] = useState(null);
+
+  // Feature 4B — Exercise swap
+  const [swapExercise, setSwapExercise] = useState(null);
+
+  // Feature 4E — Workout notes
+  const [workoutNote, setWorkoutNote] = useState("");
+
+  // Feature 4F — Weight modal
+  const [showWeightModal, setShowWeightModal] = useState(false);
+  const [weightInput, setWeightInput] = useState("");
+
+  // Settings screen
+  const [settingsName, setSettingsName] = useState("");
+  const [settingsWeight, setSettingsWeight] = useState("");
 
   // null-safe profile updater (profile starts null before onboarding)
   const p = (k, v) => setProfile(prev => ({...(prev || {}), [k]: v}));
@@ -486,6 +650,8 @@ export default function App() {
   useEffect(() => { if (pinHash)  localStorage.setItem("str_pin",     JSON.stringify(pinHash)); },  [pinHash]);
   useEffect(() => { localStorage.setItem("str_history",  JSON.stringify(workoutHistory)); }, [workoutHistory]);
   useEffect(() => { localStorage.setItem("str_messages", JSON.stringify(messages)); }, [messages]);
+  useEffect(() => { localStorage.setItem("str_prs", JSON.stringify(prs)); }, [prs]);
+  useEffect(() => { localStorage.setItem("str_weight_log", JSON.stringify(weightLog)); }, [weightLog]);
 
   /* ─── Auto-save active workout session whenever key state changes ─── */
   useEffect(() => {
@@ -579,6 +745,18 @@ export default function App() {
   const completeSet = () => {
     const key = `${exIdx}-${setNum}`;
     setCompletedSets(prev => ({...prev, [key]:true}));
+
+    // Feature 4A — Check for PR
+    const currentWeight = parseFloat(ex.wA) || 0;
+    const currentReps = parseInt((ex.reps||"8").split("–")[0]) || 8;
+    const existingPR = prs[ex.name];
+    if (currentWeight > 0 && (!existingPR || currentWeight > existingPR.weight)) {
+      const newPRs = { ...prs, [ex.name]: { weight: currentWeight, reps: currentReps, date: new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"}) }};
+      setPrs(newPRs);
+      setPrNotification({ exerciseName: ex.name, weight: ex.wA });
+      setTimeout(() => setPrNotification(null), 3000);
+    }
+
     if (setNum < ex.sets) {
       setSetNum(s => s + 1);
       startRest(ex.rest);
@@ -609,8 +787,10 @@ export default function App() {
         totalVolume,
         maxWeight,
         color: day.color,
+        note: workoutNote || "",
       };
       setWorkoutHistory(prev => [entry, ...prev].slice(0, 20));
+      setWorkoutNote("");
       // Clear active session in Supabase
       if (roomCode && supabase) {
         const col = userSlot === "a" ? "user_a" : "user_b";
@@ -653,7 +833,7 @@ export default function App() {
           system:"You are an elite strength coach. Write a 2-sentence routine summary. Be encouraging, specific, reference goals and level. No markdown.",
           messages:[{
             role:"user",
-            content:`Athlete: ${profile.name||"You"}, ${profile.age}y, ${profile.weight}kg, goal: ${profile.goal||"build muscle"}, level: ${profile.level||"intermediate"}, ${profile.daysPerWeek} days/week${resolvedPartner?`\nPartner: ${resolvedPartner.name||"Partner"}, ${resolvedPartner.weight}kg, goal: ${resolvedPartner.goal||"—"}, level: ${resolvedPartner.level||"—"}`:""}`,
+            content:`Athlete: ${profile.name||"You"}, ${profile.age}y, ${profile.weight}kg, goal: ${profile.goal||"build muscle"}, level: ${profile.level||"intermediate"}, ${profile.daysPerWeek} days/week${resolvedPartner?`\nPartner: ${resolvedPartner.name||"Partner"}, ${resolvedPartner.weight}kg, goal: ${resolvedPartner.goal||"—"}, level: ${resolvedPartner.level||"—"}`:""}${profile.priorityMuscles?.length?`\nUser wants to prioritize: ${profile.priorityMuscles.join(', ')}. Split preference: ${profile.splitPreference||"Balanced"}.`:""}`,
           }],
         }),
       });
@@ -857,8 +1037,10 @@ export default function App() {
         totalVolume,
         maxWeight: Math.max(...currentDay.exercises.map(e => parseFloat(e.wA) || 0)),
         color: currentDay.color,
+        note: workoutNote || "",
       };
       setWorkoutHistory(prev => [entry, ...prev].slice(0, 20));
+      setWorkoutNote("");
       if (roomCode && supabase) {
         const col = userSlot === "a" ? "user_a" : "user_b";
         supabase.from("rooms")
@@ -960,6 +1142,7 @@ export default function App() {
     setPinEntry(""); setPinAttempts(0); setPinError(""); setPinShake(false);
     setRoomCode(""); setRoomRole(""); setPartnerProfile(null);
     setNewPIN(""); setConfirmPin("");
+    setPrs({}); setWeightLog([]);
     setScreen("splash");
   };
 
@@ -1150,11 +1333,11 @@ export default function App() {
      ONBOARDING (6 steps)
   ════════════════════════ */
   if (screen === "onboarding") {
-    const TOTAL_STEPS  = 6;
+    const TOTAL_STEPS  = 7;
     const progress     = ((onboardStep+1)/TOTAL_STEPS)*100;
     const nextStep     = () => setOnboardStep(s=>s+1);
     const prevStep     = () => onboardStep>0 ? setOnboardStep(s=>s-1) : setScreen("splash");
-    const isPartnerStep = onboardStep===5;
+    const isPartnerStep = onboardStep===6;
 
     /* ── Chip (fixed: case-insensitive comparison) ── */
     const Chip = ({value, current, onToggle, single, currentSingle, onSelect}) => {
@@ -1171,6 +1354,52 @@ export default function App() {
       p("equipment", arr.includes(v)?arr.filter(x=>x!==v):[...arr,v]);
     };
 
+    const toggleMuscle = (v) => {
+      const arr = profile.priorityMuscles||[];
+      p("priorityMuscles", arr.includes(v)?arr.filter(x=>x!==v):[...arr,v]);
+    };
+
+    // Feature 3 — Day preset helper
+    const getDayPreset = (n) => {
+      const presets = {
+        2: ["TUE","FRI"],
+        3: ["MON","WED","FRI"],
+        4: ["MON","TUE","THU","FRI"],
+        5: ["MON","TUE","WED","THU","FRI"],
+        6: ["MON","TUE","WED","THU","FRI","SAT"],
+      };
+      return presets[n] || ["MON","WED","FRI"];
+    };
+
+    const ALL_DAYS_LABELS = ["MON","TUE","WED","THU","FRI","SAT","SUN"];
+
+    // Feature 2 — Goal conflict handler
+    const GOAL_CONFLICT_EXPLANATIONS = {
+      "Build muscle_Lose fat": "These goals require opposite nutrition strategies — building muscle needs a calorie surplus, losing fat needs a deficit. Most people get better results focusing on one. That said, beginners can do both at once ('body recomposition') — if that's you, select the goal that matters most right now.",
+      "Lose fat_Build muscle": "These goals require opposite nutrition strategies — building muscle needs a calorie surplus, losing fat needs a deficit. Most people get better results focusing on one. That said, beginners can do both at once ('body recomposition') — if that's you, select the goal that matters most right now.",
+      "Get stronger_Improve endurance": "Heavy strength training and endurance cardio can interfere with each other (interference effect). Picking one as your primary focus lets us build the right program. You can always add cardio on rest days.",
+      "Improve endurance_Get stronger": "Heavy strength training and endurance cardio can interfere with each other (interference effect). Picking one as your primary focus lets us build the right program. You can always add cardio on rest days.",
+      "Stay active_Build muscle": "Staying active is a great foundation — but muscle building requires progressive overload and specific volume targets. If you're ready to commit to that, switch to 'Build muscle' as your goal.",
+      "Build muscle_Stay active": "Staying active is a great foundation — but muscle building requires progressive overload and specific volume targets. If you're ready to commit to that, switch to 'Build muscle' as your goal.",
+    };
+
+    const handleGoalSelect = (v) => {
+      if (!profile.goal) {
+        p("goal", v);
+        return;
+      }
+      if (profile.goal === v) return;
+      // Clear any existing timer
+      if (goalConflictTimer) clearTimeout(goalConflictTimer);
+      const key = `${profile.goal}_${v}`;
+      const explanation = GOAL_CONFLICT_EXPLANATIONS[key] || "Each goal needs a different training stimulus and diet. Splitting focus usually means slower progress on both. Pick your priority for now — you can always update your goal later in settings.";
+      setGoalConflict({ pending: v, explanation });
+      const timer = setTimeout(() => {
+        setGoalConflict(null);
+      }, 6000);
+      setGoalConflictTimer(timer);
+    };
+
     const GOALS  = ["Lose fat","Build muscle","Get stronger","Improve endurance","Stay active"];
     const LEVELS = ["Beginner","Intermediate","Advanced"];
     const EQUIP  = ["Full gym","Dumbbells only","Barbell + rack","Cables","Machines","Resistance bands"];
@@ -1179,7 +1408,7 @@ export default function App() {
     const stepContent = [
       /* 0 — Name + PIN */
       <div key={0} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
-        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>STEP 1 OF {TOTAL_STEPS}</div>
+        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>STEP 1 OF 7</div>
         <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>WHO<br/>ARE<br/>YOU?</div>
         <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:24}}>Just you here. Your partner creates their own profile separately.</p>
         <Input label="YOUR NAME" placeholder="Alex" value={profile.name} onChange={v=>p("name",v)} />
@@ -1233,7 +1462,7 @@ export default function App() {
 
       /* 1 — Stats */
       <div key={1} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
-        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>STEP 2 OF {TOTAL_STEPS}</div>
+        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>STEP 2 OF 7</div>
         <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>YOUR<br/>STATS</div>
         <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:32}}>Used to calibrate your weights and rest times.</p>
         <div style={{display:"flex",gap:12}}>
@@ -1249,27 +1478,106 @@ export default function App() {
 
       /* 2 — Goals & level */
       <div key={2} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
-        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>STEP 3 OF {TOTAL_STEPS}</div>
+        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>STEP 3 OF 7</div>
         <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>YOUR<br/>GOALS</div>
         <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:28}}>What are you training for, {profile.name||"you"}?</p>
         <Label text="PRIMARY GOAL"/>
-        <div className="chip-select" style={{marginBottom:28}}>
-          {GOALS.map(v=><Chip key={v} value={v} single currentSingle={profile.goal} onSelect={v=>p("goal",v)}/>)}
+        <div className="chip-select" style={{marginBottom:goalConflict?12:28}}>
+          {GOALS.map(v=><Chip key={v} value={v} single currentSingle={profile.goal} onSelect={handleGoalSelect}/>)}
         </div>
+        {goalConflict && (
+          <div style={{background:"var(--card)",borderRadius:14,borderLeft:"3px solid var(--lime)",padding:"14px 16px",marginBottom:20,animation:"fadeIn 0.2s ease"}}>
+            <p style={{fontFamily:"var(--font-body)",fontSize:14,color:"var(--gray)",lineHeight:1.6,marginBottom:12}}>{goalConflict.explanation}</p>
+            <div style={{display:"flex",gap:10}}>
+              <button onClick={()=>{ p("goal", goalConflict.pending); setGoalConflict(null); if(goalConflictTimer) clearTimeout(goalConflictTimer); }}
+                style={{flex:1,background:"var(--lime)",border:"none",borderRadius:10,padding:"10px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:12,letterSpacing:1,color:"var(--black)",cursor:"pointer"}}>
+                Got it
+              </button>
+              <button onClick={()=>{ setGoalConflict(null); if(goalConflictTimer) clearTimeout(goalConflictTimer); }}
+                style={{flex:1,background:"transparent",border:"1px solid var(--line2)",borderRadius:10,padding:"10px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:12,letterSpacing:1,color:"var(--gray)",cursor:"pointer"}}>
+                Keep {profile.goal}
+              </button>
+            </div>
+          </div>
+        )}
         <Label text="TRAINING LEVEL"/>
         <div className="chip-select">
           {LEVELS.map(v=><Chip key={v} value={v} single currentSingle={profile.level} onSelect={v=>p("level",v.toLowerCase())}/>)}
         </div>
       </div>,
 
-      /* 3 — Schedule + equipment */
+      /* 3 — Muscle priorities (NEW) */
       <div key={3} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
-        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>STEP 4 OF {TOTAL_STEPS}</div>
+        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>STEP 4 OF 7</div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.88,marginBottom:16}}>WHAT DO<br/>YOU WANT<br/>TO BUILD?</div>
+        <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:24}}>Select the areas you want to focus on most.</p>
+        <div style={{display:"flex",gap:16,marginBottom:24}}>
+          <div style={{flex:1}}>
+            <Label text="UPPER BODY"/>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {["Chest","Back","Shoulders","Arms","Core"].map(v=>(
+                <button key={v} onClick={()=>toggleMuscle(v)}
+                  className={(profile.priorityMuscles||[]).includes(v)?"chip active":"chip"}
+                  style={{textAlign:"left"}}>{v}</button>
+              ))}
+            </div>
+          </div>
+          <div style={{flex:1}}>
+            <Label text="LOWER BODY"/>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {["Glutes","Quads","Hamstrings","Calves","Full Lower Body"].map(v=>(
+                <button key={v} onClick={()=>toggleMuscle(v)}
+                  className={(profile.priorityMuscles||[]).includes(v)?"chip active":"chip"}
+                  style={{textAlign:"left",fontSize:11}}>{v}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <Label text="SPLIT FOCUS"/>
+        <div className="chip-select">
+          {["Balanced","More lower body","More upper body","Full body"].map(v=>(
+            <Chip key={v} value={v} single currentSingle={profile.splitPreference||"Balanced"} onSelect={v=>p("splitPreference",v)}/>
+          ))}
+        </div>
+      </div>,
+
+      /* 4 — Schedule + equipment (was 3) */
+      <div key={4} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
+        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>STEP 5 OF 7</div>
         <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>YOUR<br/>GYM</div>
         <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:28}}>When and what do you train with?</p>
         <Label text="DAYS PER WEEK"/>
-        <div className="chip-select" style={{marginBottom:28}}>
-          {DAYS.map(v=><Chip key={v} value={v} single currentSingle={profile.daysPerWeek} onSelect={v=>p("daysPerWeek",v)}/>)}
+        <div className="chip-select" style={{marginBottom:20}}>
+          {DAYS.map(v=><Chip key={v} value={v} single currentSingle={profile.daysPerWeek} onSelect={v=>{
+            p("daysPerWeek",v);
+            p("trainingDays", getDayPreset(parseInt(v)));
+          }}/>)}
+        </div>
+        <Label text="TRAINING DAYS"/>
+        <div style={{display:"flex",gap:6,marginBottom:24}}>
+          {ALL_DAYS_LABELS.map(d => {
+            const td = profile.trainingDays || getDayPreset(parseInt(profile.daysPerWeek)||3);
+            const isSelected = td.includes(d);
+            const n = parseInt(profile.daysPerWeek)||3;
+            return (
+              <button key={d} onClick={()=>{
+                const current = profile.trainingDays || getDayPreset(n);
+                if (isSelected) {
+                  // Shake — don't allow deselect (must keep exactly N)
+                  return;
+                } else {
+                  // Deselect first selected, then add new
+                  const newDays = [...current.slice(1), d];
+                  p("trainingDays", newDays);
+                }
+              }} style={{
+                flex:1,padding:"8px 0",borderRadius:8,border:isSelected?"1.5px solid var(--lime)":"1.5px solid var(--line2)",
+                background:isSelected?"var(--lime)":"var(--card)",
+                fontFamily:"var(--font-cond)",fontWeight:700,fontSize:9,letterSpacing:0.5,
+                color:isSelected?"var(--black)":"var(--gray)",cursor:"pointer",transition:"all .15s"
+              }}>{d}</button>
+            );
+          })}
         </div>
         <Label text="AVAILABLE EQUIPMENT (select all)"/>
         <div className="chip-select">
@@ -1277,9 +1585,9 @@ export default function App() {
         </div>
       </div>,
 
-      /* 4 — Injuries */
-      <div key={4} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
-        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>STEP 5 OF {TOTAL_STEPS}</div>
+      /* 5 — Injuries (was 4) */
+      <div key={5} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
+        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>STEP 6 OF 7</div>
         <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>ANY<br/>LIMITS?</div>
         <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:28}}>Any injuries or areas to avoid? The AI will work around them.</p>
         <Label text="INJURIES / LIMITATIONS (optional)"/>
@@ -1293,7 +1601,7 @@ export default function App() {
           {[
             [profile.name||"You", `${profile.goal||"—"} · ${profile.level||"—"}`],
             ["Schedule", `${profile.daysPerWeek} days/week`],
-            ["Equipment", profile.equipment.length?profile.equipment.join(", "):"Full gym"],
+            ["Equipment", (profile.equipment||[]).length?(profile.equipment||[]).join(", "):"Full gym"],
           ].map(([l,v])=>(
             <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid var(--line)"}}>
               <span style={{fontFamily:"var(--font-cond)",fontSize:12,color:"var(--gray)",letterSpacing:1}}>{l}</span>
@@ -1303,9 +1611,9 @@ export default function App() {
         </div>
       </div>,
 
-      /* 5 — Partner connection */
-      <div key={5} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
-        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>STEP 6 OF {TOTAL_STEPS}</div>
+      /* 6 — Partner connection (was 5) */
+      <div key={6} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
+        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>STEP 7 OF 7</div>
         <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>CONNECT<br/>PARTNER</div>
         <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:28}}>
           Connect with your partner to sync routines and weights — or go solo and connect later.
@@ -1393,6 +1701,12 @@ export default function App() {
     return (
       <>
         <GlobalStyles/>
+        {/* Feature 4A — PR notification banner */}
+        {prNotification && (
+          <div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",background:"var(--lime)",color:"var(--black)",borderRadius:12,padding:"10px 18px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,zIndex:100,animation:"slideIn 0.3s ease",display:"flex",alignItems:"center",gap:8,maxWidth:380,whiteSpace:"nowrap"}}>
+            🏆 NEW PR — {prNotification.exerciseName.toUpperCase()} {prNotification.weight}
+          </div>
+        )}
         <div style={{background:"var(--black)",minHeight:"100vh",maxWidth:430,margin:"0 auto",display:"flex",flexDirection:"column"}}>
           <div style={{padding:"16px 20px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
             <button onClick={navigateHomeFromWorkout} style={{background:"var(--card)",border:"none",borderRadius:10,width:38,height:38,color:"var(--white)",fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>←</button>
@@ -1410,7 +1724,10 @@ export default function App() {
           <div style={{flex:1,overflowY:"auto",padding:"20px 20px 130px"}}>
             <div className="fu" style={{marginBottom:20}}>
               <div style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:3,color:"var(--gray)",marginBottom:6}}>{ex.muscles} · RPE {ex.rpe}</div>
-              <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.92,color:"var(--white)",marginBottom:14}}>{ex.name.toUpperCase()}</div>
+              <div style={{display:"flex",alignItems:"baseline",gap:12,marginBottom:14}}>
+                <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.92,color:"var(--white)"}}>{ex.name.toUpperCase()}</div>
+                <button onClick={()=>{setSwapExercise(ex);setSheet("swap");}} style={{background:"var(--card)",border:"1px solid var(--line2)",borderRadius:8,padding:"4px 10px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:10,letterSpacing:2,color:"var(--gray)",cursor:"pointer",flexShrink:0}}>SWAP</button>
+              </div>
               <div style={{display:"flex",gap:8}}>
                 {[{l:"SETS",v:ex.sets},{l:"REPS",v:ex.reps},{l:"REST",v:`${ex.rest}s`}].map(({l,v})=>(
                   <div key={l} style={{flex:1,background:"var(--card)",borderRadius:12,padding:"12px 0",textAlign:"center",border:"1px solid var(--line)"}}>
@@ -1419,6 +1736,12 @@ export default function App() {
                   </div>
                 ))}
               </div>
+            </div>
+            {/* Feature 4C — Weight progression suggestion */}
+            <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1,marginBottom:8}}>
+              {prs[ex.name]
+                ? `Last time: ${prs[ex.name].weight}kg · Try ${Math.round(prs[ex.name].weight * 1.025 / 2.5) * 2.5}kg today`
+                : "First time — start conservative"}
             </div>
             <div className="fu1" style={{background:"var(--card)",borderRadius:16,border:"1px solid var(--line)",padding:16,marginBottom:16}}>
               <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:12}}>WEIGHTS</div>
@@ -1538,6 +1861,29 @@ export default function App() {
                     <Btn variant="ghost" full onClick={()=>setSheet(null)}>Keep Going</Btn>
                   </div>
                 </>}
+                {/* Feature 4B — Swap sheet */}
+                {sheet==="swap" && swapExercise && (
+                  <div>
+                    <div style={{fontFamily:"var(--font-display)",fontSize:32,marginBottom:4}}>SWAP EXERCISE</div>
+                    <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",marginBottom:20}}>FOR TODAY ONLY — YOUR ROUTINE STAYS UNCHANGED</div>
+                    {(ALTERNATIVES_DB[swapExercise.name] || ["No alternatives"]).map(alt => (
+                      <button key={alt} onClick={() => {
+                        setRoutine(prev => {
+                          const newRoutine = prev.map((d,di) => di !== dayIdx ? d : {
+                            ...d,
+                            exercises: d.exercises.map((e,ei) => ei !== exIdx ? e : { ...e, name: alt })
+                          });
+                          return newRoutine;
+                        });
+                        setSheet(null);
+                        setSwapExercise(null);
+                      }} style={{width:"100%",background:"var(--dark)",border:"1px solid var(--line2)",borderRadius:12,padding:"14px 16px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:15,letterSpacing:1,color:"var(--white)",cursor:"pointer",marginBottom:8,textAlign:"left"}}>
+                        {alt}
+                      </button>
+                    ))}
+                    <Btn variant="ghost" full onClick={()=>{setSheet(null);setSwapExercise(null);}}>CANCEL</Btn>
+                  </div>
+                )}
                 {sheet==="complete" && (
                   <div style={{textAlign:"center",paddingTop:8}}>
                     <div style={{fontSize:56,marginBottom:12}}>🎉</div>
@@ -1555,6 +1901,16 @@ export default function App() {
                         </div>
                       ))}
                     </div>
+                    {/* Feature 4E — Workout notes */}
+                    <div style={{marginBottom:16,textAlign:"left"}}>
+                      <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>HOW DID IT FEEL? (OPTIONAL)</div>
+                      <textarea
+                        value={workoutNote}
+                        onChange={e=>setWorkoutNote(e.target.value)}
+                        placeholder="Add a note about this session..."
+                        style={{width:"100%",background:"var(--dark)",border:"1px solid var(--line2)",borderRadius:10,padding:"10px 12px",fontFamily:"var(--font-body)",fontSize:14,color:"var(--white)",resize:"none",height:72,outline:"none",boxSizing:"border-box"}}
+                      />
+                    </div>
                     <div style={{display:"flex",flexDirection:"column",gap:10}}>
                       <Btn full onClick={()=>{clearActiveSession();setSheet(null);setScreen("home");setExIdx(0);setSetNum(1);setCompletedSets({});}}>DONE</Btn>
                     </div>
@@ -1563,6 +1919,68 @@ export default function App() {
               </div>
             </div>
           )}
+        </div>
+      </>
+    );
+  }
+
+  /* ════════════════════════
+     SETTINGS
+  ════════════════════════ */
+  if (screen === "settings") {
+    const ALL_DAYS_SETTINGS = ["MON","TUE","WED","THU","FRI","SAT","SUN"];
+    const settingsTD = profile?.trainingDays || [];
+    const settingsN = parseInt(profile?.daysPerWeek)||3;
+    return (
+      <>
+        <GlobalStyles/>
+        <div style={{background:"var(--black)",minHeight:"100vh",maxWidth:430,margin:"0 auto",display:"flex",flexDirection:"column"}}>
+          <div style={{padding:"22px 22px 0",display:"flex",alignItems:"center",gap:12}}>
+            <button onClick={()=>setScreen("home")} style={{background:"none",border:"none",color:"var(--gray)",fontFamily:"var(--font-cond)",fontSize:13,letterSpacing:2,cursor:"pointer",padding:0}}>← BACK</button>
+          </div>
+          <div style={{flex:1,overflowY:"auto",padding:"24px 22px 0"}}>
+            <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.88,marginBottom:24}}>SETTINGS</div>
+            <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
+              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:14}}>PROFILE</div>
+              <Input label="NAME" placeholder="Your name" value={settingsName} onChange={v=>setSettingsName(v)} />
+              <Input label="BODY WEIGHT" placeholder="80" value={settingsWeight} onChange={v=>setSettingsWeight(v)} type="number" unit="kg" />
+              <Btn full onClick={()=>{
+                if (settingsName.trim()) p("name", settingsName.trim());
+                if (settingsWeight && parseFloat(settingsWeight) > 0) p("weight", settingsWeight);
+              }}>SAVE CHANGES</Btn>
+            </div>
+            <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
+              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:14}}>TRAINING DAYS</div>
+              <div style={{display:"flex",gap:6,marginBottom:12}}>
+                {ALL_DAYS_SETTINGS.map(d => {
+                  const isSelected = settingsTD.includes(d);
+                  return (
+                    <button key={d} onClick={()=>{
+                      if (isSelected) {
+                        if (settingsTD.length > 1) p("trainingDays", settingsTD.filter(x=>x!==d));
+                      } else {
+                        const newDays = settingsTD.length >= settingsN ? [...settingsTD.slice(1), d] : [...settingsTD, d];
+                        p("trainingDays", newDays);
+                      }
+                    }} style={{
+                      flex:1,padding:"8px 0",borderRadius:8,border:isSelected?"1.5px solid var(--lime)":"1.5px solid var(--line2)",
+                      background:isSelected?"var(--lime)":"var(--card)",
+                      fontFamily:"var(--font-cond)",fontWeight:700,fontSize:9,letterSpacing:0.5,
+                      color:isSelected?"var(--black)":"var(--gray)",cursor:"pointer",transition:"all .15s"
+                    }}>{d}</button>
+                  );
+                })}
+              </div>
+            </div>
+            <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
+              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:14}}>SECURITY</div>
+              <Btn full variant="ghost" onClick={()=>{ setScreen("onboarding"); setOnboardStep(0); }}>CHANGE PIN</Btn>
+            </div>
+            <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:40}}>
+              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:14}}>ROUTINE</div>
+              <Btn full onClick={generateRoutine}>REBUILD MY ROUTINE</Btn>
+            </div>
+          </div>
         </div>
       </>
     );
@@ -1592,6 +2010,7 @@ export default function App() {
                 <span style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"#30d158"}}>{(partnerProfile.name||"PARTNER").toUpperCase()}</span>
               </button>
             )}
+            <button onClick={()=>{ setSettingsName(profile?.name||""); setSettingsWeight(profile?.weight||""); setScreen("settings"); }} style={{background:"none",border:"none",fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",cursor:"pointer",padding:"4px 8px"}}>SETTINGS</button>
             <button onClick={()=>setShowLogout(true)} style={{background:"var(--card)",border:"none",borderRadius:10,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             </button>
@@ -1608,7 +2027,37 @@ export default function App() {
         <div style={{flex:1,overflowY:"auto",padding:"20px 22px 0"}}>
 
           {/* TODAY */}
-          {tab==="today" && (
+          {tab==="today" && (() => {
+            // Feature 3 — week display
+            const today = new Date();
+            const todayDOW = today.getDay(); // 0=Sun
+            const mondayOffset = todayDOW === 0 ? -6 : 1 - todayDOW;
+            const monday = new Date(today);
+            monday.setDate(today.getDate() + mondayOffset);
+            monday.setHours(0,0,0,0);
+
+            const WEEK_DAYS = ["MON","TUE","WED","THU","FRI","SAT","SUN"];
+            const WEEK_DAYS_SHORT = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+
+            const trainingDays = profile?.trainingDays || null;
+            const todayLabel = WEEK_DAYS[todayDOW === 0 ? 6 : todayDOW - 1];
+
+            const isTrainingDay = trainingDays ? trainingDays.includes(todayLabel) : true;
+
+            // Check workout history for this week
+            const weekStart = monday.getTime();
+            const weekEnd = weekStart + 7 * 86400000;
+            const thisWeekHistory = workoutHistory.filter(h => {
+              if (!h.date) return false;
+              try {
+                const d = new Date(h.date + " 2025");
+                return d.getTime() >= weekStart && d.getTime() < weekEnd;
+              } catch { return false; }
+            });
+
+            const completedDayOfWeeks = thisWeekHistory.map(h => h.dayOfWeek); // ["Mon","Tue",...]
+
+            return (
             <div style={{display:"flex",flexDirection:"column",gap:14}}>
               {aiSummary && (
                 <div className="fu" style={{background:"var(--card)",borderRadius:18,border:"1px solid rgba(200,241,53,.2)",padding:20}}>
@@ -1617,13 +2066,24 @@ export default function App() {
                 </div>
               )}
               <div className="fu1" style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20}}>
-                <div style={{display:"flex",gap:6,marginBottom:14}}>
-                  {["M","T","W","T","F","S","S"].map((d,i)=>(
-                    <div key={i} style={{flex:1,textAlign:"center"}}>
-                      <div style={{height:4,borderRadius:99,background:i<5?"var(--lime)":"var(--line)",marginBottom:5}}/>
-                      <div style={{fontFamily:"var(--font-cond)",fontSize:10,fontWeight:700,color:i<5?"var(--lime)":"var(--gray2)"}}>{d}</div>
-                    </div>
-                  ))}
+                <div style={{display:"flex",gap:4,marginBottom:14}}>
+                  {WEEK_DAYS.map((d,i)=>{
+                    const isTraining = trainingDays ? trainingDays.includes(d) : i < 5;
+                    const isCompleted = completedDayOfWeeks.includes(WEEK_DAYS_SHORT[i]);
+                    const isToday = d === todayLabel;
+                    return (
+                      <div key={i} style={{flex:1,textAlign:"center"}}>
+                        {isTraining && isCompleted
+                          ? <div style={{height:4,borderRadius:99,background:"var(--lime)",marginBottom:5}}/>
+                          : isTraining
+                            ? <div style={{height:4,borderRadius:99,border:"1px solid var(--lime)",background:"transparent",marginBottom:5}}/>
+                            : <div style={{height:2,borderRadius:99,background:"var(--line)",marginBottom:7}}/>
+                        }
+                        <div style={{fontFamily:"var(--font-cond)",fontSize:9,fontWeight:700,color:isTraining?"var(--lime)":"var(--gray2)"}}>{d}</div>
+                        {isToday && isTraining && <div style={{width:4,height:4,borderRadius:99,background:"var(--lime)",margin:"3px auto 0"}}/>}
+                      </div>
+                    );
+                  })}
                 </div>
                 <div style={{fontFamily:"var(--font-display)",fontSize:40,lineHeight:0.9}}>
                   {workoutHistory.length>0?`${workoutHistory.length} WORKOUT${workoutHistory.length>1?"S":""}`:"START YOUR FIRST"}
@@ -1640,38 +2100,61 @@ export default function App() {
                   <button onClick={resumeWorkout} style={{background:"var(--lime)",border:"none",borderRadius:12,padding:"12px 18px",fontFamily:"var(--font-cond)",fontWeight:800,fontSize:13,letterSpacing:2,color:"var(--black)",cursor:"pointer"}}>RESUME</button>
                 </div>
               )}
-              {(routine||[]).map((d,i)=>(
-                <div key={i} className="fu2" onClick={()=>{
-                  if (activeSession?.isActive && activeSession.dayIdx !== i) {
-                    setConflictPendingDayIdx(i);
-                  } else if (activeSession?.isActive && activeSession.dayIdx === i) {
-                    resumeWorkout();
-                  } else {
-                    startWorkout(i);
-                  }
-                }}
-                  style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,cursor:"pointer",position:"relative",overflow:"hidden"}}>
-                  <div style={{position:"absolute",top:0,left:0,width:4,height:"100%",background:d.color}}/>
-                  <div style={{paddingLeft:12}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-                      <div>
-                        <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:d.color,marginBottom:4}}>{d.label}</div>
-                        <div style={{fontFamily:"var(--font-display)",fontSize:30,lineHeight:0.95,marginBottom:5}}>{d.name.toUpperCase()}</div>
-                        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)"}}>{d.tag}</div>
-                      </div>
-                      <div style={{background:d.color,borderRadius:99,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--black)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
-                      </div>
+              {/* Feature 4D — Rest day or training day content */}
+              {!isTrainingDay ? (
+                <div className="fu2" style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:24}}>
+                  <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.9,marginBottom:16}}>REST<br/>DAY</div>
+                  <p style={{fontFamily:"var(--font-body)",fontSize:14,color:"var(--gray)",lineHeight:1.7,marginBottom:20}}>
+                    {RECOVERY_TIPS[today.getDate() % 10]}
+                  </p>
+                  <button onClick={()=>setSheet("stretching")} style={{width:"100%",background:"rgba(200,241,53,0.1)",border:"1px solid rgba(200,241,53,0.3)",borderRadius:12,padding:"14px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,color:"var(--lime)",cursor:"pointer",marginBottom:12}}>
+                    LIGHT STRETCHING ROUTINE
+                  </button>
+                  {partnerProfile?._lastWorkout && (
+                    <div style={{background:"var(--dark)",borderRadius:12,padding:14}}>
+                      <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:6}}>{(partnerProfile.name||"PARTNER").toUpperCase()}'S LAST WORKOUT</div>
+                      <div style={{fontFamily:"var(--font-display)",fontSize:22,color:"var(--lime)",marginBottom:4}}>{(partnerProfile._lastWorkout.dayName||"").toUpperCase()}</div>
+                      <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>{partnerProfile._lastWorkout.date} · {partnerProfile._lastWorkout.duration}m · {partnerProfile._lastWorkout.totalSets} sets</div>
                     </div>
-                    <div style={{marginTop:12,display:"flex",gap:16}}>
-                      <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>{d.exercises.length} EXERCISES</span>
-                      <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>~{40+d.exercises.length*3} MIN</span>
-                    </div>
-                  </div>
+                  )}
                 </div>
-              ))}
+              ) : (
+                <>
+                  {(routine||[]).map((d,i)=>(
+                    <div key={i} className="fu2" onClick={()=>{
+                      if (activeSession?.isActive && activeSession.dayIdx !== i) {
+                        setConflictPendingDayIdx(i);
+                      } else if (activeSession?.isActive && activeSession.dayIdx === i) {
+                        resumeWorkout();
+                      } else {
+                        startWorkout(i);
+                      }
+                    }}
+                      style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,cursor:"pointer",position:"relative",overflow:"hidden"}}>
+                      <div style={{position:"absolute",top:0,left:0,width:4,height:"100%",background:d.color}}/>
+                      <div style={{paddingLeft:12}}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                          <div>
+                            <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:d.color,marginBottom:4}}>{d.label}</div>
+                            <div style={{fontFamily:"var(--font-display)",fontSize:30,lineHeight:0.95,marginBottom:5}}>{d.name.toUpperCase()}</div>
+                            <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)"}}>{d.tag}</div>
+                          </div>
+                          <div style={{background:d.color,borderRadius:99,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--black)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+                          </div>
+                        </div>
+                        <div style={{marginTop:12,display:"flex",gap:16}}>
+                          <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>{d.exercises.length} EXERCISES</span>
+                          <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>~{40+d.exercises.length*3} MIN</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
-          )}
+            );
+          })()}
 
           {/* ROUTINE */}
           {tab==="routine" && (
@@ -1936,6 +2419,40 @@ export default function App() {
                   ))}
                 </div>
 
+                {/* Feature 4F — Weight log section */}
+                <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:2}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:weightLog.length>0?16:0}}>
+                    <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--gray)"}}>BODY WEIGHT</div>
+                    <button onClick={()=>{setWeightInput(profile?.weight||"");setShowWeightModal(true);}} style={{background:"rgba(200,241,53,0.1)",border:"1px solid rgba(200,241,53,0.3)",borderRadius:8,padding:"6px 12px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:2,color:"var(--lime)",cursor:"pointer"}}>+ LOG WEIGHT</button>
+                  </div>
+                  {weightLog.length >= 2 && (
+                    (() => {
+                      const entries = weightLog.slice(-8);
+                      const weights = entries.map(e=>e.weight);
+                      const min = Math.min(...weights) - 1;
+                      const max = Math.max(...weights) + 1;
+                      const w = 280, h = 60;
+                      const pts = entries.map((e,i) => {
+                        const x = (i/(entries.length-1))*w;
+                        const y = h - ((e.weight-min)/(max-min))*h;
+                        return `${x},${y}`;
+                      }).join(" ");
+                      return (
+                        <svg width="100%" height={h} viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
+                          <polyline points={pts} fill="none" stroke="var(--lime)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          {entries.map((e,i)=>{
+                            const x = (i/(entries.length-1))*w;
+                            const y = h - ((e.weight-min)/(max-min))*h;
+                            return <circle key={i} cx={x} cy={y} r="3" fill="var(--lime)"/>;
+                          })}
+                        </svg>
+                      );
+                    })()
+                  )}
+                  {weightLog.length === 0 && <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray2)",marginTop:8}}>Log your weight to track progress over time.</div>}
+                  {weightLog.length > 0 && <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:1,color:"var(--gray)",marginTop:8}}>Latest: {weightLog[weightLog.length-1].weight}kg · {weightLog.length} entries</div>}
+                </div>
+
                 {/* Workout feed */}
                 {workoutHistory.length === 0 ? (
                   <div className="fu1" style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:28,textAlign:"center"}}>
@@ -1971,6 +2488,12 @@ export default function App() {
                           </div>
                         ))}
                       </div>
+                      {/* Feature 4E — Workout note display */}
+                      {h.note && (
+                        <div style={{padding:"8px 18px",borderTop:"1px solid var(--line)"}}>
+                          <p style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",fontStyle:"italic",lineHeight:1.5,margin:0}}>{h.note}</p>
+                        </div>
+                      )}
                       {/* Photo section */}
                       {photo ? (
                         <div style={{position:"relative"}}>
@@ -2071,6 +2594,46 @@ export default function App() {
             </div>
           </div>
         )}
+        {/* Feature 4D — Stretching sheet */}
+        {sheet === "stretching" && (
+          <div onClick={()=>setSheet(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:50,backdropFilter:"blur(4px)"}}>
+            <div onClick={e=>e.stopPropagation()} style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"#181818",borderRadius:"24px 24px 0 0",padding:28,animation:"slideIn .3s cubic-bezier(.4,0,.2,1)",maxHeight:"85vh",overflowY:"auto"}}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:36,marginBottom:4}}>STRETCHING</div>
+              <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",marginBottom:20}}>LIGHT RECOVERY ROUTINE</div>
+              {[
+                {name:"Hip Flexor Stretch",duration:"60s each side"},
+                {name:"Hamstring Stretch",duration:"45s each leg"},
+                {name:"Chest Opener",duration:"45s"},
+                {name:"Spinal Twist",duration:"30s each side"},
+                {name:"Child's Pose",duration:"60s"},
+              ].map((ex,i)=>(
+                <div key={i} style={{background:"var(--dark)",borderRadius:12,padding:"14px 16px",marginBottom:10,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <div style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:15,color:"var(--white)"}}>{ex.name}</div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:12,color:"var(--lime)",letterSpacing:1}}>{ex.duration}</div>
+                </div>
+              ))}
+              <Btn full variant="ghost" onClick={()=>setSheet(null)} style={{marginTop:8}}>CLOSE</Btn>
+            </div>
+          </div>
+        )}
+
+        {/* Feature 4F — Weight log modal */}
+        {showWeightModal && (
+          <div onClick={()=>setShowWeightModal(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:60,backdropFilter:"blur(4px)"}}>
+            <div onClick={e=>e.stopPropagation()} style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"#181818",borderRadius:"24px 24px 0 0",padding:28}}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:36,marginBottom:16}}>LOG WEIGHT</div>
+              <input type="number" value={weightInput} onChange={e=>setWeightInput(e.target.value)} placeholder="kg" step="0.1"
+                style={{width:"100%",background:"var(--dark)",border:"1.5px solid var(--line2)",borderRadius:10,padding:"14px 16px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:24,color:"var(--white)",outline:"none",boxSizing:"border-box",marginBottom:16}}/>
+              <Btn full onClick={()=>{
+                const w = parseFloat(weightInput);
+                if (!w || w<20||w>300) return;
+                setWeightLog(prev=>[...prev,{date:new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"}),weight:w}]);
+                setShowWeightModal(false);
+              }}>SAVE</Btn>
+            </div>
+          </div>
+        )}
+
         {/* ── Floating chat bubble (only when partner connected) ── */}
         {partnerProfile && (
           <button
