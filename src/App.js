@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { supabase, isSupabaseConfigured } from "./supabase";
 
 /* ─── Utilities ─── */
@@ -6,6 +6,52 @@ const hashPIN = async (pin) => {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pin));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
 };
+
+/* ─── AES-GCM encryption helpers for sensitive localStorage data ─── */
+const hexToBuffer = (hex) => {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < hex.length; i += 2) bytes[i / 2] = parseInt(hex.slice(i, i + 2), 16);
+  return bytes;
+};
+const bufferToHex = (buf) => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+
+const encryptData = async (data, key) => {
+  try {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const encoded = new TextEncoder().encode(JSON.stringify(data));
+    const cryptoKey = await crypto.subtle.importKey("raw", hexToBuffer(key.slice(0, 32)), { name: "AES-GCM" }, false, ["encrypt"]);
+    const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, cryptoKey, encoded);
+    return { iv: bufferToHex(iv), data: bufferToHex(encrypted) };
+  } catch { return data; }
+};
+
+const decryptData = async (encryptedObj, key) => {
+  try {
+    const cryptoKey = await crypto.subtle.importKey("raw", hexToBuffer(key.slice(0, 32)), { name: "AES-GCM" }, false, ["decrypt"]);
+    const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: hexToBuffer(encryptedObj.iv) }, cryptoKey, hexToBuffer(encryptedObj.data));
+    return JSON.parse(new TextDecoder().decode(decrypted));
+  } catch { return null; }
+};
+
+// Device encryption key — stored alongside encrypted data; protects against
+// partial localStorage leaks (e.g. only one key being exfiltrated).
+// Trade-off: does not protect against full localStorage dump by malicious code.
+// Photos (str_photo_*) are NOT encrypted — they are large base64 blobs and
+// encrypting them would be prohibitively slow. They remain local-only by design.
+const getDeviceKey = () => {
+  try {
+    let key = localStorage.getItem("str_enc_key");
+    if (!key) {
+      const bytes = crypto.getRandomValues(new Uint8Array(32));
+      key = bufferToHex(bytes);
+      localStorage.setItem("str_enc_key", key);
+    }
+    return key;
+  } catch { return null; }
+};
+
+/* ─── Input sanitizer — strips special chars before Supabase queries ─── */
+const sanitize = (str) => String(str || "").replace(/[^a-zA-Z0-9\s\-_]/g, "").slice(0, 100);
 
 const playBeep = () => {
   try {
@@ -338,13 +384,15 @@ const Btn = ({ children, onClick, full, style = {}, variant = "lime" }) => {
   return <button style={base} onClick={onClick}>{children}</button>;
 };
 
-const Input = ({ label, placeholder, value, onChange, type="text", unit }) => (
+const Input = ({ label, placeholder, value, onChange, type="text", unit, maxLength, autoComplete }) => (
   <div style={{marginBottom:18}}>
     {label && <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>{label}</div>}
     <div style={{position:"relative"}}>
       <input
         type={type} value={value} onChange={e=>onChange(e.target.value)}
         placeholder={placeholder}
+        maxLength={maxLength}
+        autoComplete={autoComplete}
         style={{
           width:"100%",background:"var(--card)",border:"1.5px solid var(--line2)",
           borderRadius:12,padding:unit?"14px 48px 14px 16px":"14px 16px",
@@ -399,10 +447,31 @@ const Numpad = ({onDigit, onDelete}) => {
 };
 
 /* ════════════════════════════════════════════
+   ERROR BOUNDARY — catches React render errors gracefully
+════════════════════════════════════════════ */
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { hasError: false }; }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ background: "#080808", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32, textAlign: "center" }}>
+          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 52, color: "#FAFAFA", marginBottom: 16, lineHeight: 0.9 }}>SOMETHING<br />WENT WRONG</div>
+          <p style={{ fontFamily: "'Barlow',sans-serif", fontSize: 15, color: "#888", lineHeight: 1.6, marginBottom: 28 }}>An unexpected error occurred. Your data is safe.</p>
+          <button onClick={() => { this.setState({ hasError: false }); window.location.reload(); }} style={{ background: "#C8F135", border: "none", borderRadius: 14, padding: "16px 32px", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 16, letterSpacing: 2.5, color: "#080808", cursor: "pointer" }}>RESTART APP</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+/* ════════════════════════════════════════════
    FLOATING CHAT WINDOW (defined outside App so hooks are stable)
 ════════════════════════════════════════════ */
 function ChatWindow({ partnerProfile, messages, userSlot, roomCode, setMessages }) {
   const [kbOffset, setKbOffset] = useState(0);
+  const lastChatMsgRef = useRef(0); // rate limiting: 1 msg/sec
   useEffect(() => {
     if (!window.visualViewport) return;
     const onResize = () => {
@@ -413,10 +482,15 @@ function ChatWindow({ partnerProfile, messages, userSlot, roomCode, setMessages 
     return () => window.visualViewport.removeEventListener("resize", onResize);
   }, []);
   const sendMsg = async (text) => {
-    const newMsg = { slot: userSlot, text, ts: Date.now() };
-    const updated = [...messages, newMsg];
+    const now = Date.now();
+    if (now - lastChatMsgRef.current < 1000) return; // rate limit
+    lastChatMsgRef.current = now;
+    const newMsg = { slot: userSlot, text: String(text).slice(0, 200), ts: now };
+    // Cap message history at 500, trim oldest 50 when full
+    const base = messages.length >= 500 ? messages.slice(50) : messages;
+    const updated = [...base, newMsg];
     setMessages(updated);
-    if (roomCode && supabase) await supabase.from("rooms").update({ messages: updated }).eq("room_code", roomCode);
+    if (roomCode && supabase) await supabase.from("rooms").update({ messages: updated }).eq("room_code", roomCode).catch(() => {});
   };
   return (
     <div style={{position:"fixed",bottom:82+kbOffset,right:"calc(50% - 215px + 16px)",width:300,background:"#181818",borderRadius:18,border:"1px solid var(--line)",boxShadow:"0 8px 40px rgba(0,0,0,.6)",zIndex:59,display:"flex",flexDirection:"column",maxHeight:340,overflow:"hidden"}}>
@@ -449,7 +523,7 @@ function ChatWindow({ partnerProfile, messages, userSlot, roomCode, setMessages 
 /* ════════════════════════════════════════════
    MAIN APP
 ════════════════════════════════════════════ */
-export default function App() {
+function AppInner() {
   // ── localStorage helpers (defined first so lazy initialisers can use them) ──
   const getSaved = (key, fallback) => {
     try {
@@ -559,6 +633,34 @@ export default function App() {
   // Settings screen
   const [settingsName, setSettingsName] = useState("");
   const [settingsWeight, setSettingsWeight] = useState("");
+  const [settingsAge, setSettingsAge] = useState("");
+  const [settingsHeight, setSettingsHeight] = useState("");
+  const [settingsInjuries, setSettingsInjuries] = useState("");
+
+  // PIN brute-force protection
+  const [pinLockedUntil, setPinLockedUntil] = useState(null);
+  const [pinLockouts, setPinLockouts] = useState(0);
+  const [pinLockCountdown, setPinLockCountdown] = useState(0);
+
+  // Change PIN flow (Settings)
+  const [showChangePinFlow, setShowChangePinFlow] = useState(false);
+  const [cpStep, setCpStep] = useState("verify"); // "verify" | "new" | "confirm"
+  const [cpEntry, setCpEntry] = useState("");
+  const [cpNew, setCpNew] = useState("");
+  const [cpConfirm, setCpConfirm] = useState("");
+  const [cpError, setCpError] = useState("");
+
+  // Rebuild Routine modal
+  const [showRebuildModal, setShowRebuildModal] = useState(false);
+  const [rebuildDraft, setRebuildDraft] = useState(null);
+  const [rebuildPreview, setRebuildPreview] = useState(null);
+  const [showRebuildPreview, setShowRebuildPreview] = useState(false);
+  const [rebuildConflict, setRebuildConflict] = useState(null);
+  const [rebuildConflictTimer, setRebuildConflictTimer] = useState(null);
+  const [rebuildSuccess, setRebuildSuccess] = useState(false);
+
+  // Rate limiting for Supabase messages
+  const lastMsgTimeRef = useRef(0);
 
   // null-safe profile updater (profile starts null before onboarding)
   const p = (k, v) => setProfile(prev => ({...(prev || {}), [k]: v}));
@@ -616,6 +718,32 @@ export default function App() {
     if (profile && !routine) setRoutine(buildRoutine(profile));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  /* ─── Decrypt sensitive localStorage data on mount (migration: raw → encrypted) ─── */
+  useEffect(() => {
+    (async () => {
+      const key = getDeviceKey();
+      if (!key) return;
+      const tryDecrypt = async (raw) => {
+        if (!raw) return null;
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed?.iv && parsed?.data) return await decryptData(parsed, key);
+          return parsed; // plain JSON (legacy / not yet encrypted)
+        } catch { return null; }
+      };
+      const [decProfile, decRoutine, decSummary, decHistory] = await Promise.all([
+        tryDecrypt(localStorage.getItem("str_profile")),
+        tryDecrypt(localStorage.getItem("str_routine")),
+        tryDecrypt(localStorage.getItem("str_summary")),
+        tryDecrypt(localStorage.getItem("str_history")),
+      ]);
+      if (decProfile && typeof decProfile === "object" && !Array.isArray(decProfile)) setProfile(decProfile);
+      if (decRoutine && Array.isArray(decRoutine)) setRoutine(decRoutine);
+      if (typeof decSummary === "string" && decSummary) setAiSummary(decSummary);
+      if (decHistory && Array.isArray(decHistory)) setWorkoutHistory(decHistory);
+    })();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   /* ─── Deep-link: detect /join/CODE in URL on app load ─── */
   useEffect(() => {
     const path = window.location.pathname;
@@ -643,12 +771,49 @@ export default function App() {
     handleJoinWithCode(code);
   }, [screen]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ─── Persist state to localStorage whenever it changes (str_* keys) ─── */
-  useEffect(() => { if (profile) localStorage.setItem("str_profile", JSON.stringify(profile)); }, [profile]);
-  useEffect(() => { if (routine) localStorage.setItem("str_routine", JSON.stringify(routine)); }, [routine]);
-  useEffect(() => { if (aiSummary) localStorage.setItem("str_summary", JSON.stringify(aiSummary)); }, [aiSummary]);
-  useEffect(() => { if (pinHash)  localStorage.setItem("str_pin",     JSON.stringify(pinHash)); },  [pinHash]);
-  useEffect(() => { localStorage.setItem("str_history",  JSON.stringify(workoutHistory)); }, [workoutHistory]);
+  /* ─── Persist state to localStorage — sensitive keys AES-GCM encrypted ─── */
+  // Encrypted: str_profile, str_routine, str_summary, str_history
+  // Plain: str_pin (hash only, not raw PIN), str_messages, str_prs, str_weight_log
+  useEffect(() => {
+    if (!profile) return;
+    (async () => {
+      const key = getDeviceKey();
+      try {
+        const enc = key ? await encryptData(profile, key) : profile;
+        localStorage.setItem("str_profile", JSON.stringify(enc));
+      } catch { localStorage.setItem("str_profile", JSON.stringify(profile)); }
+    })();
+  }, [profile]);
+  useEffect(() => {
+    if (!routine) return;
+    (async () => {
+      const key = getDeviceKey();
+      try {
+        const enc = key ? await encryptData(routine, key) : routine;
+        localStorage.setItem("str_routine", JSON.stringify(enc));
+      } catch { localStorage.setItem("str_routine", JSON.stringify(routine)); }
+    })();
+  }, [routine]);
+  useEffect(() => {
+    if (!aiSummary) return;
+    (async () => {
+      const key = getDeviceKey();
+      try {
+        const enc = key ? await encryptData(aiSummary, key) : aiSummary;
+        localStorage.setItem("str_summary", JSON.stringify(enc));
+      } catch { localStorage.setItem("str_summary", JSON.stringify(aiSummary)); }
+    })();
+  }, [aiSummary]);
+  useEffect(() => { if (pinHash) localStorage.setItem("str_pin", JSON.stringify(pinHash)); }, [pinHash]);
+  useEffect(() => {
+    (async () => {
+      const key = getDeviceKey();
+      try {
+        const enc = key ? await encryptData(workoutHistory, key) : workoutHistory;
+        localStorage.setItem("str_history", JSON.stringify(enc));
+      } catch { localStorage.setItem("str_history", JSON.stringify(workoutHistory)); }
+    })();
+  }, [workoutHistory]);
   useEffect(() => { localStorage.setItem("str_messages", JSON.stringify(messages)); }, [messages]);
   useEffect(() => { localStorage.setItem("str_prs", JSON.stringify(prs)); }, [prs]);
   useEffect(() => { localStorage.setItem("str_weight_log", JSON.stringify(weightLog)); }, [weightLog]);
@@ -685,6 +850,19 @@ export default function App() {
     }
     return () => clearInterval(timerRef.current);
   }, [resting]);
+
+  /* ─── PIN lockout countdown timer ─── */
+  useEffect(() => {
+    if (!pinLockedUntil) { setPinLockCountdown(0); return; }
+    const update = () => {
+      const remaining = Math.ceil((pinLockedUntil - Date.now()) / 1000);
+      if (remaining <= 0) { setPinLockedUntil(null); setPinLockCountdown(0); setPinAttempts(0); }
+      else setPinLockCountdown(remaining);
+    };
+    update();
+    const id = setInterval(update, 500);
+    return () => clearInterval(id);
+  }, [pinLockedUntil]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ─── Partner training elapsed timer ─── */
   const partnerActiveSession = partnerProfile?._activeSession || null;
@@ -867,6 +1045,55 @@ export default function App() {
     setRegenerating(false);
   };
 
+  /* ─── Rebuild Routine modal helpers ─── */
+  const openRebuildModal = () => {
+    setRebuildDraft({ ...(profile || {}) });
+    setRebuildPreview(null);
+    setShowRebuildPreview(false);
+    setRebuildConflict(null);
+    setShowRebuildModal(true);
+  };
+
+  const computePreview = (draftProfile) => {
+    const newR = buildRoutine(draftProfile, partnerProfile);
+    const currentNames = new Set((routine || []).flatMap(d => d.exercises.map(e => e.name)));
+    const newNames = new Set(newR.flatMap(d => d.exercises.map(e => e.name)));
+    return {
+      added: [...newNames].filter(n => !currentNames.has(n)),
+      removed: [...currentNames].filter(n => !newNames.has(n)),
+      unchanged: [...newNames].filter(n => currentNames.has(n)),
+      newRoutine: newR,
+    };
+  };
+
+  const handleRebuildConfirm = async () => {
+    if (!rebuildDraft) return;
+    if (activeSession?.isActive) endWorkoutNow();
+    setProfile(prev => ({ ...prev, ...rebuildDraft }));
+    const newRoutine = buildRoutine(rebuildDraft, partnerProfile);
+    setRoutine(newRoutine);
+    setShowRebuildModal(false);
+    setShowRebuildPreview(false);
+    setRebuildPreview(null);
+    setRebuildDraft(null);
+    setRebuildSuccess(true);
+    setTimeout(() => setRebuildSuccess(false), 3000);
+    try {
+      const r = await fetch("https://api.anthropic.com/v1/messages", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          model:"claude-sonnet-4-20250514", max_tokens:1000,
+          system:"You are an elite strength coach. Write a 2-sentence routine summary. Be encouraging, specific. No markdown.",
+          messages:[{role:"user",content:`Routine rebuilt for: ${rebuildDraft.name||"Athlete"}, goal: ${rebuildDraft.goal||"build muscle"}, level: ${rebuildDraft.level||"intermediate"}, ${rebuildDraft.daysPerWeek} days/week.${rebuildDraft.priorityMuscles?.length?` Focus: ${rebuildDraft.priorityMuscles.join(", ")}.`:""}`}],
+        }),
+      });
+      const d = await r.json();
+      const txt = d.content?.find(b=>b.type==="text")?.text;
+      if (txt) setAiSummary(txt);
+    } catch {}
+  };
+
   const handleInvite = async () => {
     const code = genCode();
     if (!supabase) { setRoomCode(code); setWaitingForPartner(true); return; }
@@ -885,14 +1112,17 @@ export default function App() {
   };
 
   const handleJoin = async () => {
-    const code = joinInput.trim().toUpperCase();
+    const code = sanitize(joinInput.trim().toUpperCase());
     if (!code) { setJoinError("Please enter a room code."); return; }
     if (!supabase) { setJoinError("Live sync is offline. Share codes manually — your partner enters your code in the Partner tab."); return; }
     try {
       const { data } = await supabase.from("rooms").select("*").eq("room_code", code).single();
       if (!data) { setJoinError("Code not found. Check the code and try again."); return; }
       if (data.user_b) { setJoinError("Room is full. Ask your partner for a new code."); return; }
-      await supabase.from("rooms").update({ user_b: profile }).eq("room_code", code);
+      // Session hijacking prevention: generate a join token and embed it in user_b
+      const joinToken = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2));
+      localStorage.setItem("str_join_token", joinToken);
+      await supabase.from("rooms").update({ user_b: { ...profile, _joinToken: joinToken } }).eq("room_code", code);
       const hostProfile = data.user_a;
       localStorage.setItem("str_room_code", code);
       localStorage.setItem("str_user_slot", "b");
@@ -919,7 +1149,9 @@ export default function App() {
       if (!data) { setJoinError("Code not found. Check the code and try again."); setTab("partner"); return; }
       if (data.user_b) { setJoinError("Room is full. Ask your partner for a new code."); setTab("partner"); return; }
       const currentProfile = JSON.parse(localStorage.getItem("str_profile") || "null") || profile;
-      await supabase.from("rooms").update({ user_b: currentProfile }).eq("room_code", code);
+      const joinToken2 = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2));
+      localStorage.setItem("str_join_token", joinToken2);
+      await supabase.from("rooms").update({ user_b: { ...currentProfile, _joinToken: joinToken2 } }).eq("room_code", code);
       const hostProfile = data.user_a;
       localStorage.setItem("str_room_code", code);
       localStorage.setItem("str_user_slot", "b");
@@ -1058,24 +1290,33 @@ export default function App() {
 
   /* ─── PIN screen handlers ─── */
   const handlePinDigit = async (d) => {
-    if (pinAttempts >= 3) return;
+    if (pinLockedUntil && Date.now() < pinLockedUntil) return;
+    if (pinLockouts >= 3) return;
     const next = pinEntry + d;
     setPinEntry(next);
     if (next.length === 4) {
       const h = await hashPIN(next);
       if (h === pinHash) {
-        setPinEntry(""); setPinError(""); setPinAttempts(0); setPinShake(false);
+        setPinEntry(""); setPinError(""); setPinAttempts(0); setPinLockouts(0); setPinShake(false);
+        setPinLockedUntil(null);
         if (joinCodeFromUrl) { postAuthJoinCode.current = joinCodeFromUrl; setJoinCodeFromUrl(""); }
         setScreen("home");
       } else {
         const attempts = pinAttempts + 1;
-        setPinAttempts(attempts);
-        // Trigger shake animation
         setPinShake(true);
         setTimeout(() => setPinShake(false), 450);
         if (attempts >= 3) {
-          setPinError("Too many attempts.");
+          const newLockouts = pinLockouts + 1;
+          setPinLockouts(newLockouts);
+          setPinAttempts(0);
+          if (newLockouts >= 3) {
+            setPinError("Account locked after too many failed attempts.");
+          } else {
+            setPinLockedUntil(Date.now() + 30000);
+            setPinError(`Too many attempts. Locked for 30s. (${3 - newLockouts} lockout${3-newLockouts===1?"":"s"} before full reset)`);
+          }
         } else {
+          setPinAttempts(attempts);
           setPinError(`Wrong PIN. ${3 - attempts} attempt${3-attempts===1?"":"s"} left.`);
         }
         setTimeout(() => setPinEntry(""), 500);
@@ -1083,7 +1324,8 @@ export default function App() {
     }
   };
   const handlePinDelete = () => {
-    if (pinAttempts >= 3) return;
+    if (pinLockedUntil && Date.now() < pinLockedUntil) return;
+    if (pinLockouts >= 3) return;
     setPinEntry(p => p.slice(0,-1));
   };
 
@@ -1091,36 +1333,46 @@ export default function App() {
   useEffect(() => {
     if (screen !== "pin") return;
     const onKey = async (e) => {
-      if (pinAttempts >= 3) return;
+      if (pinLockedUntil && Date.now() < pinLockedUntil) return;
+      if (pinLockouts >= 3) return;
       if (e.key >= "0" && e.key <= "9") {
         const next = pinEntry + e.key;
         setPinEntry(next);
         if (next.length === 4) {
           const h = await hashPIN(next);
           if (h === pinHash) {
-            setPinEntry(""); setPinError(""); setPinAttempts(0); setPinShake(false);
+            setPinEntry(""); setPinError(""); setPinAttempts(0); setPinLockouts(0); setPinShake(false);
+            setPinLockedUntil(null);
             if (joinCodeFromUrl) { postAuthJoinCode.current = joinCodeFromUrl; setJoinCodeFromUrl(""); }
             setScreen("home");
           } else {
             const attempts = pinAttempts + 1;
-            setPinAttempts(attempts);
             setPinShake(true);
             setTimeout(() => setPinShake(false), 450);
             if (attempts >= 3) {
-              setPinError("Too many attempts.");
+              const newLockouts = pinLockouts + 1;
+              setPinLockouts(newLockouts);
+              setPinAttempts(0);
+              if (newLockouts >= 3) {
+                setPinError("Account locked after too many failed attempts.");
+              } else {
+                setPinLockedUntil(Date.now() + 30000);
+                setPinError(`Too many attempts. Locked for 30s.`);
+              }
             } else {
+              setPinAttempts(attempts);
               setPinError(`Wrong PIN. ${3 - attempts} attempt${3-attempts===1?"":"s"} left.`);
             }
             setTimeout(() => setPinEntry(""), 500);
           }
         }
       } else if (e.key === "Backspace") {
-        setPinEntry(p => p.slice(0,-1));
+        if (!(pinLockedUntil && Date.now() < pinLockedUntil)) setPinEntry(p => p.slice(0,-1));
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [screen, pinEntry, pinAttempts, pinHash]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [screen, pinEntry, pinAttempts, pinHash, pinLockedUntil, pinLockouts]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const finishOnboarding = async () => {
     if (newPIN.length === 4) {
@@ -1228,19 +1480,24 @@ export default function App() {
           <PinDots count={pinEntry.length} error={pinAttempts >= 3} shake={pinShake} />
 
           <div style={{minHeight:22,marginBottom:20}}>
-            {pinError && (
+            {pinLockedUntil && pinLockCountdown > 0 ? (
+              <div style={{fontFamily:"var(--font-cond)",fontSize:12,letterSpacing:1,color:"var(--red)",textAlign:"center"}}>
+                LOCKED — {pinLockCountdown}s · {3 - pinLockouts} lockout{3-pinLockouts===1?"":"s"} before reset
+              </div>
+            ) : pinError ? (
               <div style={{fontFamily:"var(--font-cond)",fontSize:12,letterSpacing:1,color:"var(--red)"}}>{pinError}</div>
-            )}
+            ) : null}
           </div>
 
-          {/* Numpad — always visible, disabled after 3 attempts */}
-          <Numpad onDigit={handlePinDigit} onDelete={handlePinDelete} />
+          {/* Numpad — dimmed and blocked during lockout */}
+          <div style={{opacity:(pinLockedUntil || pinLockouts >= 3) ? 0.35 : 1, pointerEvents:(pinLockedUntil || pinLockouts >= 3) ? "none" : "auto", transition:"opacity .3s"}}>
+            <Numpad onDigit={handlePinDigit} onDelete={handlePinDelete} />
+          </div>
 
-          {/* After 3 wrong attempts: show prominent reset button */}
-          {pinAttempts >= 3 ? (
+          {pinLockouts >= 3 ? (
             <div style={{marginTop:32,width:"100%"}}>
               <Btn full variant="red-soft" onClick={resetAndGoSplash}>
-                Forgot PIN? Reset Everything
+                Reset Account (Locked Out)
               </Btn>
             </div>
           ) : (
@@ -1420,6 +1677,7 @@ export default function App() {
               type="password"
               inputMode="numeric"
               maxLength={4}
+              autoComplete="new-password"
               placeholder="• • • •"
               value={newPIN}
               onChange={e=>{
@@ -1440,6 +1698,7 @@ export default function App() {
               type="password"
               inputMode="numeric"
               maxLength={4}
+              autoComplete="new-password"
               placeholder="• • • •"
               value={confirmPin}
               onChange={e=>{
@@ -1836,10 +2095,14 @@ export default function App() {
                       <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
                         {["Set done!","Form check?","Let's go!","Break"].map(t=>(
                           <button key={t} onClick={async ()=>{
-                            const newMsg = {slot:userSlot,text:t,ts:Date.now()};
-                            const updated = [...messages, newMsg];
+                            const now = Date.now();
+                            if (now - lastMsgTimeRef.current < 1000) return;
+                            lastMsgTimeRef.current = now;
+                            const newMsg = {slot:userSlot, text:sanitize(t), ts:now};
+                            const base = messages.length >= 500 ? messages.slice(50) : messages;
+                            const updated = [...base, newMsg];
                             setMessages(updated);
-                            if (roomCode && supabase) await supabase.from("rooms").update({messages:updated}).eq("room_code",roomCode);
+                            if (roomCode && supabase) await supabase.from("rooms").update({messages:updated}).eq("room_code",roomCode).catch(()=>{});
                           }} style={{background:"var(--dark)",border:"1px solid var(--line)",borderRadius:99,padding:"8px 14px",fontFamily:"var(--font-body)",fontSize:12,color:"var(--white)",cursor:"pointer"}}>{t}</button>
                         ))}
                       </div>
@@ -1934,21 +2197,43 @@ export default function App() {
     return (
       <>
         <GlobalStyles/>
+        {/* Toast inside settings */}
+        {toast && (
+          <div style={{position:"fixed",top:24,left:"50%",transform:"translateX(-50%)",background:"var(--lime)",color:"var(--black)",borderRadius:12,padding:"10px 20px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,zIndex:200,whiteSpace:"nowrap"}}>
+            {toast}
+          </div>
+        )}
         <div style={{background:"var(--black)",minHeight:"100vh",maxWidth:430,margin:"0 auto",display:"flex",flexDirection:"column"}}>
           <div style={{padding:"22px 22px 0",display:"flex",alignItems:"center",gap:12}}>
-            <button onClick={()=>setScreen("home")} style={{background:"none",border:"none",color:"var(--gray)",fontFamily:"var(--font-cond)",fontSize:13,letterSpacing:2,cursor:"pointer",padding:0}}>← BACK</button>
+            <button onClick={()=>{setShowChangePinFlow(false);setScreen("home");}} style={{background:"none",border:"none",color:"var(--gray)",fontFamily:"var(--font-cond)",fontSize:13,letterSpacing:2,cursor:"pointer",padding:0}}>← BACK</button>
           </div>
-          <div style={{flex:1,overflowY:"auto",padding:"24px 22px 0"}}>
+          <div style={{flex:1,overflowY:"auto",padding:"24px 22px 40px"}}>
             <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.88,marginBottom:24}}>SETTINGS</div>
+
+            {/* Profile */}
             <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
-              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:14}}>PROFILE</div>
-              <Input label="NAME" placeholder="Your name" value={settingsName} onChange={v=>setSettingsName(v)} />
-              <Input label="BODY WEIGHT" placeholder="80" value={settingsWeight} onChange={v=>setSettingsWeight(v)} type="number" unit="kg" />
+              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:14}}>EDIT PROFILE</div>
+              <Input label="NAME" placeholder="Your name" value={settingsName} onChange={v=>setSettingsName(v)} maxLength={50}/>
+              <div style={{display:"flex",gap:10}}>
+                <div style={{flex:1}}><Input label="WEIGHT" placeholder="80" value={settingsWeight} onChange={v=>setSettingsWeight(v)} type="number" unit="kg"/></div>
+                <div style={{flex:1}}><Input label="AGE" placeholder="28" value={settingsAge} onChange={v=>setSettingsAge(v)} type="number"/></div>
+                <div style={{flex:1}}><Input label="HEIGHT" placeholder="175" value={settingsHeight} onChange={v=>setSettingsHeight(v)} type="number" unit="cm"/></div>
+              </div>
+              <div style={{marginBottom:14}}>
+                <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>INJURIES / LIMITATIONS</div>
+                <textarea maxLength={300} value={settingsInjuries} onChange={e=>setSettingsInjuries(e.target.value)} placeholder="Any injuries or limitations..." rows={2} style={{width:"100%",background:"var(--dark)",border:"1.5px solid var(--line2)",borderRadius:12,padding:"12px 14px",fontFamily:"var(--font-body)",fontSize:14,color:"var(--white)",resize:"none",outline:"none",boxSizing:"border-box"}}/>
+              </div>
               <Btn full onClick={()=>{
                 if (settingsName.trim()) p("name", settingsName.trim());
                 if (settingsWeight && parseFloat(settingsWeight) > 0) p("weight", settingsWeight);
-              }}>SAVE CHANGES</Btn>
+                if (settingsAge && parseInt(settingsAge) > 0) p("age", settingsAge);
+                if (settingsHeight && parseInt(settingsHeight) > 0) p("height", settingsHeight);
+                p("injuries", settingsInjuries||"");
+                setToast("Profile saved"); setTimeout(()=>setToast(null),2000);
+              }}>SAVE PROFILE</Btn>
             </div>
+
+            {/* Training Days */}
             <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
               <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:14}}>TRAINING DAYS</div>
               <div style={{display:"flex",gap:6,marginBottom:12}}>
@@ -1964,7 +2249,7 @@ export default function App() {
                       }
                     }} style={{
                       flex:1,padding:"8px 0",borderRadius:8,border:isSelected?"1.5px solid var(--lime)":"1.5px solid var(--line2)",
-                      background:isSelected?"var(--lime)":"var(--card)",
+                      background:isSelected?"var(--lime)":"var(--dark)",
                       fontFamily:"var(--font-cond)",fontWeight:700,fontSize:9,letterSpacing:0.5,
                       color:isSelected?"var(--black)":"var(--gray)",cursor:"pointer",transition:"all .15s"
                     }}>{d}</button>
@@ -1972,13 +2257,72 @@ export default function App() {
                 })}
               </div>
             </div>
+
+            {/* Security — Change PIN */}
             <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
               <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:14}}>SECURITY</div>
-              <Btn full variant="ghost" onClick={()=>{ setScreen("onboarding"); setOnboardStep(0); }}>CHANGE PIN</Btn>
+              {!showChangePinFlow ? (
+                <Btn full variant="ghost" onClick={()=>{setShowChangePinFlow(true);setCpStep("verify");setCpEntry("");setCpNew("");setCpConfirm("");setCpError("");}}>CHANGE PIN</Btn>
+              ) : (
+                <div>
+                  {cpStep === "verify" && (
+                    <>
+                      <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:10}}>ENTER CURRENT PIN</div>
+                      <input type="password" inputMode="numeric" maxLength={4} autoComplete="off" value={cpEntry} onChange={e=>{const v=e.target.value.replace(/\D/g,"").slice(0,4);setCpEntry(v);setCpError("");}} placeholder="• • • •" style={{width:"100%",background:"var(--dark)",border:`1.5px solid ${cpError?"var(--red)":"var(--line2)"}`,borderRadius:12,padding:"14px 16px",fontFamily:"var(--font-body)",fontSize:24,letterSpacing:8,color:"var(--white)",textAlign:"center",outline:"none",boxSizing:"border-box",marginBottom:8}}/>
+                      {cpError && <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--red)",marginBottom:8}}>{cpError}</div>}
+                      <div style={{display:"flex",gap:8}}>
+                        <Btn full onClick={async()=>{
+                          if(cpEntry.length!==4){setCpError("Enter your 4-digit PIN");return;}
+                          const h=await hashPIN(cpEntry);
+                          if(h===pinHash){setCpStep("new");setCpEntry("");setCpError("");}
+                          else{setCpError("Wrong PIN. Try again.");}
+                        }}>VERIFY</Btn>
+                        <Btn full variant="ghost" onClick={()=>{setShowChangePinFlow(false);}}>CANCEL</Btn>
+                      </div>
+                    </>
+                  )}
+                  {cpStep === "new" && (
+                    <>
+                      <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:10}}>NEW PIN</div>
+                      <input type="password" inputMode="numeric" maxLength={4} autoComplete="new-password" value={cpNew} onChange={e=>{const v=e.target.value.replace(/\D/g,"").slice(0,4);setCpNew(v);setCpError("");}} placeholder="• • • •" style={{width:"100%",background:"var(--dark)",border:`1.5px solid ${cpError?"var(--red)":"var(--line2)"}`,borderRadius:12,padding:"14px 16px",fontFamily:"var(--font-body)",fontSize:24,letterSpacing:8,color:"var(--white)",textAlign:"center",outline:"none",boxSizing:"border-box",marginBottom:8}}/>
+                      {cpError && <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--red)",marginBottom:8}}>{cpError}</div>}
+                      <div style={{display:"flex",gap:8}}>
+                        <Btn full onClick={()=>{
+                          if(cpNew.length!==4||!/^\d{4}$/.test(cpNew)){setCpError("PIN must be 4 digits");return;}
+                          setCpStep("confirm");setCpError("");
+                        }}>NEXT</Btn>
+                        <Btn full variant="ghost" onClick={()=>setShowChangePinFlow(false)}>CANCEL</Btn>
+                      </div>
+                    </>
+                  )}
+                  {cpStep === "confirm" && (
+                    <>
+                      <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:10}}>CONFIRM NEW PIN</div>
+                      <input type="password" inputMode="numeric" maxLength={4} autoComplete="new-password" value={cpConfirm} onChange={e=>{const v=e.target.value.replace(/\D/g,"").slice(0,4);setCpConfirm(v);setCpError("");}} placeholder="• • • •" style={{width:"100%",background:"var(--dark)",border:`1.5px solid ${cpError?"var(--red)":"var(--line2)"}`,borderRadius:12,padding:"14px 16px",fontFamily:"var(--font-body)",fontSize:24,letterSpacing:8,color:"var(--white)",textAlign:"center",outline:"none",boxSizing:"border-box",marginBottom:8}}/>
+                      {cpError && <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--red)",marginBottom:8}}>{cpError}</div>}
+                      <div style={{display:"flex",gap:8}}>
+                        <Btn full onClick={async()=>{
+                          if(cpConfirm!==cpNew){setCpError("PINs don't match");return;}
+                          const h=await hashPIN(cpNew);
+                          setPinHash(h);
+                          setShowChangePinFlow(false);setCpEntry("");setCpNew("");setCpConfirm("");setCpError("");
+                          setToast("PIN changed"); setTimeout(()=>setToast(null),2500);
+                        }}>SAVE NEW PIN</Btn>
+                        <Btn full variant="ghost" onClick={()=>setShowChangePinFlow(false)}>CANCEL</Btn>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
+
+            {/* Routine */}
             <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:40}}>
               <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:14}}>ROUTINE</div>
-              <Btn full onClick={generateRoutine}>REBUILD MY ROUTINE</Btn>
+              <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                <Btn full onClick={()=>{setScreen("home"); setTimeout(()=>openRebuildModal(),150);}}>CUSTOMIZE ROUTINE</Btn>
+                <Btn full variant="ghost" onClick={()=>{setScreen("home"); setTimeout(()=>generateRoutine(),150);}}>QUICK REBUILD</Btn>
+              </div>
             </div>
           </div>
         </div>
@@ -2010,7 +2354,7 @@ export default function App() {
                 <span style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"#30d158"}}>{(partnerProfile.name||"PARTNER").toUpperCase()}</span>
               </button>
             )}
-            <button onClick={()=>{ setSettingsName(profile?.name||""); setSettingsWeight(profile?.weight||""); setScreen("settings"); }} style={{background:"none",border:"none",fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",cursor:"pointer",padding:"4px 8px"}}>SETTINGS</button>
+            <button onClick={()=>{ setSettingsName(profile?.name||""); setSettingsWeight(profile?.weight||""); setSettingsAge(profile?.age||""); setSettingsHeight(profile?.height||""); setSettingsInjuries(profile?.injuries||""); setShowChangePinFlow(false); setScreen("settings"); }} style={{background:"none",border:"none",fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",cursor:"pointer",padding:"4px 8px"}}>SETTINGS</button>
             <button onClick={()=>setShowLogout(true)} style={{background:"var(--card)",border:"none",borderRadius:10,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             </button>
@@ -2160,7 +2504,10 @@ export default function App() {
           {tab==="routine" && (
             <div style={{display:"flex",flexDirection:"column",gap:16}}>
               <div className="fu" style={{background:"var(--card)",borderRadius:18,padding:20,border:"1px solid var(--line)"}}>
-                <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:6}}>AI GENERATED · MONTH 1</div>
+                <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:6}}>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)"}}>AI GENERATED · MONTH 1</div>
+                  <button onClick={openRebuildModal} style={{background:"rgba(200,241,53,.12)",border:"1px solid rgba(200,241,53,.3)",borderRadius:8,padding:"5px 12px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:10,letterSpacing:2,color:"var(--lime)",cursor:"pointer"}}>CUSTOMIZE</button>
+                </div>
                 <div style={{fontFamily:"var(--font-display)",fontSize:36,lineHeight:0.9,marginBottom:8}}>YOUR ROUTINE</div>
                 <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",lineHeight:1.6,marginBottom:16}}>
                   {profile.daysPerWeek}-day plan. Calibrated for {profile.name||"you"}{partnerProfile?` and ${partnerProfile.name||"your partner"}`:""}.
@@ -2255,10 +2602,14 @@ export default function App() {
                   ? [...new Set(Object.keys(pSession.completedSets||{}).map(k=>k.split("-")[0]))].length
                   : 0;
                 const sendQuickMsg = async (text) => {
-                  const newMsg = {slot:userSlot, text, ts:Date.now()};
-                  const updated = [...messages, newMsg];
+                  const now = Date.now();
+                  if (now - lastMsgTimeRef.current < 1000) return;
+                  lastMsgTimeRef.current = now;
+                  const newMsg = {slot:userSlot, text: sanitize(text), ts:now};
+                  const base = messages.length >= 500 ? messages.slice(50) : messages;
+                  const updated = [...base, newMsg];
                   setMessages(updated);
-                  if (roomCode && supabase) await supabase.from("rooms").update({messages:updated}).eq("room_code",roomCode);
+                  if (roomCode && supabase) await supabase.from("rooms").update({messages:updated}).eq("room_code",roomCode).catch(()=>{});
                 };
                 return (
                   <>
@@ -2372,6 +2723,7 @@ export default function App() {
               { label:"STREAK", value: streak, unit:" days" },
             ];
 
+            // PRIVACY: photo data never leaves this device — stored as base64 in localStorage only
             const handlePhoto = (workoutId) => {
               const input = document.createElement("input");
               input.type = "file"; input.accept = "image/*"; input.capture = "environment";
@@ -2391,6 +2743,7 @@ export default function App() {
               input.click();
             };
 
+            // PRIVACY: Web Share API shares only text + URL — never image data
             const shareWorkout = (h) => {
               const text = `${h.dayName} — ${h.totalVolume ? (h.totalVolume/1000).toFixed(1)+"t total volume" : h.totalSets+" sets"}`;
               if (navigator.share) {
@@ -2634,6 +2987,195 @@ export default function App() {
           </div>
         )}
 
+        {/* Rebuild success toast */}
+        {rebuildSuccess && (
+          <div style={{position:"fixed",top:24,left:"50%",transform:"translateX(-50%)",background:"var(--lime)",color:"var(--black)",borderRadius:12,padding:"10px 20px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,zIndex:200,animation:"slideIn 0.3s ease",whiteSpace:"nowrap"}}>
+            ✓ ROUTINE REBUILT
+          </div>
+        )}
+
+        {/* ── REBUILD ROUTINE MODAL ── */}
+        {showRebuildModal && rebuildDraft && (() => {
+          const rd = rebuildDraft;
+          const setRd = (k, v) => setRebuildDraft(prev => ({...prev, [k]: v}));
+          const toggleRdArr = (k, v) => {
+            const arr = rd[k] || [];
+            setRd(k, arr.includes(v) ? arr.filter(x=>x!==v) : [...arr, v]);
+          };
+          const GOALS_RD  = ["Lose fat","Build muscle","Get stronger","Improve endurance","Stay active"];
+          const LEVELS_RD = ["Beginner","Intermediate","Advanced"];
+          const EQUIP_RD  = ["Full gym","Dumbbells only","Barbell + rack","Cables","Machines","Resistance bands"];
+          const ALL_DAYS_RD = ["MON","TUE","WED","THU","FRI","SAT","SUN"];
+          const DAYS_COUNT_RD = ["2","3","4","5","6"];
+          const getDayPresetRd = (n) => ({2:["TUE","FRI"],3:["MON","WED","FRI"],4:["MON","TUE","THU","FRI"],5:["MON","TUE","WED","THU","FRI"],6:["MON","TUE","WED","THU","FRI","SAT"]}[n] || ["MON","WED","FRI"]);
+          const GOAL_CONFLICT_RD = {
+            "Build muscle_Lose fat":"These goals need opposite nutrition strategies. Pick the priority that matters most right now.",
+            "Lose fat_Build muscle":"These goals need opposite nutrition strategies. Pick the priority that matters most right now.",
+            "Get stronger_Improve endurance":"Strength training and endurance can interfere. Picking one as primary gets better results.",
+            "Improve endurance_Get stronger":"Strength training and endurance can interfere. Picking one as primary gets better results.",
+          };
+          const handleRdGoal = (v) => {
+            if (!rd.goal || rd.goal === v) { setRd("goal", v); return; }
+            if (rebuildConflictTimer) clearTimeout(rebuildConflictTimer);
+            const key = `${rd.goal}_${v}`;
+            const explanation = GOAL_CONFLICT_RD[key] || "Each goal needs a different training stimulus. Pick your priority for now.";
+            setRebuildConflict({ pending: v, explanation });
+            const timer = setTimeout(() => setRebuildConflict(null), 6000);
+            setRebuildConflictTimer(timer);
+          };
+          const removedEquip = (profile?.equipment || []).filter(e => !(rd.equipment||[]).includes(e));
+          const equipWarning = removedEquip.length > 0 ? `Removing '${removedEquip[0]}' may replace some exercises with bodyweight or dumbbell alternatives.` : null;
+          return (
+            <div style={{position:"fixed",inset:0,background:"var(--black)",zIndex:150,overflowY:"auto",display:"flex",flexDirection:"column",alignItems:"center"}}>
+              <div style={{width:"100%",maxWidth:430,padding:"max(env(safe-area-inset-top),22px) 22px 140px"}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:24}}>
+                  <button onClick={()=>{setShowRebuildModal(false);setRebuildDraft(null);setRebuildPreview(null);setShowRebuildPreview(false);setRebuildConflict(null);}} style={{background:"none",border:"none",color:"var(--gray)",fontFamily:"var(--font-cond)",fontSize:13,letterSpacing:2,cursor:"pointer",padding:0}}>← CANCEL</button>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)"}}>CUSTOMIZE</div>
+                </div>
+                <div style={{fontFamily:"var(--font-display)",fontSize:48,lineHeight:0.88,marginBottom:24}}>REBUILD<br/>ROUTINE</div>
+
+                {activeSession?.isActive && (
+                  <div style={{background:"rgba(255,59,48,.1)",border:"1px solid rgba(255,59,48,.3)",borderRadius:14,padding:"12px 16px",marginBottom:20}}>
+                    <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--red)",marginBottom:4}}>ACTIVE WORKOUT</div>
+                    <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",lineHeight:1.5}}>You have a workout in progress. Rebuilding will end your current session.</div>
+                  </div>
+                )}
+
+                {/* A — Training Days */}
+                <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>A — TRAINING DAYS</div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>DAYS PER WEEK</div>
+                  <div className="chip-select" style={{marginBottom:16}}>
+                    {DAYS_COUNT_RD.map(v=>(
+                      <button key={v} className={`chip${rd.daysPerWeek===v?" active":""}`} onClick={()=>{setRd("daysPerWeek",v);setRd("trainingDays",getDayPresetRd(parseInt(v)));}}>{v}</button>
+                    ))}
+                  </div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>TRAINING DAYS</div>
+                  <div style={{display:"flex",gap:6}}>
+                    {ALL_DAYS_RD.map(d => {
+                      const td = rd.trainingDays || getDayPresetRd(parseInt(rd.daysPerWeek)||3);
+                      const isSel = td.includes(d);
+                      const n = parseInt(rd.daysPerWeek)||3;
+                      return <button key={d} onClick={()=>{
+                        if (isSel) { if(td.length>1) setRd("trainingDays",td.filter(x=>x!==d)); }
+                        else { const nd = td.length>=n ? [...td.slice(1),d] : [...td,d]; setRd("trainingDays",nd); }
+                      }} style={{flex:1,padding:"8px 0",borderRadius:8,border:isSel?"1.5px solid var(--lime)":"1.5px solid var(--line2)",background:isSel?"var(--lime)":"var(--dark)",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:9,letterSpacing:0.5,color:isSel?"var(--black)":"var(--gray)",cursor:"pointer",transition:"all .15s"}}>{d}</button>;
+                    })}
+                  </div>
+                </div>
+
+                {/* B — Muscle Focus */}
+                <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>B — MUSCLE FOCUS</div>
+                  <div style={{display:"flex",gap:14,marginBottom:16}}>
+                    <div style={{flex:1}}>
+                      <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>UPPER BODY</div>
+                      <div style={{display:"flex",flexDirection:"column",gap:7}}>
+                        {["Chest","Back","Shoulders","Arms","Core"].map(v=>(
+                          <button key={v} onClick={()=>toggleRdArr("priorityMuscles",v)} className={(rd.priorityMuscles||[]).includes(v)?"chip active":"chip"} style={{textAlign:"left"}}>{v}</button>
+                        ))}
+                      </div>
+                    </div>
+                    <div style={{flex:1}}>
+                      <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>LOWER BODY</div>
+                      <div style={{display:"flex",flexDirection:"column",gap:7}}>
+                        {["Glutes","Quads","Hamstrings","Calves","Full Lower Body"].map(v=>(
+                          <button key={v} onClick={()=>toggleRdArr("priorityMuscles",v)} className={(rd.priorityMuscles||[]).includes(v)?"chip active":"chip"} style={{textAlign:"left",fontSize:11}}>{v}</button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>SPLIT FOCUS</div>
+                  <div className="chip-select">
+                    {["Balanced","More lower body","More upper body","Full body"].map(v=>(
+                      <button key={v} className={`chip${(rd.splitPreference||"Balanced")===v?" active":""}`} onClick={()=>setRd("splitPreference",v)}>{v}</button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* C — Goal */}
+                <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>C — PRIMARY GOAL</div>
+                  <div className="chip-select" style={{marginBottom:rebuildConflict?12:0}}>
+                    {GOALS_RD.map(v=>(
+                      <button key={v} className={`chip${rd.goal===v?" active":""}`} onClick={()=>handleRdGoal(v)}>{v}</button>
+                    ))}
+                  </div>
+                  {rebuildConflict && (
+                    <div style={{background:"var(--dark)",borderRadius:12,borderLeft:"3px solid var(--lime)",padding:"12px 14px",marginTop:12,animation:"fadeIn 0.2s ease"}}>
+                      <p style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",lineHeight:1.6,marginBottom:10}}>{rebuildConflict.explanation}</p>
+                      <div style={{display:"flex",gap:8}}>
+                        <button onClick={()=>{setRd("goal",rebuildConflict.pending);setRebuildConflict(null);if(rebuildConflictTimer)clearTimeout(rebuildConflictTimer);}} style={{flex:1,background:"var(--lime)",border:"none",borderRadius:8,padding:"9px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:1,color:"var(--black)",cursor:"pointer"}}>Got it</button>
+                        <button onClick={()=>{setRebuildConflict(null);if(rebuildConflictTimer)clearTimeout(rebuildConflictTimer);}} style={{flex:1,background:"transparent",border:"1px solid var(--line2)",borderRadius:8,padding:"9px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:1,color:"var(--gray)",cursor:"pointer"}}>Keep {rd.goal}</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* D — Level */}
+                <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>D — TRAINING LEVEL</div>
+                  <div className="chip-select" style={{marginBottom:12}}>
+                    {LEVELS_RD.map(v=>(
+                      <button key={v} className={`chip${(rd.level||"").toLowerCase()===v.toLowerCase()?" active":""}`} onClick={()=>setRd("level",v.toLowerCase())}>{v}</button>
+                    ))}
+                  </div>
+                  <div style={{background:"var(--dark)",borderRadius:10,padding:"10px 12px"}}>
+                    <div style={{fontFamily:"var(--font-body)",fontSize:12,color:"var(--gray)",lineHeight:1.5}}>Changing your level adjusts sets, reps, and weight recommendations.</div>
+                  </div>
+                </div>
+
+                {/* E — Equipment */}
+                <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>E — EQUIPMENT</div>
+                  <div className="chip-select" style={{marginBottom:equipWarning?12:0}}>
+                    {EQUIP_RD.map(v=>(
+                      <button key={v} className={`chip${(rd.equipment||[]).includes(v)?" active":""}`} onClick={()=>toggleRdArr("equipment",v)}>{v}</button>
+                    ))}
+                  </div>
+                  {equipWarning && (
+                    <div style={{background:"rgba(255,159,10,.1)",border:"1px solid rgba(255,159,10,.25)",borderRadius:10,padding:"10px 12px",marginTop:12}}>
+                      <div style={{fontFamily:"var(--font-body)",fontSize:12,color:"#FF9F0A",lineHeight:1.5}}>⚠ {equipWarning}</div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Preview diff */}
+                {showRebuildPreview && rebuildPreview && (
+                  <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
+                    <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>ROUTINE PREVIEW</div>
+                    {rebuildPreview.removed.length > 0 && (
+                      <div style={{marginBottom:12}}>
+                        <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--red)",marginBottom:6}}>REMOVED</div>
+                        {rebuildPreview.removed.map(n=><div key={n} style={{fontFamily:"var(--font-cond)",fontSize:13,color:"var(--red)",padding:"5px 0",borderBottom:"1px solid var(--line)",opacity:0.8}}>− {n}</div>)}
+                      </div>
+                    )}
+                    {rebuildPreview.added.length > 0 && (
+                      <div style={{marginBottom:12}}>
+                        <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--lime)",marginBottom:6}}>NEW</div>
+                        {rebuildPreview.added.map(n=><div key={n} style={{fontFamily:"var(--font-cond)",fontSize:13,color:"var(--lime)",padding:"5px 0",borderBottom:"1px solid var(--line)"}}>+ {n}</div>)}
+                      </div>
+                    )}
+                    {rebuildPreview.unchanged.length > 0 && (
+                      <div>
+                        <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--gray)",marginBottom:6}}>UNCHANGED ({rebuildPreview.unchanged.length})</div>
+                        {rebuildPreview.unchanged.slice(0,4).map(n=><div key={n} style={{fontFamily:"var(--font-cond)",fontSize:13,color:"var(--gray2)",padding:"5px 0",borderBottom:"1px solid var(--line)"}}>{n}</div>)}
+                        {rebuildPreview.unchanged.length > 4 && <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray2)",paddingTop:6}}>+{rebuildPreview.unchanged.length-4} more</div>}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Bottom actions */}
+              <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"rgba(8,8,8,.97)",backdropFilter:"blur(20px)",borderTop:"1px solid var(--line)",padding:"16px 20px max(env(safe-area-inset-bottom),20px)",display:"flex",flexDirection:"column",gap:10,zIndex:151}}>
+                <Btn full onClick={handleRebuildConfirm}>REBUILD MY ROUTINE</Btn>
+                <button onClick={()=>{const prev=computePreview(rebuildDraft);setRebuildPreview(prev);setShowRebuildPreview(true);}} style={{width:"100%",background:"transparent",border:"1.5px solid rgba(200,241,53,.3)",borderRadius:14,padding:"14px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:14,letterSpacing:2,color:"var(--lime)",cursor:"pointer"}}>PREVIEW CHANGES</button>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* ── Floating chat bubble (only when partner connected) ── */}
         {partnerProfile && (
           <button
@@ -2682,4 +3224,8 @@ export default function App() {
       </div>
     </>
   );
+}
+
+export default function App() {
+  return <ErrorBoundary><AppInner /></ErrorBoundary>;
 }
