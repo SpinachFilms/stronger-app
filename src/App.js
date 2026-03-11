@@ -75,43 +75,104 @@ const genCode = () => {
   return code;
 };
 
-/* ─── Exercise DB for equipment filtering ─── */
+/* ─── Exercise DB for equipment filtering (80+ exercises) ─── */
 const EXERCISE_DB = {
+  // Chest
   "Barbell Bench Press":    { equipment: ["barbell"], muscles: ["chest"] },
   "Incline DB Press":       { equipment: ["dumbbells"], muscles: ["chest"] },
+  "DB Bench Press":         { equipment: ["dumbbells"], muscles: ["chest"] },
+  "Dumbbell Press":         { equipment: ["dumbbells"], muscles: ["chest"] },
+  "Cable Fly":              { equipment: ["cables"], muscles: ["chest"] },
+  "Low Cable Fly":          { equipment: ["cables"], muscles: ["chest"] },
+  "DB Fly":                 { equipment: ["dumbbells"], muscles: ["chest"] },
+  "Pec Deck":               { equipment: ["machine"], muscles: ["chest"] },
+  "Machine Chest Press":    { equipment: ["machine"], muscles: ["chest"] },
+  "Chest Dip":              { equipment: ["bodyweight"], muscles: ["chest","triceps"] },
+  "Push-Ups":               { equipment: ["bodyweight"], muscles: ["chest"] },
+  "Incline Push-Ups":       { equipment: ["bodyweight"], muscles: ["chest"] },
+  "Diamond Push-Ups":       { equipment: ["bodyweight"], muscles: ["triceps","chest"] },
+  // Shoulders
   "Overhead Press":         { equipment: ["barbell"], muscles: ["shoulders"] },
+  "DB Shoulder Press":      { equipment: ["dumbbells"], muscles: ["shoulders"] },
+  "Arnold Press":           { equipment: ["dumbbells"], muscles: ["shoulders"] },
+  "Machine Shoulder Press": { equipment: ["machine"], muscles: ["shoulders"] },
   "Lateral Raise":          { equipment: ["dumbbells"], muscles: ["shoulders"] },
-  "Tricep Pushdown":        { equipment: ["cables"], muscles: ["triceps"] },
+  "Cable Lateral Raise":    { equipment: ["cables"], muscles: ["shoulders"] },
+  "Machine Lateral Raise":  { equipment: ["machine"], muscles: ["shoulders"] },
+  "Front Raise":            { equipment: ["dumbbells"], muscles: ["shoulders"] },
+  "Cable Front Raise":      { equipment: ["cables"], muscles: ["shoulders"] },
+  "Upright Row":            { equipment: ["barbell"], muscles: ["shoulders","traps"] },
+  "Face Pull":              { equipment: ["cables"], muscles: ["shoulders"] },
+  "Rear Delt Fly":          { equipment: ["dumbbells"], muscles: ["shoulders"] },
+  "Cable Rear Delt":        { equipment: ["cables"], muscles: ["shoulders"] },
+  "Band Pull-Apart":        { equipment: ["bands"], muscles: ["shoulders"] },
+  "Pike Push-Up":           { equipment: ["bodyweight"], muscles: ["shoulders"] },
+  // Back
   "Deadlift":               { equipment: ["barbell"], muscles: ["back","hamstrings"] },
   "Pull-Ups":               { equipment: ["bodyweight"], muscles: ["back"] },
+  "Chin-Up":                { equipment: ["bodyweight"], muscles: ["back","biceps"] },
+  "Lat Pulldown":           { equipment: ["cables"], muscles: ["back"] },
   "Seated Cable Row":       { equipment: ["cables"], muscles: ["back"] },
+  "Bent-Over Row":          { equipment: ["barbell"], muscles: ["back"] },
+  "Single Arm Row":         { equipment: ["dumbbells"], muscles: ["back"] },
+  "T-Bar Row":              { equipment: ["barbell"], muscles: ["back"] },
+  "Chest-Supported Row":    { equipment: ["dumbbells"], muscles: ["back"] },
+  "Machine Row":            { equipment: ["machine"], muscles: ["back"] },
+  "Cable Pullover":         { equipment: ["cables"], muscles: ["back"] },
+  "Trap Bar Deadlift":      { equipment: ["barbell"], muscles: ["back","quads"] },
+  // Biceps
   "Barbell Curl":           { equipment: ["barbell"], muscles: ["biceps"] },
-  "Face Pull":              { equipment: ["cables"], muscles: ["shoulders"] },
+  "EZ Bar Curl":            { equipment: ["barbell"], muscles: ["biceps"] },
+  "Hammer Curl":            { equipment: ["dumbbells"], muscles: ["biceps"] },
+  "Dumbbell Curl":          { equipment: ["dumbbells"], muscles: ["biceps"] },
+  "Cable Curl":             { equipment: ["cables"], muscles: ["biceps"] },
+  "Preacher Curl":          { equipment: ["barbell"], muscles: ["biceps"] },
+  "Concentration Curl":     { equipment: ["dumbbells"], muscles: ["biceps"] },
+  "Reverse Curl":           { equipment: ["barbell"], muscles: ["biceps","forearms"] },
+  // Triceps
+  "Tricep Pushdown":        { equipment: ["cables"], muscles: ["triceps"] },
+  "Skull Crushers":         { equipment: ["barbell"], muscles: ["triceps"] },
+  "Overhead Tricep Extension": { equipment: ["dumbbells"], muscles: ["triceps"] },
+  "Cable Overhead Tricep":  { equipment: ["cables"], muscles: ["triceps"] },
+  "Tricep Dip":             { equipment: ["bodyweight"], muscles: ["triceps","chest"] },
+  "Close-Grip Bench Press": { equipment: ["barbell"], muscles: ["triceps","chest"] },
+  // Legs
   "Back Squat":             { equipment: ["barbell"], muscles: ["quads"] },
+  "Front Squat":            { equipment: ["barbell"], muscles: ["quads"] },
   "Romanian Deadlift":      { equipment: ["barbell"], muscles: ["hamstrings","glutes"] },
   "Leg Press":              { equipment: ["machine"], muscles: ["quads"] },
+  "Hack Squat":             { equipment: ["machine"], muscles: ["quads"] },
   "Leg Curl":               { equipment: ["machine"], muscles: ["hamstrings"] },
+  "Leg Extension":          { equipment: ["machine"], muscles: ["quads"] },
   "Calf Raise":             { equipment: ["machine"], muscles: ["calves"] },
-  "EZ Bar Curl":            { equipment: ["barbell"], muscles: ["biceps"] },
-  "Skull Crushers":         { equipment: ["barbell"], muscles: ["triceps"] },
-  "Hammer Curl":            { equipment: ["dumbbells"], muscles: ["biceps"] },
-  "Cable Crunch":           { equipment: ["cables"], muscles: ["core"] },
-  "DB Bench Press":         { equipment: ["dumbbells"], muscles: ["chest"] },
-  "Bent-Over Row":          { equipment: ["barbell"], muscles: ["back"] },
-  "DB Shoulder Press":      { equipment: ["dumbbells"], muscles: ["shoulders"] },
-  "Front Squat":            { equipment: ["barbell"], muscles: ["quads"] },
+  "Seated Calf Raise":      { equipment: ["machine"], muscles: ["calves"] },
+  "Single-Leg Calf Raise":  { equipment: ["bodyweight"], muscles: ["calves"] },
   "Hip Thrust":             { equipment: ["barbell"], muscles: ["glutes"] },
-  "Walking Lunges":         { equipment: ["dumbbells"], muscles: ["quads","glutes"] },
-  "Plank":                  { equipment: ["bodyweight"], muscles: ["core"] },
-  "Push-Ups":               { equipment: ["bodyweight"], muscles: ["chest"] },
-  "Dumbbell Press":         { equipment: ["dumbbells"], muscles: ["chest"] },
-  "Goblet Squat":           { equipment: ["dumbbells"], muscles: ["quads"] },
+  "Glute Bridge":           { equipment: ["bodyweight"], muscles: ["glutes"] },
   "Bulgarian Split Squat":  { equipment: ["dumbbells"], muscles: ["glutes","quads"] },
-  "Cable Fly":              { equipment: ["cables"], muscles: ["chest"] },
+  "Walking Lunges":         { equipment: ["dumbbells"], muscles: ["quads","glutes"] },
+  "Reverse Lunges":         { equipment: ["dumbbells"], muscles: ["quads","glutes"] },
+  "Step-Ups":               { equipment: ["dumbbells"], muscles: ["quads","glutes"] },
+  "Goblet Squat":           { equipment: ["dumbbells"], muscles: ["quads"] },
+  "Nordic Curl":            { equipment: ["bodyweight"], muscles: ["hamstrings"] },
+  "Good Mornings":          { equipment: ["barbell"], muscles: ["hamstrings","glutes"] },
+  "Box Jump":               { equipment: ["bodyweight"], muscles: ["quads","glutes"] },
+  "Sumo Deadlift":          { equipment: ["barbell"], muscles: ["glutes","hamstrings"] },
+  // Core
+  "Plank":                  { equipment: ["bodyweight"], muscles: ["core"] },
+  "Side Plank":             { equipment: ["bodyweight"], muscles: ["core"] },
+  "Cable Crunch":           { equipment: ["cables"], muscles: ["core"] },
+  "Ab Wheel Rollout":       { equipment: ["bodyweight"], muscles: ["core"] },
+  "Hanging Leg Raise":      { equipment: ["bodyweight"], muscles: ["core"] },
+  "Russian Twist":          { equipment: ["bodyweight"], muscles: ["core"] },
+  "V-Up":                   { equipment: ["bodyweight"], muscles: ["core"] },
+  "Dead Bug":               { equipment: ["bodyweight"], muscles: ["core"] },
+  "Mountain Climber":       { equipment: ["bodyweight"], muscles: ["core"] },
+  // Recovery / mobility
   "Foam Rolling":           { equipment: ["bodyweight"], muscles: ["recovery"] },
   "Hip Flexor Stretch":     { equipment: ["bodyweight"], muscles: ["recovery"] },
-  "Dead Bug":               { equipment: ["bodyweight"], muscles: ["core"] },
-  "Band Pull-Apart":        { equipment: ["bands"], muscles: ["shoulders"] },
+  "Pigeon Stretch":         { equipment: ["bodyweight"], muscles: ["recovery"] },
+  "Thoracic Rotation":      { equipment: ["bodyweight"], muscles: ["recovery"] },
 };
 
 const equipmentAllowed = (exerciseName, userEquipment) => {
@@ -458,7 +519,7 @@ class ErrorBoundary extends React.Component {
         <div style={{ background: "#080808", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32, textAlign: "center" }}>
           <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 52, color: "#FAFAFA", marginBottom: 16, lineHeight: 0.9 }}>SOMETHING<br />WENT WRONG</div>
           <p style={{ fontFamily: "'Barlow',sans-serif", fontSize: 15, color: "#888", lineHeight: 1.6, marginBottom: 28 }}>An unexpected error occurred. Your data is safe.</p>
-          <button onClick={() => { this.setState({ hasError: false }); window.location.reload(); }} style={{ background: "#C8F135", border: "none", borderRadius: 14, padding: "16px 32px", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 16, letterSpacing: 2.5, color: "#080808", cursor: "pointer" }}>RESTART APP</button>
+          <button onClick={() => { try { localStorage.removeItem("str_active_session"); localStorage.removeItem("str_current_session_id"); } catch {} this.setState({ hasError: false }); window.location.reload(); }} style={{ background: "#C8F135", border: "none", borderRadius: 14, padding: "16px 32px", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 16, letterSpacing: 2.5, color: "#080808", cursor: "pointer" }}>RESTART APP</button>
         </div>
       );
     }
@@ -658,6 +719,9 @@ function AppInner() {
   const [rebuildConflict, setRebuildConflict] = useState(null);
   const [rebuildConflictTimer, setRebuildConflictTimer] = useState(null);
   const [rebuildSuccess, setRebuildSuccess] = useState(false);
+
+  // Routine version counter — increments on rebuild to force Today tab re-key
+  const [routineVersion, setRoutineVersion] = useState(0);
 
   // Rate limiting for Supabase messages
   const lastMsgTimeRef = useRef(0);
@@ -1068,10 +1132,17 @@ function AppInner() {
 
   const handleRebuildConfirm = async () => {
     if (!rebuildDraft) return;
-    if (activeSession?.isActive) endWorkoutNow();
+    // End active session before rebuilding (routine change mid-session is unsafe)
+    if (activeSession?.isActive) {
+      clearActiveSession();
+    }
     setProfile(prev => ({ ...prev, ...rebuildDraft }));
     const newRoutine = buildRoutine(rebuildDraft, partnerProfile);
     setRoutine(newRoutine);
+    // Synchronously write to localStorage so Today tab sees it on next render
+    try { localStorage.setItem("str_routine", JSON.stringify(newRoutine)); } catch {}
+    // Increment version to force Today tab to re-key and re-render
+    setRoutineVersion(v => v + 1);
     setShowRebuildModal(false);
     setShowRebuildPreview(false);
     setRebuildPreview(null);
@@ -1177,25 +1248,38 @@ function AppInner() {
   /* ─── Supabase realtime subscription ─── */
   const subscribeToRoom = (code, slot, userProfile) => {
     if (!supabase) return;
-    if (supaSubRef.current) supaSubRef.current.unsubscribe();
+    if (supaSubRef.current) { try { supaSubRef.current.unsubscribe(); } catch {} }
     supaSubRef.current = supabase
       .channel(`room:${code}`)
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "rooms", filter: `room_code=eq.${code}` }, (payload) => {
-        const data = payload.new;
-        const partner = slot === "a" ? data.user_b : data.user_a;
-        if (partner) {
-          setPartnerProfile(partner); // _activeSession and _lastWorkout embedded here
-          setWaitingForPartner(false);
-          // Don't rebuild routine during an active workout — it would replace the
-          // current routine mid-session and can cause day/ex to become undefined.
-          if (!workoutStartRef.current) {
-            setRoutine(prev => prev || buildRoutine(userProfile || {}, partner));
+        try {
+          const data = payload.new;
+          const partner = slot === "a" ? data.user_b : data.user_a;
+          if (partner) {
+            setPartnerProfile(partner); // _activeSession and _lastWorkout embedded here
+            setWaitingForPartner(false);
+            // Don't rebuild routine during an active workout — it would replace the
+            // current routine mid-session and can cause day/ex to become undefined.
+            if (!workoutStartRef.current) {
+              setRoutine(prev => prev || buildRoutine(userProfile || {}, partner));
+            }
           }
-        }
-        if (Array.isArray(data.messages) && data.messages.length) setMessages(data.messages);
+          const msgs = data.messages || [];
+          if (Array.isArray(msgs) && msgs.length) setMessages(msgs);
+        } catch (e) { console.warn("Realtime handler error:", e); }
       })
       .subscribe();
   };
+
+  /* ─── Cleanup subscription on unmount ─── */
+  useEffect(() => {
+    return () => {
+      if (supaSubRef.current) {
+        try { supaSubRef.current.unsubscribe(); } catch {}
+        supaSubRef.current = null;
+      }
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ─── Active session helpers ─── */
   const clearActiveSession = () => {
@@ -1249,43 +1333,47 @@ function AppInner() {
     setScreen("home");
   };
 
-  const endWorkoutNow = () => {
-    const currentDay = routine?.[dayIdx];
-    if (currentDay && workoutStartRef.current) {
-      const durationMin = Math.max(1, Math.round((Date.now() - workoutStartRef.current) / 60000));
-      const totalVolume = Math.round(currentDay.exercises.reduce((sum, e) => {
-        const w = parseFloat(e.wA) || 0;
-        const reps = parseInt((e.reps||"8").split("–")[0]) || 8;
-        return sum + e.sets * reps * w;
-      }, 0));
-      const entry = {
-        id: Date.now(),
-        date: new Date().toLocaleDateString("en-US", {month:"short", day:"numeric"}),
-        dayOfWeek: new Date().toLocaleDateString("en-US", {weekday:"short"}),
-        dayName: currentDay.name,
-        totalSets: Object.keys(completedSets).length,
-        duration: durationMin,
-        exercises: currentDay.exercises.length,
-        totalVolume,
-        maxWeight: Math.max(...currentDay.exercises.map(e => parseFloat(e.wA) || 0)),
-        color: currentDay.color,
-        note: workoutNote || "",
-      };
-      setWorkoutHistory(prev => [entry, ...prev].slice(0, 20));
-      setWorkoutNote("");
-      if (roomCode && supabase) {
-        const col = userSlot === "a" ? "user_a" : "user_b";
-        supabase.from("rooms")
-          .update({ [col]: { ...profile, _activeSession: null, _lastWorkout: entry } })
-          .eq("room_code", roomCode)
-          .catch(() => {});
+  const endWorkoutNow = async () => {
+    try {
+      const currentDay = routine?.[dayIdx];
+      if (currentDay && workoutStartRef.current) {
+        const durationMin = Math.max(1, Math.round((Date.now() - workoutStartRef.current) / 60000));
+        const totalVolume = Math.round(currentDay.exercises.reduce((sum, e) => {
+          const w = parseFloat(e.wA) || 0;
+          const reps = parseInt((e.reps||"8").split("–")[0]) || 8;
+          return sum + e.sets * reps * w;
+        }, 0));
+        const entry = {
+          id: Date.now(),
+          date: new Date().toLocaleDateString("en-US", {month:"short", day:"numeric"}),
+          dayOfWeek: new Date().toLocaleDateString("en-US", {weekday:"short"}),
+          dayName: currentDay.name,
+          totalSets: Object.keys(completedSets).length,
+          duration: durationMin,
+          exercises: currentDay.exercises.length,
+          totalVolume,
+          maxWeight: Math.max(...currentDay.exercises.map(e => parseFloat(e.wA) || 0)),
+          color: currentDay.color,
+          note: workoutNote || "",
+        };
+        setWorkoutHistory(prev => [entry, ...prev].slice(0, 20));
+        setWorkoutNote("");
+        if (roomCode && supabase) {
+          const col = userSlot === "a" ? "user_a" : "user_b";
+          await supabase.from("rooms")
+            .update({ [col]: { ...profile, _activeSession: null, _lastWorkout: entry } })
+            .eq("room_code", roomCode);
+        }
       }
+    } catch (e) {
+      console.warn("Could not sync session end:", e);
+    } finally {
+      if (timerRef.current) clearInterval(timerRef.current);
+      setResting(false);
+      setSheet(null);
+      clearActiveSession();
+      setScreen("home");
     }
-    if (timerRef.current) clearInterval(timerRef.current);
-    setResting(false);
-    setSheet(null);
-    clearActiveSession();
-    setScreen("home");
   };
 
   /* ─── PIN screen handlers ─── */
@@ -2003,18 +2091,65 @@ function AppInner() {
                 : "First time — start conservative"}
             </div>
             <div className="fu1" style={{background:"var(--card)",borderRadius:16,border:"1px solid var(--line)",padding:16,marginBottom:16}}>
-              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:12}}>WEIGHTS</div>
-              <div style={{display:"flex",gap:12}}>
-                <div style={{flex:1,background:"var(--black)",borderRadius:12,padding:14}}>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"var(--gray)",marginBottom:4}}>{profile.name?.toUpperCase()||"YOU"}</div>
-                  <div style={{fontFamily:"var(--font-display)",fontSize:38,color:accentColor,lineHeight:1}}>{ex.wA}</div>
+              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:12}}>PROGRESS</div>
+              {/* My progress bar */}
+              <div style={{marginBottom:14}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <div style={{width:6,height:6,borderRadius:99,background:accentColor}}/>
+                    <span style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:2,color:"var(--white)"}}>{profile.name?.toUpperCase()||"YOU"}</span>
+                  </div>
+                  <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                    <span style={{fontFamily:"var(--font-display)",fontSize:18,color:accentColor}}>{ex.wA}</span>
+                    <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>{exIdx+1}/{day.exercises.length}</span>
+                  </div>
                 </div>
-                <div style={{width:1,background:"var(--line)"}}/>
-                <div style={{flex:1,background:"var(--black)",borderRadius:12,padding:14}}>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"var(--gray)",marginBottom:4}}>{partnerProfile?.name?.toUpperCase()||"PARTNER"}</div>
-                  <div style={{fontFamily:"var(--font-display)",fontSize:38,color:"var(--gray)",lineHeight:1}}>{ex.wB}</div>
+                <div style={{height:4,background:"var(--black)",borderRadius:99,overflow:"hidden"}}>
+                  <div style={{height:"100%",borderRadius:99,background:accentColor,width:`${((exIdx + (setNum-1)/ex.sets) / day.exercises.length)*100}%`,transition:"width .5s"}}/>
+                </div>
+                <div style={{display:"flex",gap:4,marginTop:6}}>
+                  {Array.from({length:ex.sets}).map((_,i)=>{
+                    const done = completedSets[`${exIdx}-${i+1}`];
+                    const cur = i+1===setNum;
+                    return <div key={i} style={{width:8,height:8,borderRadius:99,background:done?accentColor:cur?`${accentColor}66`:"var(--line)",border:cur?`1px solid ${accentColor}`:"none",transition:"background .2s"}}/>;
+                  })}
                 </div>
               </div>
+              {/* Partner progress bar */}
+              {(() => {
+                const pSession = partnerProfile?._activeSession;
+                const isPartnerActive = pSession && (Date.now() - (pSession.startedAt || 0)) < 7_200_000;
+                const pColor = pSession?.color || "var(--gray)";
+                const pEx = isPartnerActive ? pSession.exIdx : 0;
+                const pSet = isPartnerActive ? pSession.setNum : 0;
+                const pTotal = isPartnerActive ? (pSession.totalExercises || 1) : 1;
+                const pSets = routine?.[pSession?.dayIdx]?.exercises?.[pEx]?.sets || 4;
+                const pPct = isPartnerActive ? ((pEx + (pSet-1)/pSets) / pTotal) * 100 : 0;
+                return (
+                  <div>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}>
+                        <div style={{width:6,height:6,borderRadius:99,background:isPartnerActive?"#30d158":"var(--gray2)"}}/>
+                        <span style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:2,color:"var(--gray)"}}>{partnerProfile?.name?.toUpperCase()||"PARTNER"}</span>
+                      </div>
+                      <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                        <span style={{fontFamily:"var(--font-display)",fontSize:18,color:isPartnerActive?pColor:"var(--gray2)"}}>{ex.wB}</span>
+                        {isPartnerActive && <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>{pEx+1}/{pTotal}</span>}
+                      </div>
+                    </div>
+                    <div style={{height:4,background:"var(--black)",borderRadius:99,overflow:"hidden"}}>
+                      <div style={{height:"100%",borderRadius:99,background:isPartnerActive?pColor:"var(--line)",width:`${pPct}%`,transition:"width .5s"}}/>
+                    </div>
+                    {isPartnerActive && (
+                      <div style={{display:"flex",gap:4,marginTop:6}}>
+                        {Array.from({length:pSets}).map((_,i)=>(
+                          <div key={i} style={{width:8,height:8,borderRadius:99,background:i<pSet-1?pColor:"var(--line)",transition:"background .2s"}}/>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
             <div className="fu2" style={{background:"var(--card)",borderRadius:16,border:"1px solid var(--line)",padding:16,marginBottom:16}}>
               <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:12}}>SETS</div>
@@ -2079,7 +2214,10 @@ function AppInner() {
                         <div style={{width:50,height:50,borderRadius:99,background:accentColor,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-display)",fontSize:22,color:"var(--black)"}}>{(partnerProfile.name||"?").slice(0,2).toUpperCase()}</div>
                         <div>
                           <div style={{fontFamily:"var(--font-display)",fontSize:28}}>{(partnerProfile.name||"PARTNER").toUpperCase()}</div>
-                          <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:7,height:7,borderRadius:99,background:"#30d158",animation:"pulse 2s infinite"}}/><span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"#30d158"}}>TRAINING NOW</span></div>
+                          {partnerProfile._activeSession && (Date.now() - (partnerProfile._activeSession.startedAt || 0)) < 7_200_000
+                            ? <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:7,height:7,borderRadius:99,background:"#30d158",animation:"pulse 2s infinite"}}/><span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"#30d158"}}>TRAINING NOW</span></div>
+                            : <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)"}}>NOT TRAINING</div>
+                          }
                         </div>
                       </div>
                       <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
@@ -2370,9 +2508,11 @@ function AppInner() {
 
         <div style={{flex:1,overflowY:"auto",padding:"20px 22px 0"}}>
 
-          {/* TODAY */}
+          {/* TODAY — keyed on routineVersion so rebuilds force re-render */}
           {tab==="today" && (() => {
             // Feature 3 — week display
+            // routineVersion is read here to create a dependency (React key trick via IIFE)
+            void routineVersion;
             const today = new Date();
             const todayDOW = today.getDay(); // 0=Sun
             const mondayOffset = todayDOW === 0 ? -6 : 1 - todayDOW;
@@ -2391,15 +2531,19 @@ function AppInner() {
             // Check workout history for this week
             const weekStart = monday.getTime();
             const weekEnd = weekStart + 7 * 86400000;
+            const currentYear = new Date().getFullYear();
             const thisWeekHistory = workoutHistory.filter(h => {
               if (!h.date) return false;
               try {
-                const d = new Date(h.date + " 2025");
+                const d = new Date(h.date + ` ${currentYear}`);
                 return d.getTime() >= weekStart && d.getTime() < weekEnd;
               } catch { return false; }
             });
 
-            const completedDayOfWeeks = thisWeekHistory.map(h => h.dayOfWeek); // ["Mon","Tue",...]
+            // Map completed days to their workout entries (for color)
+            const completedDayMap = {}; // { "Mon": entry, "Tue": entry, ... }
+            thisWeekHistory.forEach(h => { if (h.dayOfWeek) completedDayMap[h.dayOfWeek] = h; });
+            const completedDayOfWeeks = Object.keys(completedDayMap);
 
             return (
             <div style={{display:"flex",flexDirection:"column",gap:14}}>
@@ -2415,13 +2559,17 @@ function AppInner() {
                     const isTraining = trainingDays ? trainingDays.includes(d) : i < 5;
                     const isCompleted = completedDayOfWeeks.includes(WEEK_DAYS_SHORT[i]);
                     const isToday = d === todayLabel;
+                    const completedEntry = completedDayMap[WEEK_DAYS_SHORT[i]];
+                    const barColor = completedEntry?.color || "var(--lime)";
                     return (
                       <div key={i} style={{flex:1,textAlign:"center"}}>
                         {isTraining && isCompleted
-                          ? <div style={{height:4,borderRadius:99,background:"var(--lime)",marginBottom:5}}/>
-                          : isTraining
-                            ? <div style={{height:4,borderRadius:99,border:"1px solid var(--lime)",background:"transparent",marginBottom:5}}/>
-                            : <div style={{height:2,borderRadius:99,background:"var(--line)",marginBottom:7}}/>
+                          ? <div style={{height:4,borderRadius:99,background:barColor,marginBottom:5}}/>
+                          : isTraining && isToday
+                            ? <div style={{height:4,borderRadius:99,background:"var(--lime)",marginBottom:5,animation:"pulse 1.5s infinite"}}/>
+                            : isTraining
+                              ? <div style={{height:4,borderRadius:99,border:"1px solid rgba(200,241,53,0.4)",background:"transparent",marginBottom:5}}/>
+                              : <div style={{height:2,borderRadius:99,background:"var(--line)",marginBottom:7}}/>
                         }
                         <div style={{fontFamily:"var(--font-cond)",fontSize:9,fontWeight:700,color:isTraining?"var(--lime)":"var(--gray2)"}}>{d}</div>
                         {isToday && isTraining && <div style={{width:4,height:4,borderRadius:99,background:"var(--lime)",margin:"3px auto 0"}}/>}
@@ -2545,6 +2693,23 @@ function AppInner() {
           {/* PARTNER */}
           {tab==="partner" && (
             <div style={{display:"flex",flexDirection:"column",gap:14}}>
+              {/* Close Room button — host only, no partner yet */}
+              {!partnerProfile && roomCode && userSlot === "a" && (
+                <div style={{display:"flex",justifyContent:"flex-end",marginBottom:4}}>
+                  <button onClick={async () => {
+                    if (!supabase || !roomCode) return;
+                    try {
+                      await supabase.from("rooms").delete().eq("room_code", roomCode);
+                    } catch {}
+                    localStorage.removeItem("str_room_code");
+                    localStorage.removeItem("str_user_slot");
+                    setRoomCode("");
+                    setWaitingForPartner(false);
+                    if (supaSubRef.current) { try { supaSubRef.current.unsubscribe(); } catch {} supaSubRef.current = null; }
+                    setToast("Room closed"); setTimeout(() => setToast(null), 2000);
+                  }} style={{background:"rgba(255,59,48,.1)",border:"1px solid rgba(255,59,48,.25)",borderRadius:8,padding:"6px 14px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:2,color:"var(--red)",cursor:"pointer"}}>CLOSE ROOM</button>
+                </div>
+              )}
               {!partnerProfile ? (
                 <>
                   <div className="fu" style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:28,textAlign:"center"}}>
@@ -2593,12 +2758,16 @@ function AppInner() {
               ) : (() => {
                 const pSession = partnerProfile._activeSession;
                 const pLastWorkout = partnerProfile._lastWorkout;
+                // Staleness check: only count as "training now" if session started < 2 hours ago
+                const isPartnerActive = pSession && (Date.now() - (pSession.startedAt || 0)) < 7_200_000;
+                const todayStr = new Date().toLocaleDateString("en-US", {month:"short", day:"numeric"});
+                const lastSeenToday = pLastWorkout?.date === todayStr;
                 const fmtElapsed = (s) => {
                   const m = Math.floor(s / 60);
                   const sec = s % 60;
                   return `${m}:${String(sec).padStart(2,"0")}`;
                 };
-                const completedExCount = pSession
+                const completedExCount = isPartnerActive
                   ? [...new Set(Object.keys(pSession.completedSets||{}).map(k=>k.split("-")[0]))].length
                   : 0;
                 const sendQuickMsg = async (text) => {
@@ -2609,7 +2778,24 @@ function AppInner() {
                   const base = messages.length >= 500 ? messages.slice(50) : messages;
                   const updated = [...base, newMsg];
                   setMessages(updated);
-                  if (roomCode && supabase) await supabase.from("rooms").update({messages:updated}).eq("room_code",roomCode).catch(()=>{});
+                  try {
+                    if (roomCode && supabase) await supabase.from("rooms").update({messages:updated}).eq("room_code",roomCode);
+                  } catch {}
+                };
+                const handleLeaveRoom = async () => {
+                  try {
+                    if (supabase && roomCode) {
+                      const col = userSlot === "a" ? "user_a" : "user_b";
+                      await supabase.from("rooms").update({ [col]: null }).eq("room_code", roomCode);
+                    }
+                  } catch {}
+                  localStorage.removeItem("str_room_code");
+                  localStorage.removeItem("str_user_slot");
+                  setRoomCode("");
+                  setPartnerProfile(null);
+                  setWaitingForPartner(false);
+                  if (supaSubRef.current) { try { supaSubRef.current.unsubscribe(); } catch {} supaSubRef.current = null; }
+                  setToast("Left the room"); setTimeout(() => setToast(null), 2000);
                 };
                 return (
                   <>
@@ -2619,18 +2805,24 @@ function AppInner() {
                         <div style={{width:52,height:52,borderRadius:99,background:"var(--lime)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-display)",fontSize:24,color:"var(--black)",flexShrink:0}}>{(partnerProfile.name||"?").slice(0,2).toUpperCase()}</div>
                         <div style={{flex:1}}>
                           <div style={{fontFamily:"var(--font-display)",fontSize:28,lineHeight:1}}>{(partnerProfile.name||"PARTNER").toUpperCase()}</div>
-                          {pSession ? (
+                          {isPartnerActive ? (
                             <div style={{display:"flex",alignItems:"center",gap:6,marginTop:4}}>
                               <div style={{width:7,height:7,borderRadius:99,background:"#30d158",animation:"pulse 1.5s infinite"}}/>
                               <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"#30d158"}}>TRAINING NOW</span>
                             </div>
+                          ) : lastSeenToday ? (
+                            <div style={{display:"flex",alignItems:"center",gap:6,marginTop:4}}>
+                              <div style={{width:7,height:7,borderRadius:99,background:"var(--orange)"}}/>
+                              <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--orange)"}}>LAST SEEN TODAY</span>
+                            </div>
                           ) : (
-                            <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",marginTop:4}}>NOT TRAINING RIGHT NOW</div>
+                            <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",marginTop:4}}>NOT TRAINING</div>
                           )}
                         </div>
+                        <button onClick={handleLeaveRoom} style={{background:"rgba(255,59,48,.1)",border:"1px solid rgba(255,59,48,.25)",borderRadius:8,padding:"6px 12px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:10,letterSpacing:2,color:"var(--red)",cursor:"pointer",flexShrink:0}}>LEAVE</button>
                       </div>
 
-                      {pSession ? (
+                      {isPartnerActive ? (
                         /* ── Active session view ── */
                         <div>
                           <div style={{fontFamily:"var(--font-display)",fontSize:42,lineHeight:0.9,marginBottom:8,color:pSession.color||"var(--lime)"}}>{(pSession.exerciseName||"TRAINING").toUpperCase()}</div>
@@ -2648,10 +2840,10 @@ function AppInner() {
                           <div style={{marginBottom:12}}>
                             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
                               <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)"}}>CURRENT SET</span>
-                              <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--white)"}}>{pSession.setNum} / {routine?.[pSession.dayIdx]?.exercises[pSession.exIdx]?.sets||"?"}</span>
+                              <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--white)"}}>{pSession.setNum} / {routine?.[pSession.dayIdx]?.exercises?.[pSession.exIdx]?.sets||"?"}</span>
                             </div>
                             <div style={{display:"flex",gap:5}}>
-                              {Array.from({length: routine?.[pSession.dayIdx]?.exercises[pSession.exIdx]?.sets||4}).map((_,i)=>(
+                              {Array.from({length: routine?.[pSession.dayIdx]?.exercises?.[pSession.exIdx]?.sets||4}).map((_,i)=>(
                                 <div key={i} style={{width:10,height:10,borderRadius:99,background:i<pSession.setNum-1?"var(--lime)":"var(--line)",border:`1.5px solid ${i<pSession.setNum-1?"var(--lime)":"var(--line2)"}`}}/>
                               ))}
                             </div>
@@ -2706,7 +2898,7 @@ function AppInner() {
             const totalVolume   = workoutHistory.reduce((s,h) => s + (h.totalVolume||0), 0);
             const streak = (() => {
               if (!workoutHistory.length) return 0;
-              const dates = workoutHistory.map(h => new Date(h.date + " 2025").toDateString());
+              const dates = workoutHistory.map(h => new Date(h.date + ` ${new Date().getFullYear()}`).toDateString());
               let count = 0;
               const d = new Date();
               while (true) {
