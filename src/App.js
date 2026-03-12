@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { supabase, isSupabaseConfigured } from "./supabase";
 
+/*
+ * MANUAL STEP REQUIRED — run once in your Supabase SQL Editor:
+ *   alter publication supabase_realtime add table rooms;
+ *   alter table rooms replica identity full;
+ */
+
 /* ─── Utilities ─── */
 const hashPIN = async (pin) => {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pin));
@@ -716,9 +722,8 @@ class ErrorBoundary extends React.Component {
 /* ════════════════════════════════════════════
    FLOATING CHAT WINDOW (defined outside App so hooks are stable)
 ════════════════════════════════════════════ */
-function ChatWindow({ partnerProfile, messages, userSlot, roomCode, setMessages }) {
+function ChatWindow({ partnerProfile, messages, userSlot, onSend }) {
   const [kbOffset, setKbOffset] = useState(0);
-  const lastChatMsgRef = useRef(0); // rate limiting: 1 msg/sec
   useEffect(() => {
     if (!window.visualViewport) return;
     const onResize = () => {
@@ -728,17 +733,6 @@ function ChatWindow({ partnerProfile, messages, userSlot, roomCode, setMessages 
     window.visualViewport.addEventListener("resize", onResize);
     return () => window.visualViewport.removeEventListener("resize", onResize);
   }, []);
-  const sendMsg = async (text) => {
-    const now = Date.now();
-    if (now - lastChatMsgRef.current < 1000) return; // rate limit
-    lastChatMsgRef.current = now;
-    const newMsg = { slot: userSlot, text: String(text).slice(0, 200), ts: now };
-    // Cap message history at 500, trim oldest 50 when full
-    const base = messages.length >= 500 ? messages.slice(50) : messages;
-    const updated = [...base, newMsg];
-    setMessages(updated);
-    if (roomCode && supabase) await supabase.from("rooms").update({ messages: updated }).eq("room_code", roomCode).catch(() => {});
-  };
   return (
     <div style={{position:"fixed",bottom:82+kbOffset,right:"calc(50% - 215px + 16px)",width:300,background:"#181818",borderRadius:18,border:"1px solid var(--line)",boxShadow:"0 8px 40px rgba(0,0,0,.6)",zIndex:59,display:"flex",flexDirection:"column",maxHeight:340,overflow:"hidden"}}>
       <div style={{padding:"12px 14px 8px",borderBottom:"1px solid var(--line)",display:"flex",alignItems:"center",gap:8}}>
@@ -760,7 +754,7 @@ function ChatWindow({ partnerProfile, messages, userSlot, roomCode, setMessages 
       </div>
       <div style={{padding:"8px 10px",borderTop:"1px solid var(--line)",display:"flex",flexWrap:"wrap",gap:6}}>
         {["Done!","Form check?","Let's go!","Break","Almost!","You got this!"].map(t=>(
-          <button key={t} onClick={()=>sendMsg(t)} style={{background:"var(--dark)",border:"1px solid var(--line)",borderRadius:99,padding:"7px 12px",fontFamily:"var(--font-body)",fontSize:11,color:"var(--white)",cursor:"pointer"}}>{t}</button>
+          <button key={t} onClick={()=>onSend(t)} style={{background:"var(--dark)",border:"1px solid var(--line)",borderRadius:99,padding:"7px 12px",fontFamily:"var(--font-body)",fontSize:11,color:"var(--white)",cursor:"pointer"}}>{t}</button>
         ))}
       </div>
     </div>
@@ -844,7 +838,9 @@ function AppInner() {
   const [showLogout, setShowLogout]       = useState(false);
   const workoutStartRef = useRef(null);
   const timerRef = useRef(null);
-  const supaSubRef = useRef(null); // Supabase realtime subscription
+  const supaSubRef = useRef(null); // legacy — kept for cleanup only
+  const roomChannelRef = useRef(null); // shared Broadcast channel for the room
+  const profileRef = useRef(null); // always-fresh profile for async callbacks
 
   // Active workout session (persisted across navigation)
   const [activeSession, setActiveSession] = useState(() => getSaved("str_active_session", null));
@@ -916,6 +912,9 @@ function AppInner() {
   const [partnerSession, setPartnerSession] = useState(null);
   // Live room data for partner tab status
   const [roomData, setRoomData] = useState(null);
+
+  // Keep profileRef current for use inside async channel callbacks
+  useEffect(() => { profileRef.current = profile; }, [profile]);
 
   // null-safe profile updater (profile starts null before onboarding)
   const p = (k, v) => setProfile(prev => ({...(prev || {}), [k]: v}));
@@ -990,8 +989,7 @@ function AppInner() {
           } else if (savedSlot === "a") {
             setWaitingForPartner(true);
           }
-          // Subscribe for live partner join + messages
-          subscribeToRoom(savedCode, savedSlot, profile);
+          // Channel subscription is handled by the roomCode useEffect
         });
     }
 
@@ -1146,7 +1144,8 @@ function AppInner() {
   }, [pinLockedUntil]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ─── Partner training elapsed timer ─── */
-  const partnerActiveSession = partnerProfile?._activeSession || null;
+  // Prefer live Broadcast session state; fall back to persisted _activeSession
+  const partnerActiveSession = partnerSession || partnerProfile?._activeSession || null;
   useEffect(() => {
     if (!partnerActiveSession?.startedAt) { setPartnerElapsedSecs(0); return; }
     const tick = () => setPartnerElapsedSecs(Math.floor((Date.now() - partnerActiveSession.startedAt) / 1000));
@@ -1169,33 +1168,8 @@ function AppInner() {
     }
   }, [messages.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ─── Sync active workout session to Supabase room on every set ─── */
-  useEffect(() => {
-    if (!roomCode || !supabase || !workoutStartRef.current || screen !== "workout") return;
-    // Only sync after at least one set has been completed — don't fire on initial startWorkout
-    if (Object.keys(completedSets).length === 0 && exIdx === 0 && setNum === 1) return;
-    const curDay = routine?.[dayIdx];
-    if (!curDay) return;
-    const totalSetsInRoutine = curDay.exercises.reduce((s, e) => s + e.sets, 0);
-    const sessionData = {
-      dayIdx, exIdx, setNum, completedSets,
-      startedAt: workoutStartRef.current,
-      lastActivityAt: Date.now(),
-      exerciseName: curDay.exercises[exIdx]?.name || "",
-      dayName: curDay.name,
-      totalExercises: curDay.exercises.length,
-      totalSetsInRoutine,
-      currentWeight: curDay.exercises[exIdx]?.wA || "",
-      color: curDay.color,
-    };
-    const col = userSlot === "a" ? "user_a" : "user_b";
-    try {
-      supabase.from("rooms")
-        .update({ [col]: { ...(profile || {}), _activeSession: sessionData } })
-        .eq("room_code", roomCode)
-        .catch(() => {});
-    } catch {}
-  }, [completedSets, exIdx, setNum]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Session sync is now handled synchronously inside completeSet via
+  // broadcastSessionUpdate (Broadcast) + persistSessionToSupabase (REST fire-and-forget)
 
   const startRest = (s) => { setRestMax(s); setRestSec(s); setResting(true); };
   const skipRest  = () => { clearInterval(timerRef.current); setResting(false); setRestSec(0); };
@@ -1227,7 +1201,8 @@ function AppInner() {
         totalExercises: day.exercises.length,
       };
       localStorage.setItem('str_active_session', JSON.stringify(sessionUpdate));
-      pushSessionToSupabase(sessionUpdate);
+      broadcastSessionUpdate(sessionUpdate);   // real-time delivery to partner
+      persistSessionToSupabase(sessionUpdate); // persisted for Partner tab / reconnect
     }
 
     // Feature 4A — Check for PR
@@ -1420,7 +1395,7 @@ function AppInner() {
       setRoomCode(code);
       setUserSlot("a");
       setWaitingForPartner(true);
-      subscribeToRoom(code, "a", profile);
+      // Channel subscription fires automatically via roomCode useEffect
     } catch (e) {
       console.error("Failed to create room:", e);
       setJoinError("Could not create room. Check your connection and try again.");
@@ -1446,7 +1421,7 @@ function AppInner() {
       setUserSlot("b");
       setPartnerProfile(hostProfile);
       setJoinError("");
-      subscribeToRoom(code, "b", profile);
+      // Channel subscription fires automatically via roomCode useEffect
       generateRoutine(hostProfile);
     } catch (e) {
       setJoinError("Could not join room. Check the code and try again.");
@@ -1475,7 +1450,7 @@ function AppInner() {
       setUserSlot("b");
       setPartnerProfile(hostProfile);
       setJoinError("");
-      subscribeToRoom(code, "b", currentProfile);
+      // Channel subscription fires automatically via roomCode useEffect
       generateRoutine(hostProfile);
     } catch {
       setJoinError("Could not join room. Check the code and try again.");
@@ -1490,109 +1465,149 @@ function AppInner() {
     });
   };
 
-  /* ─── Supabase realtime subscription ─── */
-  const subscribeToRoom = (code, slot, userProfile) => {
-    if (!supabase) return;
-    if (supaSubRef.current) { try { supaSubRef.current.unsubscribe(); } catch {} }
-    supaSubRef.current = supabase
-      .channel(`room:${code}`)
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "rooms", filter: `room_code=eq.${code}` }, (payload) => {
-        try {
-          const data = payload.new;
-          const partner = slot === "a" ? data.user_b : data.user_a;
-          if (partner) {
-            setPartnerProfile(partner); // _activeSession and _lastWorkout embedded here
-            setWaitingForPartner(false);
-            // Don't rebuild routine during an active workout — it would replace the
-            // current routine mid-session and can cause day/ex to become undefined.
-            if (!workoutStartRef.current) {
-              setRoutine(prev => prev || buildRoutine(userProfile || {}, partner));
-            }
-          }
-          const msgs = data.messages || [];
-          if (Array.isArray(msgs) && msgs.length) setMessages(msgs);
-        } catch (e) { console.warn("Realtime handler error:", e); }
-      })
-      .subscribe();
+  /* ─── Broadcast helpers — called from completeSet on every set ─── */
+  const broadcastSessionUpdate = (sessionData) => {
+    if (!roomCode || !roomChannelRef.current) return;
+    const event = userSlot === 'a' ? 'session_a' : 'session_b';
+    roomChannelRef.current
+      .send({ type: 'broadcast', event, payload: sessionData })
+      .catch(e => console.warn('Broadcast failed:', e));
   };
 
-  /* ─── Cleanup subscription on unmount ─── */
+  const persistSessionToSupabase = (sessionData) => {
+    if (!roomCode || !supabase) return;
+    const slot = userSlot === 'a' ? 'active_session_a' : 'active_session_b';
+    supabase.from('rooms')
+      .update({ [slot]: sessionData })
+      .eq('room_code', roomCode)
+      .then(({ error }) => { if (error) console.warn('Persist failed:', error.message); });
+  };
+
+  /* ─── Shared Broadcast channel — ONE channel for the whole room ─── */
+  useEffect(() => {
+    if (!roomCode || !supabase) return;
+    const partnerEvent = userSlot === 'a' ? 'session_b' : 'session_a';
+    const partnerDataSlot = userSlot === 'a' ? 'active_session_b' : 'active_session_a';
+
+    const channel = supabase
+      .channel(`room:${roomCode}`)
+      // Partner profile updates (when partner joins/leaves)
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'rooms', filter: `room_code=eq.${roomCode}`
+      }, (payload) => {
+        try {
+          const data = payload.new;
+          const partner = userSlot === 'a' ? data.user_b : data.user_a;
+          if (partner) {
+            setPartnerProfile(partner);
+            setWaitingForPartner(false);
+            if (!workoutStartRef.current) {
+              setRoutine(prev => prev || buildRoutine(profileRef.current || {}, partner));
+            }
+          }
+          setRoomData(data);
+        } catch (e) { console.warn('Realtime handler error:', e); }
+      })
+      // Partner workout session — Broadcast (low-latency, peer-to-peer)
+      .on('broadcast', { event: partnerEvent }, ({ payload }) => {
+        if (payload) {
+          setPartnerSession(payload);
+          setRoomData(prev => prev ? { ...prev, [partnerDataSlot]: payload } : prev);
+        }
+      })
+      // Chat messages — Broadcast (low-latency)
+      .on('broadcast', { event: 'chat_message' }, ({ payload }) => {
+        if (payload?.from_slot !== userSlot) {
+          setMessages(prev => {
+            const base = prev.length >= 500 ? prev.slice(50) : prev;
+            return [...base, { slot: payload.from_slot, text: payload.text, ts: payload.ts || Date.now() }];
+          });
+          navigator.vibrate?.(100);
+        }
+      })
+      .subscribe((status) => {
+        console.log('Room broadcast channel:', status);
+      });
+
+    roomChannelRef.current = channel;
+
+    // Fetch initial persisted state so UI is populated before first broadcast
+    supabase.from('rooms').select('*').eq('room_code', roomCode).single()
+      .then(({ data }) => {
+        if (!data) return;
+        setRoomData(data);
+        const ps = data[partnerDataSlot];
+        if (ps?.isActive) setPartnerSession(ps);
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+      roomChannelRef.current = null;
+    };
+  }, [roomCode, userSlot]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ─── Cleanup on unmount (supaSubRef legacy) ─── */
   useEffect(() => {
     return () => {
       if (supaSubRef.current) {
         try { supaSubRef.current.unsubscribe(); } catch {}
         supaSubRef.current = null;
       }
+      if (roomChannelRef.current) {
+        try { supabase?.removeChannel(roomChannelRef.current); } catch {}
+        roomChannelRef.current = null;
+      }
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ─── Real-time workout progress: push to active_session_a/b column ─── */
-  const pushSessionToSupabase = async (sessionData) => {
-    if (!roomCode || !supabase) return;
-    const slot = userSlot === 'a' ? 'active_session_a' : 'active_session_b';
-    const { error } = await supabase
-      .from('rooms')
-      .update({ [slot]: sessionData })
-      .eq('room_code', roomCode);
-    if (error) console.warn('Session push failed:', error.message);
-  };
-
-  /* ─── Subscribe to partner's active_session on workout screen mount ─── */
+  /* ─── Fetch partner snapshot when workout screen mounts ─── */
   useEffect(() => {
     if (!roomCode || !supabase || screen !== 'workout') return;
-    // Fetch current partner session immediately — don't wait for next UPDATE
-    (async () => {
-      const { data } = await supabase
-        .from('rooms')
-        .select('active_session_a, active_session_b')
-        .eq('room_code', roomCode)
-        .single();
-      if (data) {
-        const partnerSlot = userSlot === 'a' ? 'active_session_b' : 'active_session_a';
-        const ps = data[partnerSlot];
+    const partnerDataSlot = userSlot === 'a' ? 'active_session_b' : 'active_session_a';
+    supabase.from('rooms')
+      .select('active_session_a, active_session_b')
+      .eq('room_code', roomCode).single()
+      .then(({ data }) => {
+        if (!data) return;
+        const ps = data[partnerDataSlot];
         if (ps?.isActive) setPartnerSession(ps);
-      }
-    })();
-    // Subscribe to subsequent updates
-    const channel = supabase
-      .channel(`workout-progress-${roomCode}-${Date.now()}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `room_code=eq.${roomCode}` }, (payload) => {
-        const partnerSlot = userSlot === 'a' ? 'active_session_b' : 'active_session_a';
-        const ps = payload.new?.[partnerSlot];
-        if (ps?.isActive) {
-          setPartnerSession(ps);
-        } else if (ps && !ps.isActive) {
-          setPartnerSession(null);
-        }
-      })
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') console.log('Partner workout channel active');
-        if (status === 'CHANNEL_ERROR') console.warn('Partner channel error');
       });
-    return () => { supabase.removeChannel(channel); };
   }, [roomCode, userSlot, screen]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  /* ─── Partner-tab room subscription (for live status outside workout) ─── */
-  useEffect(() => {
-    if (!roomCode || !supabase) return;
-    (async () => {
-      const { data } = await supabase.from('rooms').select('*').eq('room_code', roomCode).single();
-      if (data) setRoomData(data);
-    })();
-    const channel = supabase
-      .channel(`partner-tab-${roomCode}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `room_code=eq.${roomCode}` }, (payload) => {
-        setRoomData(payload.new);
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [roomCode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ─── Active session helpers ─── */
   const clearActiveSession = () => {
     localStorage.removeItem("str_active_session");
     setActiveSession(null);
     workoutStartRef.current = null;
+  };
+
+  /* ─── Shared chat send — Broadcast + fire-and-forget persist ─── */
+  const sendChatMsg = (text) => {
+    const now = Date.now();
+    if (now - lastMsgTimeRef.current < 1000) return; // rate limit
+    lastMsgTimeRef.current = now;
+    const msg = { slot: userSlot, text: sanitize(String(text).slice(0, 200)), ts: now };
+    // Broadcast to partner immediately
+    if (roomChannelRef.current) {
+      roomChannelRef.current
+        .send({ type: 'broadcast', event: 'chat_message', payload: { from_slot: userSlot, text: msg.text, ts: now } })
+        .catch(e => console.warn('Chat broadcast failed:', e));
+    }
+    // Optimistic local update
+    setMessages(prev => {
+      const base = prev.length >= 500 ? prev.slice(50) : prev;
+      return [...base, msg];
+    });
+    // Persist to Supabase for history (fire-and-forget)
+    if (roomCode && supabase) {
+      supabase.from('rooms').select('messages').eq('room_code', roomCode).single()
+        .then(({ data }) => {
+          const existing = data?.messages || [];
+          const updated = [...existing, msg].slice(-200);
+          return supabase.from('rooms').update({ messages: updated }).eq('room_code', roomCode);
+        })
+        .catch(e => console.warn('Chat persist failed:', e));
+    }
   };
 
   const startWorkout = (idx) => {
@@ -2558,16 +2573,7 @@ function AppInner() {
                       </div>
                       <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
                         {["Set done!","Form check?","Let's go!","Break"].map(t=>(
-                          <button key={t} onClick={async ()=>{
-                            const now = Date.now();
-                            if (now - lastMsgTimeRef.current < 1000) return;
-                            lastMsgTimeRef.current = now;
-                            const newMsg = {slot:userSlot, text:sanitize(t), ts:now};
-                            const base = messages.length >= 500 ? messages.slice(50) : messages;
-                            const updated = [...base, newMsg];
-                            setMessages(updated);
-                            if (roomCode && supabase) await supabase.from("rooms").update({messages:updated}).eq("room_code",roomCode).catch(()=>{});
-                          }} style={{background:"var(--dark)",border:"1px solid var(--line)",borderRadius:99,padding:"8px 14px",fontFamily:"var(--font-body)",fontSize:12,color:"var(--white)",cursor:"pointer"}}>{t}</button>
+                          <button key={t} onClick={()=>sendChatMsg(t)} style={{background:"var(--dark)",border:"1px solid var(--line)",borderRadius:99,padding:"8px 14px",fontFamily:"var(--font-body)",fontSize:12,color:"var(--white)",cursor:"pointer"}}>{t}</button>
                         ))}
                       </div>
                     </>
@@ -3091,18 +3097,7 @@ function AppInner() {
                 const completedExCount = isPartnerActive
                   ? [...new Set(Object.keys(pSession.completedSets||{}).map(k=>k.split("-")[0]))].length
                   : 0;
-                const sendQuickMsg = async (text) => {
-                  const now = Date.now();
-                  if (now - lastMsgTimeRef.current < 1000) return;
-                  lastMsgTimeRef.current = now;
-                  const newMsg = {slot:userSlot, text: sanitize(text), ts:now};
-                  const base = messages.length >= 500 ? messages.slice(50) : messages;
-                  const updated = [...base, newMsg];
-                  setMessages(updated);
-                  try {
-                    if (roomCode && supabase) await supabase.from("rooms").update({messages:updated}).eq("room_code",roomCode);
-                  } catch {}
-                };
+                const sendQuickMsg = (text) => sendChatMsg(text);
                 const handleLeaveRoom = async () => {
                   try {
                     if (supabase && roomCode) {
@@ -3115,7 +3110,7 @@ function AppInner() {
                   setRoomCode("");
                   setPartnerProfile(null);
                   setWaitingForPartner(false);
-                  if (supaSubRef.current) { try { supaSubRef.current.unsubscribe(); } catch {} supaSubRef.current = null; }
+                  if (roomChannelRef.current) { try { supabase?.removeChannel(roomChannelRef.current); } catch {} roomChannelRef.current = null; }
                   setToast("Left the room"); setTimeout(() => setToast(null), 2000);
                 };
                 return (
@@ -3729,8 +3724,7 @@ function AppInner() {
             partnerProfile={partnerProfile}
             messages={messages}
             userSlot={userSlot}
-            roomCode={roomCode}
-            setMessages={setMessages}
+            onSend={sendChatMsg}
           />
         )}
 
