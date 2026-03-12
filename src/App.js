@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { supabase, isSupabaseConfigured } from "./supabase";
 
 /* ─── Utilities ─── */
@@ -173,6 +173,47 @@ const EXERCISE_DB = {
   "Hip Flexor Stretch":     { equipment: ["bodyweight"], muscles: ["recovery"] },
   "Pigeon Stretch":         { equipment: ["bodyweight"], muscles: ["recovery"] },
   "Thoracic Rotation":      { equipment: ["bodyweight"], muscles: ["recovery"] },
+  // Bodyweight — compound & full-body
+  "Burpee":                 { equipment: ["bodyweight"], muscles: ["full_body"] },
+  "Jump Squat":             { equipment: ["bodyweight"], muscles: ["quads","glutes"] },
+  "Pistol Squat":           { equipment: ["bodyweight"], muscles: ["quads","glutes"] },
+  "Bodyweight Squat":       { equipment: ["bodyweight"], muscles: ["quads"] },
+  "Lateral Lunge":          { equipment: ["bodyweight"], muscles: ["quads","glutes"] },
+  "Reverse Lunge":          { equipment: ["bodyweight"], muscles: ["quads","glutes"] },
+  "Wall Sit":               { equipment: ["bodyweight"], muscles: ["quads"] },
+  "Single-Leg Glute Bridge":{ equipment: ["bodyweight"], muscles: ["glutes"] },
+  "Skater Jump":            { equipment: ["bodyweight"], muscles: ["glutes","quads"] },
+  "Plyo Push-Up":           { equipment: ["bodyweight"], muscles: ["chest","triceps"] },
+  "Tuck Jump":              { equipment: ["bodyweight"], muscles: ["quads","calves"] },
+  "Inchworm":               { equipment: ["bodyweight"], muscles: ["core","hamstrings"] },
+  "Superman":               { equipment: ["bodyweight"], muscles: ["back","glutes"] },
+  "Bird Dog":               { equipment: ["bodyweight"], muscles: ["core","back"] },
+  "Hollow Body Hold":       { equipment: ["bodyweight"], muscles: ["core"] },
+  "Jumping Jacks":          { equipment: ["bodyweight"], muscles: ["full_body"] },
+  "High Knees":             { equipment: ["bodyweight"], muscles: ["full_body"] },
+  "Inverted Row":           { equipment: ["bodyweight"], muscles: ["back"] },
+  "Step-Up":                { equipment: ["bodyweight"], muscles: ["quads","glutes"] },
+  "Hip Circle":             { equipment: ["bodyweight"], muscles: ["glutes"] },
+  "Bear Crawl":             { equipment: ["bodyweight"], muscles: ["core","shoulders"] },
+  "Crab Walk":              { equipment: ["bodyweight"], muscles: ["triceps","core"] },
+  "L-Sit":                  { equipment: ["bodyweight"], muscles: ["core"] },
+  "Broad Jump":             { equipment: ["bodyweight"], muscles: ["quads","glutes"] },
+  // Resistance bands
+  "Band Squat":             { equipment: ["bands"], muscles: ["quads","glutes"] },
+  "Band Deadlift":          { equipment: ["bands"], muscles: ["hamstrings","glutes"] },
+  "Band Bicep Curl":        { equipment: ["bands"], muscles: ["biceps"] },
+  "Band Tricep Extension":  { equipment: ["bands"], muscles: ["triceps"] },
+  "Band Row":               { equipment: ["bands"], muscles: ["back"] },
+  "Band Chest Press":       { equipment: ["bands"], muscles: ["chest"] },
+  "Band Shoulder Press":    { equipment: ["bands"], muscles: ["shoulders"] },
+  "Band Lateral Walk":      { equipment: ["bands"], muscles: ["glutes"] },
+  "Band Hip Thrust":        { equipment: ["bands"], muscles: ["glutes"] },
+  "Band Good Morning":      { equipment: ["bands"], muscles: ["hamstrings","glutes"] },
+  "Band Lat Pulldown":      { equipment: ["bands"], muscles: ["back"] },
+  "Band Kickback":          { equipment: ["bands"], muscles: ["glutes"] },
+  "Band Overhead Press":    { equipment: ["bands"], muscles: ["shoulders"] },
+  "Band Clamshell":         { equipment: ["bands"], muscles: ["glutes"] },
+  "Band Face Pull":         { equipment: ["bands"], muscles: ["shoulders"] },
 };
 
 const equipmentAllowed = (exerciseName, userEquipment) => {
@@ -225,21 +266,120 @@ const RECOVERY_TIPS = [
   "Light activity (yoga, walking) is better than complete inactivity.",
 ];
 
+/* ─── Goal definitions with training parameters ─── */
+const GOAL_CONFIGS = [
+  {
+    id: 'muscle_mass', label: 'Gain Muscle Mass',
+    description: 'Hypertrophy focus — moderate weight, higher volume',
+    reps: { beginner:'10-12', intermediate:'8-12', advanced:'6-12' },
+    sets: { beginner:3, intermediate:4, advanced:5 },
+    rest: { beginner:75, intermediate:90, advanced:90 },
+    exercises: { beginner:5, intermediate:7, advanced:9 },
+  },
+  {
+    id: 'strength', label: 'Increase Strength',
+    description: 'Heavy compound lifts — low reps, high intensity',
+    reps: { beginner:'6-8', intermediate:'4-6', advanced:'3-5' },
+    sets: { beginner:3, intermediate:4, advanced:6 },
+    rest: { beginner:120, intermediate:150, advanced:180 },
+    exercises: { beginner:5, intermediate:6, advanced:7 },
+  },
+  {
+    id: 'fitness', label: 'Improve Physical Fitness',
+    description: 'Balanced training — strength and conditioning',
+    reps: { beginner:'10-15', intermediate:'10-12', advanced:'8-12' },
+    sets: { beginner:3, intermediate:3, advanced:4 },
+    rest: { beginner:60, intermediate:60, advanced:75 },
+    exercises: { beginner:6, intermediate:7, advanced:8 },
+  },
+  {
+    id: 'definition', label: 'Definition',
+    description: 'Sculpt and define — moderate weight, high reps',
+    reps: { beginner:'12-15', intermediate:'12-15', advanced:'12-20' },
+    sets: { beginner:3, intermediate:4, advanced:4 },
+    rest: { beginner:45, intermediate:45, advanced:30 },
+    exercises: { beginner:6, intermediate:8, advanced:9 },
+  },
+  {
+    id: 'toning', label: 'Body Toning',
+    description: 'Light resistance, high reps — firm and tone',
+    reps: { beginner:'15-20', intermediate:'15-20', advanced:'15-20' },
+    sets: { beginner:2, intermediate:3, advanced:4 },
+    rest: { beginner:30, intermediate:30, advanced:30 },
+    exercises: { beginner:6, intermediate:7, advanced:8 },
+  },
+  {
+    id: 'cardio', label: 'Cardiovascular',
+    description: 'Circuit style — keep heart rate elevated',
+    reps: { beginner:'15-20', intermediate:'20', advanced:'20+' },
+    sets: { beginner:2, intermediate:3, advanced:4 },
+    rest: { beginner:30, intermediate:20, advanced:15 },
+    exercises: { beginner:6, intermediate:8, advanced:10 },
+  },
+  {
+    id: 'fat_loss', label: 'Weight / Fat Loss',
+    description: 'High volume circuits — maximize calorie burn',
+    reps: { beginner:'12-15', intermediate:'15', advanced:'15-20' },
+    sets: { beginner:3, intermediate:4, advanced:4 },
+    rest: { beginner:45, intermediate:30, advanced:20 },
+    exercises: { beginner:6, intermediate:8, advanced:9 },
+  },
+  {
+    id: 'active', label: 'Stay Active',
+    description: 'Enjoyable movement — health and wellbeing',
+    reps: { beginner:'10-15', intermediate:'10-15', advanced:'12-15' },
+    sets: { beginner:2, intermediate:3, advanced:3 },
+    rest: { beginner:60, intermediate:60, advanced:60 },
+    exercises: { beginner:5, intermediate:6, advanced:7 },
+  },
+];
+// Helper: look up goal config by id or label (supports both legacy label and new id)
+const getGoalConfig = (goalIdOrLabel) => {
+  if (!goalIdOrLabel) return GOAL_CONFIGS[0];
+  return GOAL_CONFIGS.find(g => g.id === goalIdOrLabel || g.label === goalIdOrLabel) || GOAL_CONFIGS[0];
+};
+
 /* ─── Routine builder (2–6 days) ─── */
 const buildRoutine = (profile, partnerProfile = null) => {
-  const level = profile.level || "intermediate";
+  const level   = (profile.level || "intermediate").toLowerCase();
+  const levelKey = level === "advanced" ? "advanced" : level === "beginner" ? "beginner" : "intermediate";
+  const goalCfg  = getGoalConfig(profile.goal);
+  const goalSets = goalCfg.sets[levelKey] || 3;
+  const goalReps = goalCfg.reps[levelKey] || "8-12";
+  const goalRest = goalCfg.rest[levelKey] || 75;
   const days  = parseInt(profile.daysPerWeek) || 3;
   const yw    = parseInt(profile.weight) || 80;
   const pw    = partnerProfile?.weight ? parseInt(partnerProfile.weight) : null;
   const wA    = (m) => `${Math.round(yw * m)}kg`;
   const wB    = (m) => pw ? `${Math.round(pw * m)}kg` : "— kg";
-  const beg   = level === "beginner";
+  const beg   = levelKey === "beginner";
+  // Apply goal-aware set/rep overrides to an exercise definition
+  const applyGoal = (ex) => ({ ...ex, sets: goalSets, reps: goalReps, rest: goalRest });
   const equip = profile.equipment || [];
   const splitPref = profile.splitPreference || "Balanced";
   const prioMuscles = profile.priorityMuscles || [];
   const trainingDays = profile.trainingDays || null;
 
-  const filterEx = (exercises) => exercises.filter(e => equipmentAllowed(e.name, equip));
+  // Bodyweight fallback pool — used to pad days when equipment filter removes too many exercises
+  const BW_FALLBACK_POOL = [
+    { name:"Push-Ups",          muscles:"CHEST",     sets:3, reps:"10–15", rest:60, wA:"BW", wB:"BW", rpe:5 },
+    { name:"Bodyweight Squat",  muscles:"QUADS",     sets:3, reps:"15–20", rest:45, wA:"BW", wB:"BW", rpe:4 },
+    { name:"Inverted Row",      muscles:"BACK",      sets:3, reps:"8–12",  rest:60, wA:"BW", wB:"BW", rpe:6 },
+    { name:"Glute Bridge",      muscles:"GLUTES",    sets:3, reps:"12–15", rest:45, wA:"BW", wB:"BW", rpe:5 },
+    { name:"Plank",             muscles:"CORE",      sets:3, reps:"30–60s",rest:45, wA:"BW", wB:"BW", rpe:5 },
+    { name:"Burpee",            muscles:"FULL BODY", sets:3, reps:"8–12",  rest:60, wA:"BW", wB:"BW", rpe:7 },
+    { name:"Jump Squat",        muscles:"QUADS",     sets:3, reps:"10–15", rest:60, wA:"BW", wB:"BW", rpe:6 },
+    { name:"Tricep Dip",        muscles:"TRICEPS",   sets:3, reps:"10–12", rest:60, wA:"BW", wB:"BW", rpe:6 },
+    { name:"Dead Bug",          muscles:"CORE",      sets:3, reps:"10–12", rest:45, wA:"BW", wB:"BW", rpe:4 },
+    { name:"Mountain Climber",  muscles:"CORE",      sets:3, reps:"20–30", rest:45, wA:"BW", wB:"BW", rpe:6 },
+  ];
+  const filterEx = (exercises) => {
+    const filtered = exercises.filter(e => equipmentAllowed(e.name, equip)).map(applyGoal);
+    if (filtered.length >= 3) return filtered;
+    const existing = new Set(filtered.map(e => e.name));
+    const extras = BW_FALLBACK_POOL.filter(e => !existing.has(e.name)).slice(0, 3 - filtered.length);
+    return [...filtered, ...extras.map(applyGoal)];
+  };
 
   // Day label helper
   const dayLabel = (idx) => trainingDays && trainingDays[idx] ? trainingDays[idx] : `DAY ${idx + 1}`;
@@ -511,15 +651,61 @@ const Numpad = ({onDigit, onDelete}) => {
    ERROR BOUNDARY — catches React render errors gracefully
 ════════════════════════════════════════════ */
 class ErrorBoundary extends React.Component {
-  constructor(props) { super(props); this.state = { hasError: false }; }
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
   static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(error, info) { console.warn('App error caught:', error.message); }
+
+  handleRestart = () => {
+    // Keep profile, PIN, routine, history — only clear volatile session state
+    const keysToKeep = ['str_profile','str_pin','str_routine','str_summary',
+                        'str_room_code','str_user_slot','str_join_token',
+                        'str_history','str_weight_log','str_prs','str_enc_key',
+                        'str_messages'];
+    const saved = {};
+    keysToKeep.forEach(k => { const v = localStorage.getItem(k); if (v) saved[k] = v; });
+    localStorage.clear();
+    Object.entries(saved).forEach(([k, v]) => localStorage.setItem(k, v));
+    // Always remove volatile crash-causing session keys
+    localStorage.removeItem('str_active_session');
+    localStorage.removeItem('str_current_session_id');
+    window.location.reload();
+  };
+
+  handleNuclear = () => {
+    localStorage.clear();
+    window.location.reload();
+  };
+
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ background: "#080808", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32, textAlign: "center" }}>
-          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 52, color: "#FAFAFA", marginBottom: 16, lineHeight: 0.9 }}>SOMETHING<br />WENT WRONG</div>
-          <p style={{ fontFamily: "'Barlow',sans-serif", fontSize: 15, color: "#888", lineHeight: 1.6, marginBottom: 28 }}>An unexpected error occurred. Your data is safe.</p>
-          <button onClick={() => { try { localStorage.removeItem("str_active_session"); localStorage.removeItem("str_current_session_id"); } catch {} this.setState({ hasError: false }); window.location.reload(); }} style={{ background: "#C8F135", border: "none", borderRadius: 14, padding: "16px 32px", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 16, letterSpacing: 2.5, color: "#080808", cursor: "pointer" }}>RESTART APP</button>
+        <div style={{ background:'#080808', minHeight:'100vh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:32, fontFamily:"'Barlow Condensed',sans-serif", textAlign:'center' }}>
+          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:52, color:'#FAFAFA', lineHeight:0.9, marginBottom:16 }}>
+            SOMETHING<br/>WENT WRONG
+          </div>
+          <p style={{ color:'#888', fontSize:15, marginBottom:40, lineHeight:1.6, fontFamily:"'Barlow',sans-serif" }}>
+            An error occurred. Your profile and workout history are safe.
+          </p>
+          <button onClick={this.handleRestart}
+            style={{ background:'#C8F135', border:'none', borderRadius:14, padding:'16px 0',
+                     width:'100%', maxWidth:320, fontFamily:"'Barlow Condensed',sans-serif",
+                     fontWeight:900, fontSize:16, letterSpacing:2, color:'#080808',
+                     cursor:'pointer', marginBottom:12 }}>
+            RESTART APP
+          </button>
+          <button onClick={this.handleNuclear}
+            style={{ background:'transparent', border:'1px solid #333', borderRadius:14,
+                     padding:'14px 0', width:'100%', maxWidth:320,
+                     fontFamily:"'Barlow Condensed',sans-serif", fontWeight:700,
+                     fontSize:14, letterSpacing:2, color:'#555', cursor:'pointer' }}>
+            CLEAR ALL DATA &amp; START OVER
+          </button>
+          <p style={{ color:'#333', fontSize:11, marginTop:20 }}>
+            "Clear all data" only if Restart doesn't work
+          </p>
         </div>
       );
     }
@@ -728,6 +914,32 @@ function AppInner() {
 
   // null-safe profile updater (profile starts null before onboarding)
   const p = (k, v) => setProfile(prev => ({...(prev || {}), [k]: v}));
+
+  /* ─── Week progress: recalculates whenever workoutHistory or routine changes ─── */
+  const weekProgress = useMemo(() => {
+    try {
+      const today = new Date();
+      const todayDOW = today.getDay();
+      const mondayOffset = todayDOW === 0 ? -6 : 1 - todayDOW;
+      const monday = new Date(today);
+      monday.setDate(today.getDate() + mondayOffset);
+      monday.setHours(0,0,0,0);
+      const weekStart = monday.getTime();
+      const weekEnd = weekStart + 7 * 86400000;
+      const currentYear = new Date().getFullYear();
+      // Read fresh from state (also mirrors localStorage via persistence effect)
+      const hist = workoutHistory.length
+        ? workoutHistory
+        : (() => { try { return JSON.parse(localStorage.getItem("str_history") || "[]"); } catch { return []; } })();
+      const thisWeek = hist.filter(h => {
+        if (!h.date) return false;
+        try { const d = new Date(h.date + ` ${currentYear}`); return d.getTime() >= weekStart && d.getTime() < weekEnd; } catch { return false; }
+      });
+      const map = {};
+      thisWeek.forEach(h => { if (h.dayOfWeek) map[h.dayOfWeek] = h; });
+      return map;
+    } catch { return {}; }
+  }, [workoutHistory, routine]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ─── Restore session + auto-expire check on mount ─── */
   useEffect(() => {
@@ -959,12 +1171,15 @@ function AppInner() {
     if (Object.keys(completedSets).length === 0 && exIdx === 0 && setNum === 1) return;
     const curDay = routine?.[dayIdx];
     if (!curDay) return;
+    const totalSetsInRoutine = curDay.exercises.reduce((s, e) => s + e.sets, 0);
     const sessionData = {
       dayIdx, exIdx, setNum, completedSets,
       startedAt: workoutStartRef.current,
+      lastActivityAt: Date.now(),
       exerciseName: curDay.exercises[exIdx]?.name || "",
       dayName: curDay.name,
       totalExercises: curDay.exercises.length,
+      totalSetsInRoutine,
       currentWeight: curDay.exercises[exIdx]?.wA || "",
       color: curDay.color,
     };
@@ -1007,7 +1222,9 @@ function AppInner() {
       setSetNum(1);
       startRest(ex.rest);
     } else {
-      // Workout complete — save history
+      // Workout complete — show completion sheet IMMEDIATELY, then persist async
+      setSheet("complete");
+
       const durationMin = workoutStartRef.current
         ? Math.round((Date.now() - workoutStartRef.current) / 60000)
         : 45;
@@ -1031,17 +1248,18 @@ function AppInner() {
         color: day.color,
         note: workoutNote || "",
       };
+      // Save locally immediately — never block on Supabase
       setWorkoutHistory(prev => [entry, ...prev].slice(0, 20));
       setWorkoutNote("");
-      // Clear active session in Supabase
+      localStorage.removeItem("str_active_session");
+      // Background Supabase sync — failure does not affect UX
       if (roomCode && supabase) {
         const col = userSlot === "a" ? "user_a" : "user_b";
         supabase.from("rooms")
-          .update({ [col]: { ...profile, _activeSession: null, _lastWorkout: entry } })
+          .update({ [col]: { ...(profile || {}), _activeSession: null, _lastWorkout: entry } })
           .eq("room_code", roomCode)
-          .catch(() => {});
+          .then(() => {}).catch(e => console.warn("Could not sync workout end:", e));
       }
-      setSheet("complete");
     }
   };
 
@@ -1720,12 +1938,11 @@ function AppInner() {
 
     // Feature 2 — Goal conflict handler
     const GOAL_CONFLICT_EXPLANATIONS = {
-      "Build muscle_Lose fat": "These goals require opposite nutrition strategies — building muscle needs a calorie surplus, losing fat needs a deficit. Most people get better results focusing on one. That said, beginners can do both at once ('body recomposition') — if that's you, select the goal that matters most right now.",
-      "Lose fat_Build muscle": "These goals require opposite nutrition strategies — building muscle needs a calorie surplus, losing fat needs a deficit. Most people get better results focusing on one. That said, beginners can do both at once ('body recomposition') — if that's you, select the goal that matters most right now.",
-      "Get stronger_Improve endurance": "Heavy strength training and endurance cardio can interfere with each other (interference effect). Picking one as your primary focus lets us build the right program. You can always add cardio on rest days.",
-      "Improve endurance_Get stronger": "Heavy strength training and endurance cardio can interfere with each other (interference effect). Picking one as your primary focus lets us build the right program. You can always add cardio on rest days.",
-      "Stay active_Build muscle": "Staying active is a great foundation — but muscle building requires progressive overload and specific volume targets. If you're ready to commit to that, switch to 'Build muscle' as your goal.",
-      "Build muscle_Stay active": "Staying active is a great foundation — but muscle building requires progressive overload and specific volume targets. If you're ready to commit to that, switch to 'Build muscle' as your goal.",
+      "Gain Muscle Mass_Weight / Fat Loss": "Building muscle needs a calorie surplus; fat loss needs a deficit — these goals pull in opposite directions nutritionally. Beginners can sometimes do both ('body recomposition'), but for best results pick your priority now. You can always update it later.",
+      "Weight / Fat Loss_Gain Muscle Mass": "Building muscle needs a calorie surplus; fat loss needs a deficit — these goals pull in opposite directions nutritionally. Beginners can sometimes do both ('body recomposition'), but for best results pick your priority now. You can always update it later.",
+      "Increase Strength_Cardiovascular": "Heavy strength training and high-volume cardio interfere with each other — your body can't fully adapt to both simultaneously. Pick your primary focus and add the other as supplementary work on rest days.",
+      "Cardiovascular_Increase Strength": "Heavy strength training and high-volume cardio interfere with each other — your body can't fully adapt to both simultaneously. Pick your primary focus and add the other as supplementary work on rest days.",
+      "Body Toning_Increase Strength": "Toning uses light weight and high reps; strength training uses heavy weight and low reps. They're fundamentally different training stimuli. Choose the one that matches your priority right now.",
     };
 
     const handleGoalSelect = (v) => {
@@ -1745,7 +1962,7 @@ function AppInner() {
       setGoalConflictTimer(timer);
     };
 
-    const GOALS  = ["Lose fat","Build muscle","Get stronger","Improve endurance","Stay active"];
+    const GOALS  = ["Gain Muscle Mass","Increase Strength","Improve Physical Fitness","Definition","Body Toning","Cardiovascular","Weight / Fat Loss","Stay Active"];
     const LEVELS = ["Beginner","Intermediate","Advanced"];
     const EQUIP  = ["Full gym","Dumbbells only","Barbell + rack","Cables","Machines","Resistance bands"];
     const DAYS   = ["2","3","4","5","6"];
@@ -2091,62 +2308,78 @@ function AppInner() {
                 : "First time — start conservative"}
             </div>
             <div className="fu1" style={{background:"var(--card)",borderRadius:16,border:"1px solid var(--line)",padding:16,marginBottom:16}}>
-              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:12}}>PROGRESS</div>
-              {/* My progress bar */}
-              <div style={{marginBottom:14}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
-                  <div style={{display:"flex",alignItems:"center",gap:6}}>
-                    <div style={{width:6,height:6,borderRadius:99,background:accentColor}}/>
-                    <span style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:2,color:"var(--white)"}}>{profile.name?.toUpperCase()||"YOU"}</span>
+              {/* ── MY all-sets progress ── */}
+              {(() => {
+                const totalSetsInRoutine = day.exercises.reduce((s, e) => s + e.sets, 0);
+                const totalCompletedSets = Object.keys(completedSets).length;
+                const allDots = [];
+                day.exercises.forEach((exercise, eIdx) => {
+                  for (let s = 1; s <= exercise.sets; s++) {
+                    allDots.push({
+                      key: `${eIdx}-${s}`,
+                      done: !!completedSets[`${eIdx}-${s}`],
+                      current: eIdx === exIdx && s === setNum,
+                    });
+                  }
+                });
+                return (
+                  <div style={{marginBottom:14}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}>
+                        <div style={{width:6,height:6,borderRadius:99,background:accentColor}}/>
+                        <span style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:2,color:"var(--white)"}}>{profile.name?.toUpperCase()||"YOU"}</span>
+                      </div>
+                      <span style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:1,color:"var(--gray)"}}>{totalCompletedSets} / {totalSetsInRoutine} SETS</span>
+                    </div>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                      {allDots.map(dot => (
+                        <div key={dot.key} style={{
+                          width:10, height:10, borderRadius:"50%",
+                          background: dot.done ? accentColor : dot.current ? `${accentColor}66` : "#2a2a2a",
+                          border: dot.current ? `1.5px solid ${accentColor}` : "none",
+                          transition:"background 0.3s",
+                        }}/>
+                      ))}
+                    </div>
                   </div>
-                  <div style={{display:"flex",gap:10,alignItems:"center"}}>
-                    <span style={{fontFamily:"var(--font-display)",fontSize:18,color:accentColor}}>{ex.wA}</span>
-                    <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>{exIdx+1}/{day.exercises.length}</span>
-                  </div>
-                </div>
-                <div style={{height:4,background:"var(--black)",borderRadius:99,overflow:"hidden"}}>
-                  <div style={{height:"100%",borderRadius:99,background:accentColor,width:`${((exIdx + (setNum-1)/ex.sets) / day.exercises.length)*100}%`,transition:"width .5s"}}/>
-                </div>
-                <div style={{display:"flex",gap:4,marginTop:6}}>
-                  {Array.from({length:ex.sets}).map((_,i)=>{
-                    const done = completedSets[`${exIdx}-${i+1}`];
-                    const cur = i+1===setNum;
-                    return <div key={i} style={{width:8,height:8,borderRadius:99,background:done?accentColor:cur?`${accentColor}66`:"var(--line)",border:cur?`1px solid ${accentColor}`:"none",transition:"background .2s"}}/>;
-                  })}
-                </div>
-              </div>
-              {/* Partner progress bar */}
+                );
+              })()}
+              {/* ── PARTNER all-sets progress ── */}
               {(() => {
                 const pSession = partnerProfile?._activeSession;
                 const isPartnerActive = pSession && (Date.now() - (pSession.startedAt || 0)) < 7_200_000;
-                const pColor = pSession?.color || "var(--gray)";
-                const pEx = isPartnerActive ? pSession.exIdx : 0;
-                const pSet = isPartnerActive ? pSession.setNum : 0;
-                const pTotal = isPartnerActive ? (pSession.totalExercises || 1) : 1;
-                const pSets = routine?.[pSession?.dayIdx]?.exercises?.[pEx]?.sets || 4;
-                const pPct = isPartnerActive ? ((pEx + (pSet-1)/pSets) / pTotal) * 100 : 0;
+                const pColor = pSession?.color || "#444";
+                const pName = partnerProfile?.name?.toUpperCase() || "PARTNER";
+                const pCompleted = isPartnerActive ? Object.keys(pSession.completedSets || {}).length : 0;
+                const pTotal = isPartnerActive ? (pSession.totalSetsInRoutine || pSession.totalExercises * 3 || 15) : 15;
+                // Build partner dots from their completedSets if available, else show dim placeholders
+                const pDots = [];
+                if (isPartnerActive && pSession.completedSets) {
+                  // We know total sets from totalSetsInRoutine — fill completed then remainder
+                  for (let i = 0; i < pTotal; i++) {
+                    pDots.push({ done: i < pCompleted });
+                  }
+                } else {
+                  for (let i = 0; i < pTotal; i++) pDots.push({ done: false });
+                }
                 return (
                   <div>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
                       <div style={{display:"flex",alignItems:"center",gap:6}}>
-                        <div style={{width:6,height:6,borderRadius:99,background:isPartnerActive?"#30d158":"var(--gray2)"}}/>
-                        <span style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:2,color:"var(--gray)"}}>{partnerProfile?.name?.toUpperCase()||"PARTNER"}</span>
+                        <div style={{width:6,height:6,borderRadius:99,background:isPartnerActive?"#30d158":"#333"}}/>
+                        <span style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:2,color:"var(--gray)"}}>{pName}</span>
                       </div>
-                      <div style={{display:"flex",gap:10,alignItems:"center"}}>
-                        <span style={{fontFamily:"var(--font-display)",fontSize:18,color:isPartnerActive?pColor:"var(--gray2)"}}>{ex.wB}</span>
-                        {isPartnerActive && <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>{pEx+1}/{pTotal}</span>}
-                      </div>
+                      <span style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:1,color:"var(--gray2)"}}>{pCompleted} / {pTotal} SETS</span>
                     </div>
-                    <div style={{height:4,background:"var(--black)",borderRadius:99,overflow:"hidden"}}>
-                      <div style={{height:"100%",borderRadius:99,background:isPartnerActive?pColor:"var(--line)",width:`${pPct}%`,transition:"width .5s"}}/>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                      {pDots.map((dot, i) => (
+                        <div key={i} style={{
+                          width:10, height:10, borderRadius:"50%",
+                          background: dot.done ? (isPartnerActive ? pColor : "#555") : "#2a2a2a",
+                          transition:"background 0.3s",
+                        }}/>
+                      ))}
                     </div>
-                    {isPartnerActive && (
-                      <div style={{display:"flex",gap:4,marginTop:6}}>
-                        {Array.from({length:pSets}).map((_,i)=>(
-                          <div key={i} style={{width:8,height:8,borderRadius:99,background:i<pSet-1?pColor:"var(--line)",transition:"background .2s"}}/>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 );
               })()}
@@ -2482,7 +2715,7 @@ function AppInner() {
             <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)"}}>GOOD {new Date().getHours()<12?"MORNING":new Date().getHours()<17?"AFTERNOON":"EVENING"}</div>
             <div style={{fontFamily:"var(--font-display)",fontSize:28,lineHeight:1.05,marginTop:2}}>
               {(profile.name||"ATHLETE").toUpperCase()}
-              {partnerProfile?` & ${(partnerProfile.name||"PARTNER").toUpperCase()}`:""}
+              {partnerProfile && partnerProfile.name && partnerProfile.name.toLowerCase() !== (profile.name||"").toLowerCase() ? ` & ${partnerProfile.name.toUpperCase()}` : ""}
             </div>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -2528,21 +2761,8 @@ function AppInner() {
 
             const isTrainingDay = trainingDays ? trainingDays.includes(todayLabel) : true;
 
-            // Check workout history for this week
-            const weekStart = monday.getTime();
-            const weekEnd = weekStart + 7 * 86400000;
-            const currentYear = new Date().getFullYear();
-            const thisWeekHistory = workoutHistory.filter(h => {
-              if (!h.date) return false;
-              try {
-                const d = new Date(h.date + ` ${currentYear}`);
-                return d.getTime() >= weekStart && d.getTime() < weekEnd;
-              } catch { return false; }
-            });
-
-            // Map completed days to their workout entries (for color)
-            const completedDayMap = {}; // { "Mon": entry, "Tue": entry, ... }
-            thisWeekHistory.forEach(h => { if (h.dayOfWeek) completedDayMap[h.dayOfWeek] = h; });
+            // Use the weekProgress memo (updates whenever workoutHistory or routine changes)
+            const completedDayMap = weekProgress; // { "Mon": historyEntry, ... }
             const completedDayOfWeeks = Object.keys(completedDayMap);
 
             return (
@@ -3194,17 +3414,18 @@ function AppInner() {
             const arr = rd[k] || [];
             setRd(k, arr.includes(v) ? arr.filter(x=>x!==v) : [...arr, v]);
           };
-          const GOALS_RD  = ["Lose fat","Build muscle","Get stronger","Improve endurance","Stay active"];
+          const GOALS_RD  = ["Gain Muscle Mass","Increase Strength","Improve Physical Fitness","Definition","Body Toning","Cardiovascular","Weight / Fat Loss","Stay Active"];
           const LEVELS_RD = ["Beginner","Intermediate","Advanced"];
           const EQUIP_RD  = ["Full gym","Dumbbells only","Barbell + rack","Cables","Machines","Resistance bands"];
           const ALL_DAYS_RD = ["MON","TUE","WED","THU","FRI","SAT","SUN"];
           const DAYS_COUNT_RD = ["2","3","4","5","6"];
           const getDayPresetRd = (n) => ({2:["TUE","FRI"],3:["MON","WED","FRI"],4:["MON","TUE","THU","FRI"],5:["MON","TUE","WED","THU","FRI"],6:["MON","TUE","WED","THU","FRI","SAT"]}[n] || ["MON","WED","FRI"]);
           const GOAL_CONFLICT_RD = {
-            "Build muscle_Lose fat":"These goals need opposite nutrition strategies. Pick the priority that matters most right now.",
-            "Lose fat_Build muscle":"These goals need opposite nutrition strategies. Pick the priority that matters most right now.",
-            "Get stronger_Improve endurance":"Strength training and endurance can interfere. Picking one as primary gets better results.",
-            "Improve endurance_Get stronger":"Strength training and endurance can interfere. Picking one as primary gets better results.",
+            "Gain Muscle Mass_Weight / Fat Loss":"Building muscle needs a surplus; fat loss needs a deficit. Pick the priority that matters most right now.",
+            "Weight / Fat Loss_Gain Muscle Mass":"Building muscle needs a surplus; fat loss needs a deficit. Pick the priority that matters most right now.",
+            "Increase Strength_Cardiovascular":"Strength training and cardio interfere with each other. Pick one as primary for best results.",
+            "Cardiovascular_Increase Strength":"Strength training and cardio interfere with each other. Pick one as primary for best results.",
+            "Body Toning_Increase Strength":"Toning and strength use opposite rep schemes. Pick the one that matches your goal.",
           };
           const handleRdGoal = (v) => {
             if (!rd.goal || rd.goal === v) { setRd("goal", v); return; }
