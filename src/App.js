@@ -912,6 +912,11 @@ function AppInner() {
   // Rate limiting for Supabase messages
   const lastMsgTimeRef = useRef(0);
 
+  // Real-time partner workout session (from active_session_a/b columns)
+  const [partnerSession, setPartnerSession] = useState(null);
+  // Live room data for partner tab status
+  const [roomData, setRoomData] = useState(null);
+
   // null-safe profile updater (profile starts null before onboarding)
   const p = (k, v) => setProfile(prev => ({...(prev || {}), [k]: v}));
 
@@ -1201,7 +1206,29 @@ function AppInner() {
 
   const completeSet = () => {
     const key = `${exIdx}-${setNum}`;
-    setCompletedSets(prev => ({...prev, [key]:true}));
+    const newCompletedSets = { ...completedSets, [key]: true };
+    setCompletedSets(newCompletedSets);
+
+    // Push to Supabase immediately with fresh (non-stale) data
+    if (roomCode && supabase && workoutStartRef.current && day) {
+      const totalSetsInRoutine = day.exercises.reduce((s, e) => s + e.sets, 0);
+      const sessionUpdate = {
+        isActive: true,
+        dayIdx, exIdx, setNum,
+        completedSets: newCompletedSets,
+        totalSetsInRoutine,
+        lastActivityAt: Date.now(),
+        startedAt: workoutStartRef.current,
+        dayName: day.name,
+        dayColor: day.color,
+        userName: profile?.name || "",
+        exerciseName: ex?.name || "",
+        currentWeight: ex?.wA || "",
+        totalExercises: day.exercises.length,
+      };
+      localStorage.setItem('str_active_session', JSON.stringify(sessionUpdate));
+      pushSessionToSupabase(sessionUpdate);
+    }
 
     // Feature 4A — Check for PR
     const currentWeight = parseFloat(ex.wA) || 0;
@@ -1498,6 +1525,68 @@ function AppInner() {
       }
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ─── Real-time workout progress: push to active_session_a/b column ─── */
+  const pushSessionToSupabase = async (sessionData) => {
+    if (!roomCode || !supabase) return;
+    const slot = userSlot === 'a' ? 'active_session_a' : 'active_session_b';
+    const { error } = await supabase
+      .from('rooms')
+      .update({ [slot]: sessionData })
+      .eq('room_code', roomCode);
+    if (error) console.warn('Session push failed:', error.message);
+  };
+
+  /* ─── Subscribe to partner's active_session on workout screen mount ─── */
+  useEffect(() => {
+    if (!roomCode || !supabase || screen !== 'workout') return;
+    // Fetch current partner session immediately — don't wait for next UPDATE
+    (async () => {
+      const { data } = await supabase
+        .from('rooms')
+        .select('active_session_a, active_session_b')
+        .eq('room_code', roomCode)
+        .single();
+      if (data) {
+        const partnerSlot = userSlot === 'a' ? 'active_session_b' : 'active_session_a';
+        const ps = data[partnerSlot];
+        if (ps?.isActive) setPartnerSession(ps);
+      }
+    })();
+    // Subscribe to subsequent updates
+    const channel = supabase
+      .channel(`workout-progress-${roomCode}-${Date.now()}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `room_code=eq.${roomCode}` }, (payload) => {
+        const partnerSlot = userSlot === 'a' ? 'active_session_b' : 'active_session_a';
+        const ps = payload.new?.[partnerSlot];
+        if (ps?.isActive) {
+          setPartnerSession(ps);
+        } else if (ps && !ps.isActive) {
+          setPartnerSession(null);
+        }
+      })
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') console.log('Partner workout channel active');
+        if (status === 'CHANNEL_ERROR') console.warn('Partner channel error');
+      });
+    return () => { supabase.removeChannel(channel); };
+  }, [roomCode, userSlot, screen]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ─── Partner-tab room subscription (for live status outside workout) ─── */
+  useEffect(() => {
+    if (!roomCode || !supabase) return;
+    (async () => {
+      const { data } = await supabase.from('rooms').select('*').eq('room_code', roomCode).single();
+      if (data) setRoomData(data);
+    })();
+    const channel = supabase
+      .channel(`partner-tab-${roomCode}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `room_code=eq.${roomCode}` }, (payload) => {
+        setRoomData(payload.new);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [roomCode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ─── Active session helpers ─── */
   const clearActiveSession = () => {
@@ -2293,12 +2382,21 @@ function AppInner() {
                 <button onClick={()=>{setSwapExercise(ex);setSheet("swap");}} style={{background:"var(--card)",border:"1px solid var(--line2)",borderRadius:8,padding:"4px 10px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:10,letterSpacing:2,color:"var(--gray)",cursor:"pointer",flexShrink:0}}>SWAP</button>
               </div>
               <div style={{display:"flex",gap:8}}>
-                {[{l:"SETS",v:ex.sets},{l:"REPS",v:ex.reps},{l:"REST",v:`${ex.rest}s`}].map(({l,v})=>(
+                {[{l:"SETS",v:ex.sets},{l:"REPS",v:ex.reps}].map(({l,v})=>(
                   <div key={l} style={{flex:1,background:"var(--card)",borderRadius:12,padding:"12px 0",textAlign:"center",border:"1px solid var(--line)"}}>
                     <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"var(--gray)",marginBottom:4}}>{l}</div>
                     <div style={{fontFamily:"var(--font-cond)",fontWeight:800,fontSize:22,color:"var(--white)"}}>{v}</div>
                   </div>
                 ))}
+                <div style={{flex:1,background:"var(--card)",borderRadius:12,padding:"12px 0",textAlign:"center",border:`1px solid ${day.color}33`}}>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"var(--gray)",marginBottom:4}}>WEIGHT</div>
+                  <div style={{fontFamily:"var(--font-display)",fontSize:24,color:day.color||"var(--lime)"}}>
+                    {ex.wA === "BW" ? "BW" : ex.wA || "—"}
+                  </div>
+                </div>
+              </div>
+              <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray2)",letterSpacing:1,marginTop:6}}>
+                REST · {ex.rest}s
               </div>
             </div>
             {/* Feature 4C — Weight progression suggestion */}
@@ -2346,36 +2444,31 @@ function AppInner() {
               })()}
               {/* ── PARTNER all-sets progress ── */}
               {(() => {
-                const pSession = partnerProfile?._activeSession;
-                const isPartnerActive = pSession && (Date.now() - (pSession.startedAt || 0)) < 7_200_000;
-                const pColor = pSession?.color || "#444";
-                const pName = partnerProfile?.name?.toUpperCase() || "PARTNER";
-                const pCompleted = isPartnerActive ? Object.keys(pSession.completedSets || {}).length : 0;
-                const pTotal = isPartnerActive ? (pSession.totalSetsInRoutine || pSession.totalExercises * 3 || 15) : 15;
-                // Build partner dots from their completedSets if available, else show dim placeholders
-                const pDots = [];
-                if (isPartnerActive && pSession.completedSets) {
-                  // We know total sets from totalSetsInRoutine — fill completed then remainder
-                  for (let i = 0; i < pTotal; i++) {
-                    pDots.push({ done: i < pCompleted });
-                  }
-                } else {
-                  for (let i = 0; i < pTotal; i++) pDots.push({ done: false });
-                }
+                const ps = partnerSession;
+                const isActive = ps?.isActive && (Date.now() - (ps.startedAt || 0)) < 7_200_000;
+                const pColor = ps?.dayColor || "#444";
+                const pName = (ps?.userName || partnerProfile?.name || "PARTNER").toUpperCase();
+                // Use partner's OWN totalSetsInRoutine — never the local user's routine
+                const pTotal = isActive ? (ps.totalSetsInRoutine || 0) : 10;
+                const pCompleted = isActive ? Object.keys(ps.completedSets || {}).length : 0;
+                const pDots = Array.from({ length: pTotal || 10 }, (_, i) => ({ done: i < pCompleted }));
                 return (
                   <div>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
                       <div style={{display:"flex",alignItems:"center",gap:6}}>
-                        <div style={{width:6,height:6,borderRadius:99,background:isPartnerActive?"#30d158":"#333"}}/>
+                        <div style={{width:6,height:6,borderRadius:99,background:isActive?"#30d158":"#333"}}/>
                         <span style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:2,color:"var(--gray)"}}>{pName}</span>
                       </div>
-                      <span style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:1,color:"var(--gray2)"}}>{pCompleted} / {pTotal} SETS</span>
+                      {isActive
+                        ? <span style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:1,color:"var(--gray2)"}}>{pCompleted} / {pTotal} SETS</span>
+                        : <span style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:1,color:"var(--gray2)"}}>Not training yet</span>
+                      }
                     </div>
                     <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
                       {pDots.map((dot, i) => (
                         <div key={i} style={{
                           width:10, height:10, borderRadius:"50%",
-                          background: dot.done ? (isPartnerActive ? pColor : "#555") : "#2a2a2a",
+                          background: dot.done ? pColor : "#2a2a2a",
                           transition:"background 0.3s",
                         }}/>
                       ))}
@@ -2976,12 +3069,20 @@ function AppInner() {
                   </div>
                 </>
               ) : (() => {
-                const pSession = partnerProfile._activeSession;
+                // Derive live partner session from roomData (updated via subscription)
+                const partnerRoomSlot = userSlot === 'a' ? 'active_session_b' : 'active_session_a';
+                const pSession = roomData?.[partnerRoomSlot] || partnerProfile._activeSession;
                 const pLastWorkout = partnerProfile._lastWorkout;
-                // Staleness check: only count as "training now" if session started < 2 hours ago
-                const isPartnerActive = pSession && (Date.now() - (pSession.startedAt || 0)) < 7_200_000;
-                const todayStr = new Date().toLocaleDateString("en-US", {month:"short", day:"numeric"});
-                const lastSeenToday = pLastWorkout?.date === todayStr;
+                const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
+                const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+                const isPartnerActive = pSession?.isActive && (pSession.lastActivityAt || pSession.startedAt || 0) > twoHoursAgo;
+                const partnerStatus =
+                  isPartnerActive
+                    ? 'TRAINING NOW'
+                    : (pSession?.lastActivityAt || 0) > oneDayAgo || pLastWorkout?.date === new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"})
+                      ? 'LAST SEEN TODAY'
+                      : 'NOT TRAINING';
+                const statusColor = partnerStatus === 'TRAINING NOW' ? '#C8F135' : partnerStatus === 'LAST SEEN TODAY' ? '#FF9F0A' : '#555';
                 const fmtElapsed = (s) => {
                   const m = Math.floor(s / 60);
                   const sec = s % 60;
@@ -3025,18 +3126,15 @@ function AppInner() {
                         <div style={{width:52,height:52,borderRadius:99,background:"var(--lime)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-display)",fontSize:24,color:"var(--black)",flexShrink:0}}>{(partnerProfile.name||"?").slice(0,2).toUpperCase()}</div>
                         <div style={{flex:1}}>
                           <div style={{fontFamily:"var(--font-display)",fontSize:28,lineHeight:1}}>{(partnerProfile.name||"PARTNER").toUpperCase()}</div>
-                          {isPartnerActive ? (
-                            <div style={{display:"flex",alignItems:"center",gap:6,marginTop:4}}>
-                              <div style={{width:7,height:7,borderRadius:99,background:"#30d158",animation:"pulse 1.5s infinite"}}/>
-                              <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"#30d158"}}>TRAINING NOW</span>
+                          <div style={{display:"flex",alignItems:"center",gap:6,marginTop:4}}>
+                            <div style={{width:7,height:7,borderRadius:99,background:statusColor,animation:partnerStatus==='TRAINING NOW'?"pulse 1.5s infinite":undefined}}/>
+                            <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:statusColor}}>{partnerStatus}</span>
+                          </div>
+                          {partnerStatus === 'TRAINING NOW' && pSession && (
+                            <div style={{fontSize:13,color:"#888",fontFamily:"var(--font-cond)",marginTop:4}}>
+                              NOW: <span style={{color:"var(--white)"}}>{pSession.dayName?.toUpperCase()}</span>
+                              {' · '}{Object.keys(pSession.completedSets||{}).length} / {pSession.totalSetsInRoutine} SETS
                             </div>
-                          ) : lastSeenToday ? (
-                            <div style={{display:"flex",alignItems:"center",gap:6,marginTop:4}}>
-                              <div style={{width:7,height:7,borderRadius:99,background:"var(--orange)"}}/>
-                              <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--orange)"}}>LAST SEEN TODAY</span>
-                            </div>
-                          ) : (
-                            <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",marginTop:4}}>NOT TRAINING</div>
                           )}
                         </div>
                         <button onClick={handleLeaveRoom} style={{background:"rgba(255,59,48,.1)",border:"1px solid rgba(255,59,48,.25)",borderRadius:8,padding:"6px 12px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:10,letterSpacing:2,color:"var(--red)",cursor:"pointer",flexShrink:0}}>LEAVE</button>
@@ -3045,7 +3143,7 @@ function AppInner() {
                       {isPartnerActive ? (
                         /* ── Active session view ── */
                         <div>
-                          <div style={{fontFamily:"var(--font-display)",fontSize:42,lineHeight:0.9,marginBottom:8,color:pSession.color||"var(--lime)"}}>{(pSession.exerciseName||"TRAINING").toUpperCase()}</div>
+                          <div style={{fontFamily:"var(--font-display)",fontSize:42,lineHeight:0.9,marginBottom:8,color:pSession.dayColor||pSession.color||"var(--lime)"}}>{(pSession.exerciseName||"TRAINING").toUpperCase()}</div>
                           {/* Exercise progress */}
                           <div style={{marginBottom:12}}>
                             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
@@ -3053,19 +3151,21 @@ function AppInner() {
                               <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:1,color:"var(--white)"}}>{completedExCount} / {pSession.totalExercises}</span>
                             </div>
                             <div style={{height:4,background:"var(--line)",borderRadius:99}}>
-                              <div style={{height:"100%",borderRadius:99,background:pSession.color||"var(--lime)",width:`${(completedExCount/(pSession.totalExercises||1))*100}%`,transition:"width .4s"}}/>
+                              <div style={{height:"100%",borderRadius:99,background:pSession.dayColor||pSession.color||"var(--lime)",width:`${(completedExCount/(pSession.totalExercises||1))*100}%`,transition:"width .4s"}}/>
                             </div>
                           </div>
-                          {/* Set progress dots */}
+                          {/* Set progress — total sets from partner's own session data */}
                           <div style={{marginBottom:12}}>
                             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-                              <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)"}}>CURRENT SET</span>
-                              <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--white)"}}>{pSession.setNum} / {routine?.[pSession.dayIdx]?.exercises?.[pSession.exIdx]?.sets||"?"}</span>
+                              <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)"}}>SETS DONE</span>
+                              <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--white)"}}>{Object.keys(pSession.completedSets||{}).length} / {pSession.totalSetsInRoutine||"?"}</span>
                             </div>
-                            <div style={{display:"flex",gap:5}}>
-                              {Array.from({length: routine?.[pSession.dayIdx]?.exercises?.[pSession.exIdx]?.sets||4}).map((_,i)=>(
-                                <div key={i} style={{width:10,height:10,borderRadius:99,background:i<pSession.setNum-1?"var(--lime)":"var(--line)",border:`1.5px solid ${i<pSession.setNum-1?"var(--lime)":"var(--line2)"}`}}/>
-                              ))}
+                            <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+                              {Array.from({length: pSession.totalSetsInRoutine||0}).map((_,i)=>{
+                                const done = i < Object.keys(pSession.completedSets||{}).length;
+                                const c = pSession.dayColor||pSession.color||"var(--lime)";
+                                return <div key={i} style={{width:10,height:10,borderRadius:99,background:done?c:"var(--line)",border:`1.5px solid ${done?c:"var(--line2)"}`}}/>;
+                              })}
                             </div>
                           </div>
                           <div style={{display:"flex",gap:10,marginBottom:16}}>
