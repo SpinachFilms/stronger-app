@@ -2653,6 +2653,48 @@ function AppInner() {
             </div>
           )}
         </div>
+
+        {/* ── Floating chat bubble during workout ── */}
+        {partnerProfile && (
+          <button
+            onClick={() => { setChatOpen(o => !o); if (!chatOpen) setChatLastOpenedAt(Date.now()); }}
+            style={{
+              position:"fixed",
+              bottom:82, right:"calc(50% - 215px + 16px)",
+              width:52, height:52,
+              background:"var(--lime)", border:"none", borderRadius:99,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              cursor:"pointer", zIndex:60,
+              boxShadow:"0 4px 20px rgba(200,241,53,.35)",
+              fontSize:22,
+            }}
+          >
+            {chatOpen ? "×" : (
+              <>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--black)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                {unreadCount > 0 && (
+                  <div style={{
+                    position:"absolute", top:-4, right:-4,
+                    width:18, height:18, borderRadius:99,
+                    background:"#ff3b30", border:"2px solid var(--black)",
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                    fontFamily:"var(--font-cond)", fontWeight:900, fontSize:10, color:"white",
+                  }}>{unreadCount > 9 ? "9+" : unreadCount}</div>
+                )}
+              </>
+            )}
+          </button>
+        )}
+        {chatOpen && partnerProfile && (
+          <ChatWindow
+            partnerProfile={partnerProfile}
+            messages={messages}
+            userSlot={userSlot}
+            onSend={sendChatMsg}
+          />
+        )}
       </>
     );
   }
