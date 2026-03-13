@@ -920,8 +920,8 @@ function ChatWindow({ partnerProfile, messages, userSlot, onSend, lang }) {
         })}
       </div>
       <div style={{padding:"8px 10px",borderTop:"1px solid var(--line)",display:"flex",flexWrap:"wrap",gap:6}}>
-        {["Done!","Form check?","Let's go!","Break","Almost!","You got this!"].map(t=>(
-          <button key={t} onClick={()=>onSend(t)} style={{background:"var(--dark)",border:"1px solid var(--line)",borderRadius:99,padding:"7px 12px",fontFamily:"var(--font-body)",fontSize:11,color:"var(--white)",cursor:"pointer"}}>{t}</button>
+        {(STRINGS[lang]?.quick_replies || STRINGS.en.quick_replies).map(qr=>(
+          <button key={qr} onClick={()=>onSend(qr)} style={{background:"var(--dark)",border:"1px solid var(--line)",borderRadius:99,padding:"7px 12px",fontFamily:"var(--font-body)",fontSize:11,color:"var(--white)",cursor:"pointer"}}>{qr}</button>
         ))}
       </div>
     </div>
@@ -1443,7 +1443,7 @@ function AppInner() {
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
           model:"claude-sonnet-4-20250514", max_tokens:1000,
-          system:"You are an elite strength coach inside a couples gym app called Stronger. Give concise, direct, warm advice. 2–3 short paragraphs. No markdown. Real coach voice.",
+          system:"You are an elite strength coach inside a couples gym app called Stronger. Give concise, direct, warm advice. 2–3 short paragraphs. No markdown. Real coach voice." + (lang === 'es' ? ' Respond in Spanish.' : ''),
           messages:[{role:"user", content:prompt}],
         }),
       });
@@ -1462,7 +1462,7 @@ function AppInner() {
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
           model:"claude-sonnet-4-20250514", max_tokens:1000,
-          system:"You are an elite strength coach. Write a 2-sentence routine summary. Be encouraging, specific, reference goals and level. No markdown.",
+          system:"You are an elite strength coach. Write a 2-sentence routine summary. Be encouraging, specific, reference goals and level. No markdown." + (lang === 'es' ? ' Respond in Spanish.' : ''),
           messages:[{
             role:"user",
             content:`Athlete: ${profile.name||"You"}, ${profile.age}y, ${profile.weight}kg, goal: ${profile.goal||"build muscle"}, level: ${profile.level||"intermediate"}, ${profile.daysPerWeek} days/week${resolvedPartner?`\nPartner: ${resolvedPartner.name||"Partner"}, ${resolvedPartner.weight}kg, goal: ${resolvedPartner.goal||"—"}, level: ${resolvedPartner.level||"—"}`:""}${profile.priorityMuscles?.length?`\nUser wants to prioritize: ${profile.priorityMuscles.join(', ')}. Split preference: ${profile.splitPreference||"Balanced"}.`:""}`,
@@ -1487,7 +1487,7 @@ function AppInner() {
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
           model:"claude-sonnet-4-20250514", max_tokens:1000,
-          system:"You are an elite strength coach. Write a 2-sentence routine summary. Be encouraging, specific. No markdown.",
+          system:"You are an elite strength coach. Write a 2-sentence routine summary. Be encouraging, specific. No markdown." + (lang === 'es' ? ' Respond in Spanish.' : ''),
           messages:[{role:"user", content:`Regenerate a new summary for: ${profile.name||"Athlete"}, goal: ${profile.goal||"build muscle"}, level: ${profile.level||"intermediate"}, ${profile.daysPerWeek} days/week.`}],
         }),
       });
@@ -1545,7 +1545,7 @@ function AppInner() {
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
           model:"claude-sonnet-4-20250514", max_tokens:1000,
-          system:"You are an elite strength coach. Write a 2-sentence routine summary. Be encouraging, specific. No markdown.",
+          system:"You are an elite strength coach. Write a 2-sentence routine summary. Be encouraging, specific. No markdown." + (lang === 'es' ? ' Respond in Spanish.' : ''),
           messages:[{role:"user",content:`Routine rebuilt for: ${rebuildDraft.name||"Athlete"}, goal: ${rebuildDraft.goal||"build muscle"}, level: ${rebuildDraft.level||"intermediate"}, ${rebuildDraft.daysPerWeek} days/week.${rebuildDraft.priorityMuscles?.length?` Focus: ${rebuildDraft.priorityMuscles.join(", ")}.`:""}`}],
         }),
       });
@@ -2486,7 +2486,7 @@ function AppInner() {
         </p>
         {!roomCode ? (
           <>
-            <Btn full onClick={handleInvite} style={{marginBottom:12}}>Invite My Partner</Btn>
+            <Btn full onClick={handleInvite} style={{marginBottom:12}}>{t('invite_partner')}</Btn>
             <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",textAlign:"center",marginBottom:12}}>OR</div>
             <div style={{background:"var(--card)",border:"1.5px solid var(--line2)",borderRadius:14,padding:16,marginBottom:12}}>
               <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:10}}>ENTER PARTNER'S CODE</div>
@@ -2570,7 +2570,7 @@ function AppInner() {
         {/* Feature 4A — PR notification banner */}
         {prNotification && (
           <div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",background:"var(--lime)",color:"var(--black)",borderRadius:12,padding:"10px 18px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,zIndex:100,animation:"slideIn 0.3s ease",display:"flex",alignItems:"center",gap:8,maxWidth:380,whiteSpace:"nowrap"}}>
-            🏆 NEW PR — {prNotification.exerciseName.toUpperCase()} {prNotification.weight}
+            🏆 {t('personal_record')} — {prNotification.exerciseName.toUpperCase()} {prNotification.weight}
           </div>
         )}
         <div style={{background:"var(--black)",minHeight:"100vh",maxWidth:430,margin:"0 auto",display:"flex",flexDirection:"column"}}>
@@ -2580,7 +2580,7 @@ function AppInner() {
               <div style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:3,color:accentColor}}>{day.name}</div>
               <div style={{fontFamily:"var(--font-cond)",fontWeight:600,fontSize:13,color:"var(--gray)"}}>{exIdx+1} / {day.exercises.length}</div>
             </div>
-            <button onClick={()=>setSheet("emergency")} style={{background:"rgba(255,59,48,.12)",border:"none",borderRadius:10,padding:"8px 14px",color:"var(--red)",fontSize:12,fontWeight:700,fontFamily:"var(--font-cond)",letterSpacing:1,cursor:"pointer"}}>STOP</button>
+            <button onClick={()=>setSheet("emergency")} style={{background:"rgba(255,59,48,.12)",border:"none",borderRadius:10,padding:"8px 14px",color:"var(--red)",fontSize:12,fontWeight:700,fontFamily:"var(--font-cond)",letterSpacing:1,cursor:"pointer"}}>{t('stop')}</button>
           </div>
           <div style={{padding:"14px 20px 0"}}>
             <div style={{height:3,background:"var(--line)",borderRadius:99,overflow:"hidden"}}>
@@ -2592,31 +2592,31 @@ function AppInner() {
               <div style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:3,color:"var(--gray)",marginBottom:6}}>{ex.muscles} · RPE {ex.rpe}</div>
               <div style={{display:"flex",alignItems:"baseline",gap:12,marginBottom:14}}>
                 <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.92,color:"var(--white)"}}>{ex.name.toUpperCase()}</div>
-                <button onClick={()=>{setSwapExercise(ex);setSheet("swap");}} style={{background:"var(--card)",border:"1px solid var(--line2)",borderRadius:8,padding:"4px 10px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:10,letterSpacing:2,color:"var(--gray)",cursor:"pointer",flexShrink:0}}>SWAP</button>
+                <button onClick={()=>{setSwapExercise(ex);setSheet("swap");}} style={{background:"var(--card)",border:"1px solid var(--line2)",borderRadius:8,padding:"4px 10px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:10,letterSpacing:2,color:"var(--gray)",cursor:"pointer",flexShrink:0}}>{t('swap')}</button>
               </div>
               <div style={{display:"flex",gap:8}}>
-                {[{l:"SETS",v:ex.sets},{l:"REPS",v:ex.reps}].map(({l,v})=>(
+                {[{l:t('sets'),v:ex.sets},{l:t('reps'),v:ex.reps}].map(({l,v})=>(
                   <div key={l} style={{flex:1,background:"var(--card)",borderRadius:12,padding:"12px 0",textAlign:"center",border:"1px solid var(--line)"}}>
                     <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"var(--gray)",marginBottom:4}}>{l}</div>
                     <div style={{fontFamily:"var(--font-cond)",fontWeight:800,fontSize:22,color:"var(--white)"}}>{v}</div>
                   </div>
                 ))}
                 <div style={{flex:1,background:"var(--card)",borderRadius:12,padding:"12px 0",textAlign:"center",border:`1px solid ${day.color}33`}}>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"var(--gray)",marginBottom:4}}>WEIGHT</div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"var(--gray)",marginBottom:4}}>{t('weight')}</div>
                   <div style={{fontFamily:"var(--font-display)",fontSize:24,color:day.color||"var(--lime)"}}>
                     {ex.wA === "BW" ? "BW" : ex.wA || "—"}
                   </div>
                 </div>
               </div>
               <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray2)",letterSpacing:1,marginTop:6}}>
-                REST · {ex.rest}s
+                {t('rest')} · {ex.rest}s
               </div>
             </div>
             {/* Feature 4C — Weight progression suggestion */}
             <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1,marginBottom:8}}>
               {prs[ex.name]
-                ? `Last time: ${prs[ex.name].weight}kg · Try ${Math.round(prs[ex.name].weight * 1.025 / 2.5) * 2.5}kg today`
-                : "First time — start conservative"}
+                ? `${t('last_time')}: ${prs[ex.name].weight}kg · ${t('try_today')} ${Math.round(prs[ex.name].weight * 1.025 / 2.5) * 2.5}kg`
+                : t('first_time')}
             </div>
             <div className="fu1" style={{background:"var(--card)",borderRadius:16,border:"1px solid var(--line)",padding:16,marginBottom:16}}>
               {/* ── MY all-sets progress ── */}
@@ -2691,7 +2691,7 @@ function AppInner() {
               })()}
             </div>
             <div className="fu2" style={{background:"var(--card)",borderRadius:16,border:"1px solid var(--line)",padding:16,marginBottom:16}}>
-              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:12}}>SETS</div>
+              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:12}}>{t('sets')}</div>
               <div style={{display:"flex",gap:8}}>
                 {Array.from({length:ex.sets}).map((_,i)=>{
                   const done = completedSets[`${exIdx}-${i+1}`];
@@ -2724,10 +2724,10 @@ function AppInner() {
           {!resting && (
             <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,padding:"12px 20px 34px",background:"linear-gradient(transparent,var(--black) 35%)"}}>
               <button onClick={completeSet} style={{width:"100%",background:accentColor,border:"none",borderRadius:16,padding:"18px 0",fontFamily:"var(--font-cond)",fontWeight:900,fontSize:18,letterSpacing:3,color:"var(--black)",cursor:"pointer",marginBottom:10,textTransform:"uppercase",boxShadow:`0 0 30px ${accentColor}44`}}>
-                {setNum<ex.sets?`COMPLETE SET ${setNum}`:exIdx<day.exercises.length-1?"NEXT EXERCISE →":"FINISH WORKOUT"}
+                {setNum<ex.sets?`${t('complete_set')} ${setNum}`:exIdx<day.exercises.length-1?t('next_exercise'):t('finish_workout')}
               </button>
               <div style={{display:"flex",gap:10}}>
-                <button onClick={()=>{setSheet("ai");fetchAI(`I'm doing ${ex.name}, ${ex.reps} reps at ${ex.wA}. Give me 3 form cues and tell me if I should adjust if I'm struggling.`);}} style={{flex:1,background:"var(--card)",border:"1px solid var(--line)",borderRadius:14,padding:"14px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,color:"var(--white)",cursor:"pointer"}}>AI COACH</button>
+                <button onClick={()=>{setSheet("ai");fetchAI(`I'm doing ${ex.name}, ${ex.reps} reps at ${ex.wA}. Give me 3 form cues and tell me if I should adjust if I'm struggling.`);}} style={{flex:1,background:"var(--card)",border:"1px solid var(--line)",borderRadius:14,padding:"14px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,color:"var(--white)",cursor:"pointer"}}>{t('ai_coach')}</button>
                 <button onClick={()=>setSheet("partner")} style={{flex:1,background:"var(--card)",border:"1px solid var(--line)",borderRadius:14,padding:"14px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,color:"var(--white)",cursor:"pointer"}}>PARTNER</button>
               </div>
             </div>
@@ -2736,7 +2736,7 @@ function AppInner() {
             <div onClick={()=>setSheet(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:50,backdropFilter:"blur(4px)"}}>
               <div onClick={e=>e.stopPropagation()} style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"#181818",borderRadius:"24px 24px 0 0",padding:28,animation:"slideIn .3s cubic-bezier(.4,0,.2,1)",maxHeight:"85vh",overflowY:"auto"}}>
                 {sheet==="ai" && <>
-                  <div style={{fontFamily:"var(--font-display)",fontSize:36,marginBottom:4}}>AI COACH</div>
+                  <div style={{fontFamily:"var(--font-display)",fontSize:36,marginBottom:4}}>{t('ai_coach')}</div>
                   <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:accentColor,marginBottom:20}}>{ex.name.toUpperCase()}</div>
                   {aiLoading
                     ? <div style={{display:"flex",alignItems:"center",gap:12,color:"var(--gray)",padding:"20px 0"}}><div style={{width:16,height:16,border:`2px solid ${accentColor}`,borderTopColor:"transparent",borderRadius:99,animation:"spin .8s linear infinite"}}/><span style={{fontFamily:"var(--font-cond)",letterSpacing:1}}>ANALYZING...</span></div>
@@ -2818,7 +2818,7 @@ function AppInner() {
                 {sheet==="complete" && (
                   <div style={{textAlign:"center",paddingTop:8}}>
                     <div style={{fontSize:56,marginBottom:12}}>🎉</div>
-                    <div style={{fontFamily:"var(--font-display)",fontSize:52,color:accentColor,lineHeight:0.9,marginBottom:8}}>WORKOUT<br/>COMPLETE</div>
+                    <div style={{fontFamily:"var(--font-display)",fontSize:52,color:accentColor,lineHeight:0.9,marginBottom:8}}>{t('workout_complete')}</div>
                     <div style={{fontFamily:"var(--font-cond)",fontSize:13,color:"var(--gray)",letterSpacing:2,marginBottom:28}}>{day.name.toUpperCase()} · {day.exercises.length} EXERCISES</div>
                     <div style={{display:"flex",gap:12,marginBottom:28}}>
                       {[
@@ -2891,6 +2891,7 @@ function AppInner() {
             messages={messages}
             userSlot={userSlot}
             onSend={sendChatMsg}
+            lang={lang}
           />
         )}
       </>
@@ -2918,7 +2919,35 @@ function AppInner() {
             <button onClick={()=>{setShowChangePinFlow(false);setScreen("home");}} style={{background:"none",border:"none",color:"var(--gray)",fontFamily:"var(--font-cond)",fontSize:13,letterSpacing:2,cursor:"pointer",padding:0}}>← BACK</button>
           </div>
           <div style={{flex:1,overflowY:"auto",padding:"24px 22px 40px"}}>
-            <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.88,marginBottom:24}}>SETTINGS</div>
+            <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.88,marginBottom:24}}>{t('settings')}</div>
+            <div style={{ display:'flex', gap:8, marginBottom:20 }}>
+              <button
+                onClick={() => { setLang('en'); localStorage.setItem('str_lang','en'); }}
+                style={{
+                  background: lang === 'en' ? '#C8F135' : 'transparent',
+                  color: lang === 'en' ? '#080808' : '#888',
+                  border: '1px solid',
+                  borderColor: lang === 'en' ? '#C8F135' : '#333',
+                  borderRadius: 20, padding:'6px 14px',
+                  fontFamily:"'Barlow Condensed',sans-serif",
+                  fontWeight:700, fontSize:13, letterSpacing:1, cursor:'pointer'
+                }}>
+                EN
+              </button>
+              <button
+                onClick={() => { setLang('es'); localStorage.setItem('str_lang','es'); }}
+                style={{
+                  background: lang === 'es' ? '#C8F135' : 'transparent',
+                  color: lang === 'es' ? '#080808' : '#888',
+                  border: '1px solid',
+                  borderColor: lang === 'es' ? '#C8F135' : '#333',
+                  borderRadius: 20, padding:'6px 14px',
+                  fontFamily:"'Barlow Condensed',sans-serif",
+                  fontWeight:700, fontSize:13, letterSpacing:1, cursor:'pointer'
+                }}>
+                ES
+              </button>
+            </div>
 
             {/* Profile */}
             <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
@@ -3051,7 +3080,7 @@ function AppInner() {
         {/* Header */}
         <div style={{padding:"22px 22px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
           <div>
-            <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)"}}>GOOD {new Date().getHours()<12?"MORNING":new Date().getHours()<17?"AFTERNOON":"EVENING"}</div>
+            <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)"}}>{new Date().getHours()<12?t('good_morning').toUpperCase():new Date().getHours()<17?t('good_afternoon').toUpperCase():t('good_evening').toUpperCase()}</div>
             <div style={{fontFamily:"var(--font-display)",fontSize:28,lineHeight:1.05,marginTop:2}}>
               {(profile.name||"ATHLETE").toUpperCase()}
               {partnerProfile && partnerProfile.name && partnerProfile.name.toLowerCase() !== (profile.name||"").toLowerCase() ? ` & ${partnerProfile.name.toUpperCase()}` : ""}
@@ -3064,7 +3093,7 @@ function AppInner() {
                 <span style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"#30d158"}}>{(partnerProfile.name||"PARTNER").toUpperCase()}</span>
               </button>
             )}
-            <button onClick={()=>{ setSettingsName(profile?.name||""); setSettingsWeight(profile?.weight||""); setSettingsAge(profile?.age||""); setSettingsHeight(profile?.height||""); setSettingsInjuries(profile?.injuries||""); setShowChangePinFlow(false); setScreen("settings"); }} style={{background:"none",border:"none",fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",cursor:"pointer",padding:"4px 8px"}}>SETTINGS</button>
+            <button onClick={()=>{ setSettingsName(profile?.name||""); setSettingsWeight(profile?.weight||""); setSettingsAge(profile?.age||""); setSettingsHeight(profile?.height||""); setSettingsInjuries(profile?.injuries||""); setShowChangePinFlow(false); setScreen("settings"); }} style={{background:"none",border:"none",fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",cursor:"pointer",padding:"4px 8px"}}>{t('settings')}</button>
             <button onClick={()=>setShowLogout(true)} style={{background:"var(--card)",border:"none",borderRadius:10,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             </button>
@@ -3073,7 +3102,7 @@ function AppInner() {
 
         {/* Tabs */}
         <div style={{display:"flex",gap:8,padding:"18px 22px 0",overflowX:"auto"}}>
-          {[["today","TODAY"],["routine","ROUTINE"],["partner","PARTNER"],["progress","PROGRESS"]].map(([k,l])=>(
+          {[["today",t('today')],["routine",t('routine')],["partner",t('partner')],["progress",t('progress')]].map(([k,l])=>(
             <button key={k} onClick={()=>setTab(k)} style={{flexShrink:0,background:tab===k?"var(--white)":"var(--card)",border:tab===k?"none":"1px solid var(--line)",borderRadius:99,padding:"9px 18px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:12,letterSpacing:2,color:tab===k?"var(--black)":"var(--gray)",cursor:"pointer",transition:"all .2s"}}>{l}</button>
           ))}
         </div>
@@ -3154,7 +3183,7 @@ function AppInner() {
               {/* Feature 4D — Rest day or training day content */}
               {!isTrainingDay ? (
                 <div className="fu2" style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:24}}>
-                  <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.9,marginBottom:16}}>REST<br/>DAY</div>
+                  <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.9,marginBottom:16}}>{t('rest_day')}</div>
                   <p style={{fontFamily:"var(--font-body)",fontSize:14,color:"var(--gray)",lineHeight:1.7,marginBottom:20}}>
                     {RECOVERY_TIPS[today.getDate() % 10]}
                   </p>
@@ -3226,7 +3255,7 @@ function AppInner() {
                 >
                   {regenerating
                     ? <><div style={{width:12,height:12,border:"2px solid var(--lime)",borderTopColor:"transparent",borderRadius:99,animation:"spin .8s linear infinite"}}/> REGENERATING...</>
-                    : "↺ REGENERATE ROUTINE"}
+                    : `↺ ${t('regenerate')}`}
                 </button>
               </div>
               {(routine||[]).map((d,i)=>(
@@ -3324,10 +3353,10 @@ function AppInner() {
                 const isPartnerActive = pSession?.isActive && (pSession.lastActivityAt || pSession.startedAt || 0) > twoHoursAgo;
                 const partnerStatus =
                   isPartnerActive
-                    ? 'TRAINING NOW'
+                    ? t('training_now')
                     : (pSession?.lastActivityAt || 0) > oneDayAgo || pLastWorkout?.date === new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"})
-                      ? 'LAST SEEN TODAY'
-                      : 'NOT TRAINING';
+                      ? t('last_seen_today')
+                      : t('not_training');
                 const statusColor = partnerStatus === 'TRAINING NOW' ? '#C8F135' : partnerStatus === 'LAST SEEN TODAY' ? '#FF9F0A' : '#555';
                 const fmtElapsed = (s) => {
                   const m = Math.floor(s / 60);
@@ -3372,7 +3401,7 @@ function AppInner() {
                             </div>
                           )}
                         </div>
-                        <button onClick={handleLeaveRoom} style={{background:"rgba(255,59,48,.1)",border:"1px solid rgba(255,59,48,.25)",borderRadius:8,padding:"6px 12px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:10,letterSpacing:2,color:"var(--red)",cursor:"pointer",flexShrink:0}}>LEAVE</button>
+                        <button onClick={handleLeaveRoom} style={{background:"rgba(255,59,48,.1)",border:"1px solid rgba(255,59,48,.25)",borderRadius:8,padding:"6px 12px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:10,letterSpacing:2,color:"var(--red)",cursor:"pointer",flexShrink:0}}>{t('leave')}</button>
                       </div>
 
                       {isPartnerActive ? (
@@ -3465,9 +3494,9 @@ function AppInner() {
             })();
 
             const statCards = [
-              { label:"WORKOUTS", value: totalWorkouts, unit:"" },
-              { label:"TOTAL VOLUME", value: totalVolume >= 1000 ? `${(totalVolume/1000).toFixed(1)}k` : totalVolume, unit:"kg" },
-              { label:"STREAK", value: streak, unit:" days" },
+              { label:t('workouts'), value: totalWorkouts, unit:"" },
+              { label:t('volume'), value: totalVolume >= 1000 ? `${(totalVolume/1000).toFixed(1)}k` : totalVolume, unit:"kg" },
+              { label:t('streak'), value: streak, unit:" days" },
             ];
 
             // PRIVACY: photo data never leaves this device — stored as base64 in localStorage only
@@ -3556,7 +3585,7 @@ function AppInner() {
                 {/* Workout feed */}
                 {workoutHistory.length === 0 ? (
                   <div className="fu1" style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:28,textAlign:"center"}}>
-                    <div style={{fontFamily:"var(--font-display)",fontSize:28,marginBottom:8}}>NO WORKOUTS YET</div>
+                    <div style={{fontFamily:"var(--font-display)",fontSize:28,marginBottom:8}}>{t('no_workouts_yet')}</div>
                     <p style={{fontFamily:"var(--font-body)",fontSize:14,color:"var(--gray)",lineHeight:1.6}}>Complete your first workout to see your journal here.</p>
                   </div>
                 ) : workoutHistory.map((h, i) => {
@@ -3638,7 +3667,7 @@ function AppInner() {
 
         {/* Bottom nav — safe area aware */}
         <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"rgba(8,8,8,.94)",backdropFilter:"blur(20px)",borderTop:"1px solid var(--line)",display:"flex",paddingBottom:"env(safe-area-inset-bottom)"}}>
-          {[["today","TODAY"],["routine","ROUTINE"],["partner","PARTNER"],["progress","PROGRESS"]].map(([k,l])=>(
+          {[["today",t('today')],["routine",t('routine')],["partner",t('partner')],["progress",t('progress')]].map(([k,l])=>(
             <button key={k} onClick={()=>setTab(k)} className="nav-btn" style={{color:tab===k?"var(--white)":"var(--gray2)"}}>
               {l}
               {tab===k && <div style={{width:20,height:2,background:"var(--lime)",borderRadius:99,margin:"4px auto 0"}}/>}
@@ -3680,7 +3709,7 @@ function AppInner() {
               </p>
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
                 {/* Regular logout: return to splash, keep all data so PIN login still works */}
-                <Btn full onClick={()=>{setShowLogout(false);setScreen("splash");}}>Log Out</Btn>
+                <Btn full onClick={()=>{setShowLogout(false);setScreen("splash");}}>{t('logout')}</Btn>
                 {/* Full erase: clear everything and restart from scratch */}
                 <Btn variant="red-soft" full onClick={()=>{
                   localStorage.clear();
@@ -3688,8 +3717,8 @@ function AppInner() {
                   setNewPIN(""); setConfirmPin("");
                   setRoomCode(""); setRoomRole(""); setPartnerProfile(null); setWaitingForPartner(false);
                   setShowLogout(false); setScreen("splash");
-                }}>Log Out &amp; Erase Everything</Btn>
-                <Btn variant="ghost" full onClick={()=>setShowLogout(false)}>Cancel</Btn>
+                }}>{t('logout_erase')}</Btn>
+                <Btn variant="ghost" full onClick={()=>setShowLogout(false)}>{t('cancel')}</Btn>
               </div>
             </div>
           </div>
@@ -3965,6 +3994,7 @@ function AppInner() {
             messages={messages}
             userSlot={userSlot}
             onSend={sendChatMsg}
+            lang={lang}
           />
         )}
 
