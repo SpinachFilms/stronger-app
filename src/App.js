@@ -525,6 +525,42 @@ const buildRoutine = (profile, partnerProfile = null) => {
   return [PUSH, PULL, LEGS, UPPER, LOWER2, ACTIVE];
 };
 
+/* ─── FIX 2 — Week schedule builder ─── */
+const buildWeekSchedule = (trainingDays, routineLength) => {
+  const ALL = ["MON","TUE","WED","THU","FRI","SAT","SUN"];
+  const schedule = {};
+  ALL.forEach(d => { schedule[d] = null; });
+  (trainingDays || []).forEach((d, i) => {
+    schedule[d] = i % routineLength;
+  });
+  return schedule;
+};
+
+/* ─── FIX 5 — Cool-down buffer options ─── */
+const BUFFER_OPTIONS = [
+  { id:'stretching', titleKey:'buffer_stretch_title', descKey:'buffer_stretch_desc', duration:'10 MIN',
+    exercises:[
+      {name:'Hip Flexor Stretch',duration:60,side:true},{name:'Hamstring Stretch',duration:60,side:true},
+      {name:'Chest Doorway Stretch',duration:45},{name:'Lat Stretch',duration:45,side:true},
+      {name:'Quad Stretch',duration:45,side:true},{name:'Shoulder Cross-Body Stretch',duration:45,side:true},
+      {name:"Child's Pose",duration:60},{name:'Pigeon Pose',duration:60,side:true},
+      {name:'Thoracic Rotation',duration:45,side:true},{name:'Standing Calf Stretch',duration:30,side:true},
+    ]},
+  { id:'abs', titleKey:'buffer_abs_title', descKey:'buffer_abs_desc', duration:'12 MIN',
+    exercises:[
+      {name:'Plank',sets:3,duration:45},{name:'Bicycle Crunch',sets:3,reps:20},
+      {name:'Leg Raises',sets:3,reps:15},{name:'Russian Twist',sets:3,reps:20},
+      {name:'Dead Bug',sets:3,reps:12},{name:'Side Plank',sets:2,duration:30,side:true},
+      {name:'Mountain Climber',sets:3,duration:30},{name:'Hollow Body Hold',sets:3,duration:20},
+    ]},
+  { id:'cardio', titleKey:'buffer_cardio_title', descKey:'buffer_cardio_desc', duration:'15 MIN',
+    exercises:[
+      {name:'Jump Rope / Running in place',duration:180},{name:'Burpees',sets:3,reps:10},
+      {name:'High Knees',duration:60},{name:'Jump Squats',sets:3,reps:12},
+      {name:'Mountain Climbers',duration:45},{name:'Jumping Jacks',duration:60},
+    ]},
+];
+
 /* ─── Global styles ─── */
 const GlobalStyles = () => (
   <style>{`
@@ -652,6 +688,15 @@ const Numpad = ({onDigit, onDelete}) => {
     </div>
   );
 };
+
+/* ─── Sheet wrapper for bottom sheets on home screen ─── */
+const SheetWrapper = ({ children, onClose }) => (
+  <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:50,backdropFilter:"blur(4px)"}}>
+    <div onClick={e=>e.stopPropagation()} style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"#181818",borderRadius:"24px 24px 0 0",padding:28,animation:"slideIn .3s cubic-bezier(.4,0,.2,1)",maxHeight:"85vh",overflowY:"auto"}}>
+      {children}
+    </div>
+  </div>
+);
 
 /* ════════════════════════════════════════════
    ERROR BOUNDARY — catches React render errors gracefully
@@ -1914,6 +1959,21 @@ function AppInner() {
   // Live room data for partner tab status
   const [roomData, setRoomData] = useState(null);
 
+  // FIX 1 — iOS WebSocket reconnect
+  const [channelVersion, setChannelVersion] = useState(0);
+
+  // FIX 3 — Editable weight with first-set confirmation
+  const [editingWeight, setEditingWeight] = useState(false);
+  const [tempWeight, setTempWeight] = useState("");
+  const [firstSetConfirmed, setFirstSetConfirmed] = useState({});
+
+  // FIX 4 — Train Together banner
+  const [trainTogetherBanner, setTrainTogetherBanner] = useState(null);
+
+  // FIX 5 — Cool-down buffer
+  const [bufferActivity, setBufferActivity] = useState(null);
+  const [bufferExIdx, setBufferExIdx] = useState(0);
+
   // Keep profileRef current for use inside async channel callbacks
   useEffect(() => { profileRef.current = profile; }, [profile]);
 
@@ -2305,6 +2365,9 @@ function AppInner() {
     } catch {}
     const builtRoutine = buildRoutine(profile, resolvedPartner);
     setRoutine(builtRoutine);
+    // FIX 2 — Save week schedule
+    const ws = buildWeekSchedule(profile.trainingDays || [], builtRoutine.length);
+    p("weekSchedule", ws);
     setAiSummary(summary);
     setTimeout(() => setScreen("home"), 600);
   };
@@ -2360,6 +2423,9 @@ function AppInner() {
     setProfile(prev => ({ ...prev, ...rebuildDraft }));
     const newRoutine = buildRoutine(rebuildDraft, partnerProfile);
     setRoutine(newRoutine);
+    // FIX 2 — Save week schedule
+    const wsr = buildWeekSchedule(rebuildDraft.trainingDays || [], newRoutine.length);
+    setProfile(prev => ({...(prev||{}), ...rebuildDraft, weekSchedule: wsr}));
     // Synchronously write to localStorage so Today tab sees it on next render
     try { localStorage.setItem("str_routine", JSON.stringify(newRoutine)); } catch {}
     // Increment version to force Today tab to re-key and re-render
@@ -2526,6 +2592,11 @@ function AppInner() {
           navigator.vibrate?.(100);
         }
       })
+      // FIX 4 — Train Together invite broadcast
+      .on('broadcast', { event: 'train_together_invite' }, ({ payload }) => {
+        setTrainTogetherBanner(payload?.fromName || 'Your partner');
+        setTimeout(() => setTrainTogetherBanner(null), 8000);
+      })
       .subscribe((status) => {
         console.log('Room broadcast channel:', status);
       });
@@ -2544,6 +2615,34 @@ function AppInner() {
     return () => {
       supabase.removeChannel(channel);
       roomChannelRef.current = null;
+    };
+  }, [roomCode, userSlot, channelVersion]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ─── FIX 1 — iOS WebSocket reconnect on app resume ─── */
+  useEffect(() => {
+    const handleResume = async () => {
+      if (document.visibilityState !== 'visible' || !roomCode || !supabase) return;
+      const state = roomChannelRef.current?.state;
+      if (state === 'joined') return;
+      console.log('Reconnecting room channel after background...');
+      if (roomChannelRef.current) {
+        try { await supabase.removeChannel(roomChannelRef.current); } catch {}
+        roomChannelRef.current = null;
+      }
+      setChannelVersion(v => v + 1);
+      // Fetch latest partner session snapshot
+      const partnerDataSlot = userSlot === 'a' ? 'active_session_b' : 'active_session_a';
+      supabase.from('rooms').select('active_session_a,active_session_b')
+        .eq('room_code', roomCode).single()
+        .then(({ data }) => {
+          if (data?.[partnerDataSlot]?.isActive) setPartnerSession(data[partnerDataSlot]);
+        });
+    };
+    document.addEventListener('visibilitychange', handleResume);
+    window.addEventListener('online', handleResume);
+    return () => {
+      document.removeEventListener('visibilitychange', handleResume);
+      window.removeEventListener('online', handleResume);
     };
   }, [roomCode, userSlot]); // eslint-disable-line react-hooks/exhaustive-deps
 
