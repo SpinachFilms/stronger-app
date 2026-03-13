@@ -801,6 +801,310 @@ const STRINGS = {
     next: "NEXT",
     generating_routine: "Building your personalized routine...",
     routine_ready: "Your routine is ready",
+    // Goals
+    muscle_mass: "Gain Muscle Mass",
+    increase_strength: "Increase Strength",
+    improve_fitness: "Improve Physical Fitness",
+    definition: "Definition",
+    toning: "Body Toning",
+    cardio: "Cardiovascular",
+    fat_loss: "Weight / Fat Loss",
+    stay_active: "Stay Active",
+    // Equipment
+    dumbbells: "Dumbbells only",
+    resistance_bands: "Resistance bands",
+    barbell_rack: "Barbell + rack",
+    cables: "Cables",
+    machines: "Machines",
+    bodyweight: "Bodyweight",
+    full_gym: "Full gym",
+    // Day type labels
+    push_day: "Push Day",
+    pull_day: "Pull Day",
+    legs_day: "Legs Day",
+    full_body_a: "Full Body A",
+    full_body_b: "Full Body B",
+    upper_body: "Upper Body",
+    lower_body: "Lower Body",
+    // Workout end/pause sheet
+    resume_later: "Resume Later",
+    end_workout_now: "End Workout Now",
+    keep_going: "Keep Going",
+    // Gender options
+    prefer_not_to_say: "Prefer not to say",
+    // Partner tab
+    close_room: "CLOSE ROOM",
+    leave_room: "Leave Room",
+    copy_code: "Copy Invite Link",
+    copied: "✓ Copied!",
+    no_partner_yet: "NO PARTNER YET",
+    // Today/Rest day
+    light_stretching: "LIGHT STRETCHING ROUTINE",
+    log_weight: "+ LOG WEIGHT",
+    // Days of week
+    days_of_week: ["MON","TUE","WED","THU","FRI","SAT","SUN"],
+    days_of_week_short: ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
+    // Month abbreviations
+    month_abbr: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+    // Settings labels
+    units: "Units",
+    kg: "KG",
+    lbs: "LBS",
+    notifications: "Notifications",
+    language: "Language",
+    account: "Account",
+    theme: "Theme",
+    // Onboarding
+    skip: "Skip",
+    name_placeholder: "Your name...",
+    age_placeholder: "Age",
+    weight_placeholder: "Weight",
+    height_placeholder: "Height",
+    // Progress tab
+    total_workouts: "Total Workouts",
+    current_streak: "Current Streak",
+    best_streak: "Best Streak",
+    total_volume: "Total Volume",
+    month: "Month",
+    all_time: "All Time",
+    // Error/toast messages
+    error_saving: "Error saving",
+    saved: "Saved!",
+    profile_saved: "Profile saved",
+    pin_changed: "PIN changed",
+    room_closed: "Room closed",
+    left_the_room: "Left the room",
+    error_loading: "Error loading data",
+    network_error: "Network error",
+    // Misc
+    are_you_sure: "Are you sure?",
+    yes: "Yes",
+    no: "No",
+    done: "DONE",
+    edit: "Edit",
+    delete: "Delete",
+    add: "Add",
+    ok: "OK",
+    // Workout UI
+    skip_rest: "SKIP REST",
+    sec: "SEC",
+    analyzing: "ANALYZING...",
+    partner_label: "PARTNER",
+    close: "CLOSE",
+    not_training_yet: "Not training yet",
+    pain_btn: "⚠️ I FEEL PAIN",
+    swap_exercise: "SWAP EXERCISE",
+    how_did_it_feel: "HOW DID IT FEEL? (OPTIONAL)",
+    // Home screen
+    ai_coach_note: "AI COACH NOTE",
+    active_session: "ACTIVE SESSION",
+    resume: "RESUME",
+    week_plan: "DAYS/WEEK PLAN",
+    // Settings screen
+    edit_profile: "EDIT PROFILE",
+    training_days_label: "TRAINING DAYS",
+    security: "SECURITY",
+    change_pin: "CHANGE PIN",
+    enter_current_pin: "ENTER CURRENT PIN",
+    new_pin: "NEW PIN",
+    confirm_new_pin: "CONFIRM NEW PIN",
+    verify: "VERIFY",
+    save_new_pin: "SAVE NEW PIN",
+    routine_section: "ROUTINE",
+    customize_routine: "CUSTOMIZE ROUTINE",
+    quick_rebuild: "QUICK REBUILD",
+    save_profile: "SAVE PROFILE",
+    injuries_label: "INJURIES / LIMITATIONS",
+    // Partner screen
+    generate_room_code: "Generate My Room Code",
+    partner_not_connected: "PARTNER NOT\nCONNECTED",
+    waiting_for_partner: "WAITING FOR PARTNER...",
+    join_a_partner: "JOIN A PARTNER",
+    your_room_code: "YOUR ROOM CODE",
+    // Onboarding steps
+    step_1_of_7: "STEP 1 OF 7",
+    step_2_of_7: "STEP 2 OF 7",
+    step_3_of_7: "STEP 3 OF 7",
+    step_4_of_7: "STEP 4 OF 7",
+    step_5_of_7: "STEP 5 OF 7",
+    step_6_of_7: "STEP 6 OF 7",
+    step_7_of_7: "STEP 7 OF 7",
+    continue_btn: "Continue",
+    skip_go_solo: "Skip — Go Solo",
+    continue_solo: "Continue Solo for Now",
+    // Rebuild modal
+    rebuild_routine_title: "REBUILD\nROUTINE",
+    rebuild_my_routine: "REBUILD MY ROUTINE",
+    preview_changes: "PREVIEW CHANGES",
+    // Sign out
+    sign_out: "SIGN OUT",
+    // No messages
+    no_messages_yet: "No messages yet",
+    // Onboarding hardcoded
+    join_btn: "JOIN",
+    or_label: "OR",
+    enter_partners_code: "ENTER PARTNER'S CODE",
+    your_profile_summary: "YOUR PROFILE SUMMARY",
+    who_are_you_title: "WHO\nARE\nYOU?",
+    just_you_here: "Just you here. Your partner creates their own profile separately.",
+    create_4_digit_pin: "CREATE A 4-DIGIT PIN",
+    protects_profile: "Protects your profile when you hand off your phone.",
+    confirm_pin_label: "CONFIRM PIN",
+    your_stats_title: "YOUR\nSTATS",
+    calibrate_desc: "Used to calibrate your weights and rest times.",
+    age_label: "AGE",
+    weight_label_upper: "WEIGHT",
+    height_label_upper: "HEIGHT",
+    biological_sex_label: "BIOLOGICAL SEX",
+    your_goals_title: "YOUR\nGOALS",
+    what_training_for: "What are you training for",
+    primary_goal_label: "PRIMARY GOAL",
+    training_level_label: "TRAINING LEVEL",
+    what_to_build_title: "WHAT DO\nYOU WANT\nTO BUILD?",
+    select_focus_areas: "Select the areas you want to focus on most.",
+    upper_body_label: "UPPER BODY",
+    lower_body_label: "LOWER BODY",
+    split_focus_label: "SPLIT FOCUS",
+    your_gym_title: "YOUR\nGYM",
+    when_what_train: "When and what do you train with?",
+    days_per_week_label: "DAYS PER WEEK",
+    training_days_upper: "TRAINING DAYS",
+    available_equipment_label: "AVAILABLE EQUIPMENT (select all)",
+    any_limits_title: "ANY\nLIMITS?",
+    injuries_desc: "Any injuries or areas to avoid? The AI will work around them.",
+    injuries_optional_label: "INJURIES / LIMITATIONS (optional)",
+    schedule_label: "Schedule",
+    equipment_label: "Equipment",
+    connect_partner_title: "CONNECT\nPARTNER",
+    connect_partner_desc: "Connect with your partner to sync routines and weights — or go solo and connect later.",
+    your_room_code_label: "YOUR ROOM CODE",
+    waiting_for_partner_label: "WAITING FOR PARTNER...",
+    back_label: "← BACK",
+    prev_label: "← PREV",
+    continue_btn_label: "Continue",
+    // Workout UI hardcoded
+    sec_label: "SEC",
+    skip_rest_btn: "SKIP REST",
+    partner_btn: "PARTNER",
+    analyzing_label: "ANALYZING...",
+    close_btn: "CLOSE",
+    no_partner_yet_label: "NO PARTNER YET",
+    share_room_from_partner: "Share your room code from the Partner tab to connect.",
+    stop_label: "STOP?",
+    progress_saved: "Your progress is saved. You can always come back.",
+    swap_exercise_title: "SWAP EXERCISE",
+    for_today_only: "FOR TODAY ONLY — YOUR ROUTINE STAYS UNCHANGED",
+    how_did_feel_label: "HOW DID IT FEEL? (OPTIONAL)",
+    done_btn: "DONE",
+    // Home screen hardcoded
+    ai_coach_note_label: "AI COACH NOTE",
+    active_session_label: "ACTIVE SESSION",
+    sets_completed_label: "SETS COMPLETED",
+    resume_btn: "RESUME",
+    week1_label: "WEEK 1",
+    days_week_plan: "DAYS/WEEK PLAN",
+    start_first: "START YOUR FIRST",
+    workouts_label: "WORKOUTS",
+    // Rest day
+    light_stretching_btn: "LIGHT STRETCHING ROUTINE",
+    partners_last_workout: "S LAST WORKOUT",
+    // Routine tab
+    ai_generated_month1: "AI GENERATED · MONTH 1",
+    customize_btn: "CUSTOMIZE",
+    your_routine_title: "YOUR ROUTINE",
+    exercises_count_label: "EXERCISES",
+    min_label: "MIN",
+    // Partner tab
+    close_room_btn: "CLOSE ROOM",
+    partner_not_connected_title: "PARTNER NOT\nCONNECTED",
+    share_code_desc: "Share your room code so your partner can join, or enter their code below.",
+    how_to_connect_label: "HOW TO CONNECT",
+    how_to_connect_desc: "Share your code with your partner. They open the app, go to the Partner tab, and enter it manually.",
+    join_a_partner_label: "JOIN A PARTNER",
+    training_now_label: "TRAINING NOW",
+    not_training_label: "NOT TRAINING",
+    exercises_label: "EXERCISES",
+    sets_done_label: "SETS DONE",
+    weight_label: "WEIGHT",
+    elapsed_label: "ELAPSED",
+    cheer_on_btn: "Cheer them on",
+    last_workout_label: "LAST WORKOUT",
+    train_together_btn: "Train together?",
+    // Progress tab
+    body_weight_label: "BODY WEIGHT",
+    log_weight_btn: "+ LOG WEIGHT",
+    storage_warning_label: "STORAGE WARNING",
+    storage_full_desc: "Storage almost full — consider removing older photos.",
+    log_weight_title: "LOG WEIGHT",
+    save_btn: "SAVE",
+    add_photo_label: "ADD PHOTO",
+    share_btn: "SHARE",
+    sets_stat: "SETS",
+    exer_stat: "EXER.",
+    time_stat: "TIME",
+    max_wt_stat: "MAX WT",
+    volume_stat: "VOLUME",
+    // Settings hardcoded
+    back_settings: "← BACK",
+    edit_profile_label: "EDIT PROFILE",
+    name_label_upper: "NAME",
+    weight_upper: "WEIGHT",
+    age_upper: "AGE",
+    height_upper: "HEIGHT",
+    injuries_limitations_label: "INJURIES / LIMITATIONS",
+    save_profile_btn: "SAVE PROFILE",
+    training_days_settings: "TRAINING DAYS",
+    security_label: "SECURITY",
+    change_pin_btn: "CHANGE PIN",
+    enter_current_pin_label: "ENTER CURRENT PIN",
+    new_pin_label: "NEW PIN",
+    confirm_new_pin_label: "CONFIRM NEW PIN",
+    verify_btn: "VERIFY",
+    next_btn: "NEXT",
+    cancel_btn: "CANCEL",
+    save_new_pin_btn: "SAVE NEW PIN",
+    routine_settings_label: "ROUTINE",
+    customize_routine_btn: "CUSTOMIZE ROUTINE",
+    quick_rebuild_btn: "QUICK REBUILD",
+    // Conflict modal
+    active_session_title: "ACTIVE SESSION",
+    resume_current: "Resume Current Session",
+    end_start_new: "End It & Start New",
+    // Rebuild modal
+    rebuild_routine_title_upper: "REBUILD\nROUTINE",
+    active_workout_label: "ACTIVE WORKOUT",
+    active_workout_desc: "You have a workout in progress. Rebuilding will end your current session.",
+    section_training_days: "A — TRAINING DAYS",
+    section_muscle_focus: "B — MUSCLE FOCUS",
+    section_primary_goal: "C — PRIMARY GOAL",
+    section_training_level: "D — TRAINING LEVEL",
+    section_equipment: "E — EQUIPMENT",
+    days_per_week_upper: "DAYS PER WEEK",
+    training_days_upper2: "TRAINING DAYS",
+    upper_body_upper: "UPPER BODY",
+    lower_body_upper: "LOWER BODY",
+    split_focus_upper: "SPLIT FOCUS",
+    routine_preview_label: "ROUTINE PREVIEW",
+    removed_label: "REMOVED",
+    new_label: "NEW",
+    rebuild_my_routine_btn: "REBUILD MY ROUTINE",
+    preview_changes_btn: "PREVIEW CHANGES",
+    customize_label: "CUSTOMIZE",
+    cancel_arrow: "← CANCEL",
+    // Rebuild success
+    routine_rebuilt: "✓ ROUTINE REBUILT",
+    // Stretching sheet
+    stretching_title: "STRETCHING",
+    light_recovery_routine: "LIGHT RECOVERY ROUTINE",
+    // Logout modal
+    sign_out_title: "SIGN OUT",
+    sign_out_desc: "Your routine and partner connection are saved in this browser.",
+    // Workout complete
+    exercises_upper: "EXERCISES",
+    time_upper: "TIME",
+    // Onboarding continue buttons
+    got_it: "Got it",
+    keep_goal: "Keep",
   },
   es: {
     welcome: "Bienvenido a Stronger",
@@ -883,6 +1187,310 @@ const STRINGS = {
     next: "SIGUIENTE",
     generating_routine: "Creando tu rutina personalizada...",
     routine_ready: "Tu rutina está lista",
+    // Goals
+    muscle_mass: "Ganar Masa Muscular",
+    increase_strength: "Aumentar Fuerza",
+    improve_fitness: "Mejorar Condición Física",
+    definition: "Definición",
+    toning: "Tonificación",
+    cardio: "Cardiovascular",
+    fat_loss: "Pérdida de Peso / Grasa",
+    stay_active: "Mantenerse Activo",
+    // Equipment
+    dumbbells: "Mancuernas",
+    resistance_bands: "Bandas Elásticas",
+    barbell_rack: "Barra + Rack",
+    cables: "Poleas",
+    machines: "Máquinas",
+    bodyweight: "Peso Corporal",
+    full_gym: "Gimnasio Completo",
+    // Day type labels
+    push_day: "Día de Empuje",
+    pull_day: "Día de Jalón",
+    legs_day: "Día de Piernas",
+    full_body_a: "Cuerpo Completo A",
+    full_body_b: "Cuerpo Completo B",
+    upper_body: "Tren Superior",
+    lower_body: "Tren Inferior",
+    // Workout end/pause sheet
+    resume_later: "Continuar después",
+    end_workout_now: "Terminar entrenamiento",
+    keep_going: "Seguir entrenando",
+    // Gender options
+    prefer_not_to_say: "Prefiero no decir",
+    // Partner tab
+    close_room: "CERRAR SALA",
+    leave_room: "Salir de la Sala",
+    copy_code: "Copiar Enlace de Invitación",
+    copied: "✓ ¡Copiado!",
+    no_partner_yet: "AÚN SIN PAREJA",
+    // Today/Rest day
+    light_stretching: "RUTINA DE ESTIRAMIENTOS",
+    log_weight: "+ REGISTRAR PESO",
+    // Days of week
+    days_of_week: ["LUN","MAR","MIÉ","JUE","VIE","SÁB","DOM"],
+    days_of_week_short: ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"],
+    // Month abbreviations
+    month_abbr: ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"],
+    // Settings labels
+    units: "Unidades",
+    kg: "KG",
+    lbs: "LBS",
+    notifications: "Notificaciones",
+    language: "Idioma",
+    account: "Cuenta",
+    theme: "Tema",
+    // Onboarding
+    skip: "Omitir",
+    name_placeholder: "Tu nombre...",
+    age_placeholder: "Edad",
+    weight_placeholder: "Peso",
+    height_placeholder: "Altura",
+    // Progress tab
+    total_workouts: "Entrenamientos totales",
+    current_streak: "Racha actual",
+    best_streak: "Mejor racha",
+    total_volume: "Volumen total",
+    month: "Mes",
+    all_time: "Todo el tiempo",
+    // Error/toast messages
+    error_saving: "Error al guardar",
+    saved: "¡Guardado!",
+    profile_saved: "Perfil guardado",
+    pin_changed: "PIN cambiado",
+    room_closed: "Sala cerrada",
+    left_the_room: "Saliste de la sala",
+    error_loading: "Error al cargar datos",
+    network_error: "Error de red",
+    // Misc
+    are_you_sure: "¿Estás seguro?",
+    yes: "Sí",
+    no: "No",
+    done: "LISTO",
+    edit: "Editar",
+    delete: "Eliminar",
+    add: "Añadir",
+    ok: "OK",
+    // Workout UI
+    skip_rest: "SALTAR DESCANSO",
+    sec: "SEG",
+    analyzing: "ANALIZANDO...",
+    partner_label: "PAREJA",
+    close: "CERRAR",
+    not_training_yet: "Sin entrenar aún",
+    pain_btn: "⚠️ SIENTO DOLOR",
+    swap_exercise: "CAMBIAR EJERCICIO",
+    how_did_it_feel: "¿CÓMO FUE? (OPCIONAL)",
+    // Home screen
+    ai_coach_note: "NOTA DEL ENTRENADOR IA",
+    active_session: "SESIÓN ACTIVA",
+    resume: "REANUDAR",
+    week_plan: "DÍAS/SEMANA",
+    // Settings screen
+    edit_profile: "EDITAR PERFIL",
+    training_days_label: "DÍAS DE ENTRENAMIENTO",
+    security: "SEGURIDAD",
+    change_pin: "CAMBIAR PIN",
+    enter_current_pin: "INGRESA TU PIN ACTUAL",
+    new_pin: "NUEVO PIN",
+    confirm_new_pin: "CONFIRMAR NUEVO PIN",
+    verify: "VERIFICAR",
+    save_new_pin: "GUARDAR NUEVO PIN",
+    routine_section: "RUTINA",
+    customize_routine: "PERSONALIZAR RUTINA",
+    quick_rebuild: "RECONSTRUIR RÁPIDO",
+    save_profile: "GUARDAR PERFIL",
+    injuries_label: "LESIONES / LIMITACIONES",
+    // Partner screen
+    generate_room_code: "Generar Mi Código de Sala",
+    partner_not_connected: "PAREJA NO\nCONECTADA",
+    waiting_for_partner: "ESPERANDO A LA PAREJA...",
+    join_a_partner: "UNIRSE A UNA PAREJA",
+    your_room_code: "TU CÓDIGO DE SALA",
+    // Onboarding steps
+    step_1_of_7: "PASO 1 DE 7",
+    step_2_of_7: "PASO 2 DE 7",
+    step_3_of_7: "PASO 3 DE 7",
+    step_4_of_7: "PASO 4 DE 7",
+    step_5_of_7: "PASO 5 DE 7",
+    step_6_of_7: "PASO 6 DE 7",
+    step_7_of_7: "PASO 7 DE 7",
+    continue_btn: "Continuar",
+    skip_go_solo: "Omitir — Ir Solo",
+    continue_solo: "Continuar Solo por Ahora",
+    // Rebuild modal
+    rebuild_routine_title: "RECONSTRUIR\nRUTINA",
+    rebuild_my_routine: "RECONSTRUIR MI RUTINA",
+    preview_changes: "VISTA PREVIA DE CAMBIOS",
+    // Sign out
+    sign_out: "CERRAR SESIÓN",
+    // No messages
+    no_messages_yet: "Aún no hay mensajes",
+    // Onboarding hardcoded
+    join_btn: "UNIRSE",
+    or_label: "O",
+    enter_partners_code: "INGRESA EL CÓDIGO DE TU PAREJA",
+    your_profile_summary: "RESUMEN DE TU PERFIL",
+    who_are_you_title: "¿QUIÉN\nERES\nTÚ?",
+    just_you_here: "Solo tú aquí. Tu pareja crea su propio perfil por separado.",
+    create_4_digit_pin: "CREA UN PIN DE 4 DÍGITOS",
+    protects_profile: "Protege tu perfil cuando le das el teléfono a otra persona.",
+    confirm_pin_label: "CONFIRMAR PIN",
+    your_stats_title: "TUS\nESTADÍSTICAS",
+    calibrate_desc: "Usado para calibrar tus pesos y tiempos de descanso.",
+    age_label: "EDAD",
+    weight_label_upper: "PESO",
+    height_label_upper: "ALTURA",
+    biological_sex_label: "SEXO BIOLÓGICO",
+    your_goals_title: "TUS\nOBJETIVOS",
+    what_training_for: "¿Para qué entrenas",
+    primary_goal_label: "OBJETIVO PRINCIPAL",
+    training_level_label: "NIVEL DE ENTRENAMIENTO",
+    what_to_build_title: "¿QUÉ QUIERES\nDESARROLLAR?",
+    select_focus_areas: "Selecciona las áreas en las que quieres enfocarte.",
+    upper_body_label: "TREN SUPERIOR",
+    lower_body_label: "TREN INFERIOR",
+    split_focus_label: "ENFOQUE DE RUTINA",
+    your_gym_title: "TU\nGIMNASIO",
+    when_what_train: "¿Cuándo y con qué entrenas?",
+    days_per_week_label: "DÍAS POR SEMANA",
+    training_days_upper: "DÍAS DE ENTRENAMIENTO",
+    available_equipment_label: "EQUIPAMIENTO DISPONIBLE (selecciona todo)",
+    any_limits_title: "¿ALGÚN\nLÍMITE?",
+    injuries_desc: "¿Alguna lesión o área a evitar? La IA trabajará a tu alrededor.",
+    injuries_optional_label: "LESIONES / LIMITACIONES (opcional)",
+    schedule_label: "Horario",
+    equipment_label: "Equipamiento",
+    connect_partner_title: "CONECTAR\nPAREJA",
+    connect_partner_desc: "Conéctate con tu pareja para sincronizar rutinas y pesos — o continúa solo y conéctate más tarde.",
+    your_room_code_label: "TU CÓDIGO DE SALA",
+    waiting_for_partner_label: "ESPERANDO A LA PAREJA...",
+    back_label: "← ATRÁS",
+    prev_label: "← ANTERIOR",
+    continue_btn_label: "Continuar",
+    // Workout UI hardcoded
+    sec_label: "SEG",
+    skip_rest_btn: "SALTAR DESCANSO",
+    partner_btn: "PAREJA",
+    analyzing_label: "ANALIZANDO...",
+    close_btn: "CERRAR",
+    no_partner_yet_label: "AÚN SIN PAREJA",
+    share_room_from_partner: "Comparte tu código de sala desde la pestaña Pareja para conectarte.",
+    stop_label: "¿PARAR?",
+    progress_saved: "Tu progreso está guardado. Siempre puedes volver.",
+    swap_exercise_title: "CAMBIAR EJERCICIO",
+    for_today_only: "SOLO POR HOY — TU RUTINA NO CAMBIA",
+    how_did_feel_label: "¿CÓMO FUE? (OPCIONAL)",
+    done_btn: "LISTO",
+    // Home screen hardcoded
+    ai_coach_note_label: "NOTA DEL ENTRENADOR IA",
+    active_session_label: "SESIÓN ACTIVA",
+    sets_completed_label: "SERIES COMPLETADAS",
+    resume_btn: "REANUDAR",
+    week1_label: "SEMANA 1",
+    days_week_plan: "DÍAS/SEMANA",
+    start_first: "EMPIEZA TU PRIMERO",
+    workouts_label: "ENTRENAMIENTOS",
+    // Rest day
+    light_stretching_btn: "RUTINA DE ESTIRAMIENTOS",
+    partners_last_workout: "S ÚLTIMO ENTRENO",
+    // Routine tab
+    ai_generated_month1: "IA GENERADA · MES 1",
+    customize_btn: "PERSONALIZAR",
+    your_routine_title: "TU RUTINA",
+    exercises_count_label: "EJERCICIOS",
+    min_label: "MIN",
+    // Partner tab
+    close_room_btn: "CERRAR SALA",
+    partner_not_connected_title: "PAREJA NO\nCONECTADA",
+    share_code_desc: "Comparte tu código de sala para que tu pareja pueda unirse, o ingresa su código abajo.",
+    how_to_connect_label: "CÓMO CONECTARSE",
+    how_to_connect_desc: "Comparte tu código con tu pareja. Abren la app, van a la pestaña Pareja e ingresan el código manualmente.",
+    join_a_partner_label: "UNIRSE A UNA PAREJA",
+    training_now_label: "ENTRENANDO AHORA",
+    not_training_label: "SIN ENTRENAR",
+    exercises_label: "EJERCICIOS",
+    sets_done_label: "SERIES HECHAS",
+    weight_label: "PESO",
+    elapsed_label: "TIEMPO",
+    cheer_on_btn: "¡Anímalos!",
+    last_workout_label: "ÚLTIMO ENTRENO",
+    train_together_btn: "¿Entrenamos juntos?",
+    // Progress tab
+    body_weight_label: "PESO CORPORAL",
+    log_weight_btn: "+ REGISTRAR PESO",
+    storage_warning_label: "ADVERTENCIA DE ALMACENAMIENTO",
+    storage_full_desc: "Almacenamiento casi lleno — considera eliminar fotos antiguas.",
+    log_weight_title: "REGISTRAR PESO",
+    save_btn: "GUARDAR",
+    add_photo_label: "AÑADIR FOTO",
+    share_btn: "COMPARTIR",
+    sets_stat: "SERIES",
+    exer_stat: "EJERC.",
+    time_stat: "TIEMPO",
+    max_wt_stat: "PESO MÁX",
+    volume_stat: "VOLUMEN",
+    // Settings hardcoded
+    back_settings: "← ATRÁS",
+    edit_profile_label: "EDITAR PERFIL",
+    name_label_upper: "NOMBRE",
+    weight_upper: "PESO",
+    age_upper: "EDAD",
+    height_upper: "ALTURA",
+    injuries_limitations_label: "LESIONES / LIMITACIONES",
+    save_profile_btn: "GUARDAR PERFIL",
+    training_days_settings: "DÍAS DE ENTRENAMIENTO",
+    security_label: "SEGURIDAD",
+    change_pin_btn: "CAMBIAR PIN",
+    enter_current_pin_label: "INGRESA TU PIN ACTUAL",
+    new_pin_label: "NUEVO PIN",
+    confirm_new_pin_label: "CONFIRMAR NUEVO PIN",
+    verify_btn: "VERIFICAR",
+    next_btn: "SIGUIENTE",
+    cancel_btn: "CANCELAR",
+    save_new_pin_btn: "GUARDAR NUEVO PIN",
+    routine_settings_label: "RUTINA",
+    customize_routine_btn: "PERSONALIZAR RUTINA",
+    quick_rebuild_btn: "RECONSTRUIR RÁPIDO",
+    // Conflict modal
+    active_session_title: "SESIÓN ACTIVA",
+    resume_current: "Reanudar Sesión Actual",
+    end_start_new: "Terminarla e Iniciar Nueva",
+    // Rebuild modal
+    rebuild_routine_title_upper: "RECONSTRUIR\nRUTINA",
+    active_workout_label: "ENTRENO ACTIVO",
+    active_workout_desc: "Tienes un entrenamiento en progreso. Reconstruir terminará tu sesión actual.",
+    section_training_days: "A — DÍAS DE ENTRENAMIENTO",
+    section_muscle_focus: "B — ENFOQUE MUSCULAR",
+    section_primary_goal: "C — OBJETIVO PRINCIPAL",
+    section_training_level: "D — NIVEL DE ENTRENAMIENTO",
+    section_equipment: "E — EQUIPAMIENTO",
+    days_per_week_upper: "DÍAS POR SEMANA",
+    training_days_upper2: "DÍAS DE ENTRENAMIENTO",
+    upper_body_upper: "TREN SUPERIOR",
+    lower_body_upper: "TREN INFERIOR",
+    split_focus_upper: "ENFOQUE DE RUTINA",
+    routine_preview_label: "VISTA PREVIA DE RUTINA",
+    removed_label: "ELIMINADOS",
+    new_label: "NUEVOS",
+    rebuild_my_routine_btn: "RECONSTRUIR MI RUTINA",
+    preview_changes_btn: "VISTA PREVIA DE CAMBIOS",
+    customize_label: "PERSONALIZAR",
+    cancel_arrow: "← CANCELAR",
+    // Rebuild success
+    routine_rebuilt: "✓ RUTINA RECONSTRUIDA",
+    // Stretching sheet
+    stretching_title: "ESTIRAMIENTOS",
+    light_recovery_routine: "RUTINA DE RECUPERACIÓN LIGERA",
+    // Logout modal
+    sign_out_title: "CERRAR SESIÓN",
+    sign_out_desc: "Tu rutina y conexión con tu pareja están guardadas en este navegador.",
+    // Workout complete
+    exercises_upper: "EJERCICIOS",
+    time_upper: "TIEMPO",
+    // Onboarding continue buttons
+    got_it: "Entendido",
+    keep_goal: "Mantener",
   }
 };
 
@@ -908,7 +1516,7 @@ function ChatWindow({ partnerProfile, messages, userSlot, onSend, lang }) {
       </div>
       <div style={{flex:1,overflowY:"auto",padding:"10px 12px",display:"flex",flexDirection:"column",gap:6}}>
         {messages.length === 0 && (
-          <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",textAlign:"center",padding:"12px 0"}}>No messages yet</div>
+          <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",textAlign:"center",padding:"12px 0"}}>{STRINGS[lang]?.no_messages_yet || STRINGS.en.no_messages_yet}</div>
         )}
         {messages.map((m,i)=>{
           const isMe = m.slot ? m.slot===userSlot : m.from==="me";
@@ -2272,13 +2880,13 @@ function AppInner() {
     const stepContent = [
       /* 0 — Name + PIN */
       <div key={0} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
-        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>STEP 1 OF 7</div>
+        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>{t('step_1_of_7')}</div>
         <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>WHO<br/>ARE<br/>YOU?</div>
-        <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:24}}>Just you here. Your partner creates their own profile separately.</p>
+        <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:24}}>{t('just_you_here')}</p>
         <Input label="YOUR NAME" placeholder="Alex" value={profile.name} onChange={v=>p("name",v)} />
         <div style={{marginTop:16}}>
           <Label text="CREATE A 4-DIGIT PIN" />
-          <p style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray2)",marginBottom:14,lineHeight:1.5}}>Protects your profile when you hand off your phone.</p>
+          <p style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray2)",marginBottom:14,lineHeight:1.5}}>{t('protects_profile')}</p>
           <div style={{marginBottom:14}}>
             <input
               type="password"
@@ -2328,9 +2936,9 @@ function AppInner() {
 
       /* 1 — Stats */
       <div key={1} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
-        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>STEP 2 OF 7</div>
+        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>{t('step_2_of_7')}</div>
         <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>YOUR<br/>STATS</div>
-        <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:32}}>Used to calibrate your weights and rest times.</p>
+        <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:32}}>{t('calibrate_desc')}</p>
         <div style={{display:"flex",gap:12}}>
           <div style={{flex:1}}><Input label="AGE" placeholder="28" value={profile.age} onChange={v=>p("age",v)} type="number"/></div>
           <div style={{flex:1}}><Input label="WEIGHT" placeholder="80" value={profile.weight} onChange={v=>p("weight",v)} type="number" unit="kg"/></div>
@@ -2344,9 +2952,9 @@ function AppInner() {
 
       /* 2 — Goals & level */
       <div key={2} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
-        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>STEP 3 OF 7</div>
+        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>{t('step_3_of_7')}</div>
         <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>YOUR<br/>GOALS</div>
-        <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:28}}>What are you training for, {profile.name||"you"}?</p>
+        <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:28}}>{t('what_training_for')}, {profile.name||"you"}?</p>
         <Label text="PRIMARY GOAL"/>
         <div className="chip-select" style={{marginBottom:goalConflict?12:28}}>
           {GOALS.map(v=><Chip key={v} value={v} single currentSingle={profile.goal} onSelect={handleGoalSelect}/>)}
@@ -2357,11 +2965,11 @@ function AppInner() {
             <div style={{display:"flex",gap:10}}>
               <button onClick={()=>{ p("goal", goalConflict.pending); setGoalConflict(null); if(goalConflictTimer) clearTimeout(goalConflictTimer); }}
                 style={{flex:1,background:"var(--lime)",border:"none",borderRadius:10,padding:"10px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:12,letterSpacing:1,color:"var(--black)",cursor:"pointer"}}>
-                Got it
+                {t('got_it')}
               </button>
               <button onClick={()=>{ setGoalConflict(null); if(goalConflictTimer) clearTimeout(goalConflictTimer); }}
                 style={{flex:1,background:"transparent",border:"1px solid var(--line2)",borderRadius:10,padding:"10px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:12,letterSpacing:1,color:"var(--gray)",cursor:"pointer"}}>
-                Keep {profile.goal}
+                {t('keep_goal')} {profile.goal}
               </button>
             </div>
           </div>
@@ -2374,9 +2982,9 @@ function AppInner() {
 
       /* 3 — Muscle priorities (NEW) */
       <div key={3} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
-        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>STEP 4 OF 7</div>
+        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>{t('step_4_of_7')}</div>
         <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.88,marginBottom:16}}>WHAT DO<br/>YOU WANT<br/>TO BUILD?</div>
-        <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:24}}>Select the areas you want to focus on most.</p>
+        <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:24}}>{t('select_focus_areas')}</p>
         <div style={{display:"flex",gap:16,marginBottom:24}}>
           <div style={{flex:1}}>
             <Label text="UPPER BODY"/>
@@ -2409,9 +3017,9 @@ function AppInner() {
 
       /* 4 — Schedule + equipment (was 3) */
       <div key={4} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
-        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>STEP 5 OF 7</div>
+        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>{t('step_5_of_7')}</div>
         <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>YOUR<br/>GYM</div>
-        <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:28}}>When and what do you train with?</p>
+        <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:28}}>{t('when_what_train')}</p>
         <Label text="DAYS PER WEEK"/>
         <div className="chip-select" style={{marginBottom:20}}>
           {DAYS.map(v=><Chip key={v} value={v} single currentSingle={profile.daysPerWeek} onSelect={v=>{
@@ -2453,9 +3061,9 @@ function AppInner() {
 
       /* 5 — Injuries (was 4) */
       <div key={5} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
-        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>STEP 6 OF 7</div>
+        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>{t('step_6_of_7')}</div>
         <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>ANY<br/>LIMITS?</div>
-        <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:28}}>Any injuries or areas to avoid? The AI will work around them.</p>
+        <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:28}}>{t('injuries_desc')}</p>
         <Label text="INJURIES / LIMITATIONS (optional)"/>
         <textarea
           value={profile.injuries} onChange={e=>p("injuries",e.target.value)}
@@ -2463,11 +3071,11 @@ function AppInner() {
           style={{width:"100%",background:"var(--card)",border:"1.5px solid var(--line2)",borderRadius:12,padding:14,fontFamily:"var(--font-body)",fontSize:16,color:"var(--white)",resize:"none",marginBottom:24}}
         />
         <div style={{background:"var(--card)",borderRadius:16,border:"1px solid var(--line)",padding:18}}>
-          <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:12}}>YOUR PROFILE SUMMARY</div>
+          <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:12}}>{t('your_profile_summary')}</div>
           {[
             [profile.name||"You", `${profile.goal||"—"} · ${profile.level||"—"}`],
-            ["Schedule", `${profile.daysPerWeek} days/week`],
-            ["Equipment", (profile.equipment||[]).length?(profile.equipment||[]).join(", "):"Full gym"],
+            [t('schedule_label'), `${profile.daysPerWeek} days/week`],
+            [t('equipment_label'), (profile.equipment||[]).length?(profile.equipment||[]).join(", "):t('full_gym')],
           ].map(([l,v])=>(
             <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid var(--line)"}}>
               <span style={{fontFamily:"var(--font-cond)",fontSize:12,color:"var(--gray)",letterSpacing:1}}>{l}</span>
@@ -2479,17 +3087,17 @@ function AppInner() {
 
       /* 6 — Partner connection (was 5) */
       <div key={6} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
-        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>STEP 7 OF 7</div>
+        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>{t('step_7_of_7')}</div>
         <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>CONNECT<br/>PARTNER</div>
         <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:28}}>
-          Connect with your partner to sync routines and weights — or go solo and connect later.
+          {t('connect_partner_desc')}
         </p>
         {!roomCode ? (
           <>
             <Btn full onClick={handleInvite} style={{marginBottom:12}}>{t('invite_partner')}</Btn>
-            <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",textAlign:"center",marginBottom:12}}>OR</div>
+            <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",textAlign:"center",marginBottom:12}}>{t('or_label')}</div>
             <div style={{background:"var(--card)",border:"1.5px solid var(--line2)",borderRadius:14,padding:16,marginBottom:12}}>
-              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:10}}>ENTER PARTNER'S CODE</div>
+              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:10}}>{t('enter_partners_code')}</div>
               <div style={{display:"flex",gap:8}}>
                 <input
                   value={joinInput}
@@ -2497,22 +3105,22 @@ function AppInner() {
                   placeholder="STR-XXXX"
                   style={{flex:1,background:"var(--dark)",border:"1.5px solid var(--line2)",borderRadius:10,padding:"12px 14px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:16,letterSpacing:2,color:"var(--white)",outline:"none"}}
                 />
-                <button onClick={handleJoin} style={{background:"var(--lime)",border:"none",borderRadius:10,padding:"12px 18px",fontFamily:"var(--font-cond)",fontWeight:900,fontSize:13,letterSpacing:2,color:"var(--black)",cursor:"pointer"}}>JOIN</button>
+                <button onClick={handleJoin} style={{background:"var(--lime)",border:"none",borderRadius:10,padding:"12px 18px",fontFamily:"var(--font-cond)",fontWeight:900,fontSize:13,letterSpacing:2,color:"var(--black)",cursor:"pointer"}}>{t('join_btn')}</button>
               </div>
               {joinError && <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--red)",marginTop:8}}>{joinError}</div>}
             </div>
-            <Btn full variant="ghost" onClick={finishOnboarding}>Skip — Go Solo</Btn>
+            <Btn full variant="ghost" onClick={finishOnboarding}>{t('skip_go_solo')}</Btn>
           </>
         ) : waitingForPartner ? (
           <div style={{textAlign:"center"}}>
-            <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--gray)",marginBottom:12}}>YOUR ROOM CODE</div>
+            <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--gray)",marginBottom:12}}>{t('your_room_code_label')}</div>
             <div style={{fontFamily:"var(--font-display)",fontSize:72,color:"var(--lime)",letterSpacing:4,marginBottom:20,lineHeight:1}}>{roomCode}</div>
-            <Btn full onClick={handleCopyLink} style={{marginBottom:20}}>{copied?"✓ Copied!":"Copy Invite Link"}</Btn>
+            <Btn full onClick={handleCopyLink} style={{marginBottom:20}}>{copied?t('copied'):t('copy_code')}</Btn>
             <div style={{display:"flex",alignItems:"center",gap:10,justifyContent:"center",marginBottom:24}}>
               <div style={{width:9,height:9,borderRadius:99,background:"var(--lime)",animation:"pulse 1.5s infinite"}}/>
-              <span style={{fontFamily:"var(--font-cond)",fontSize:12,letterSpacing:2,color:"var(--gray)"}}>WAITING FOR PARTNER...</span>
+              <span style={{fontFamily:"var(--font-cond)",fontSize:12,letterSpacing:2,color:"var(--gray)"}}>{t('waiting_for_partner_label')}</span>
             </div>
-            <Btn full variant="ghost" onClick={finishOnboarding}>Continue Solo for Now</Btn>
+            <Btn full variant="ghost" onClick={finishOnboarding}>{t('continue_solo')}</Btn>
           </div>
         ) : null}
       </div>,
@@ -2527,7 +3135,7 @@ function AppInner() {
           </div>
           <div style={{padding:"16px 24px 0"}}>
             <button onClick={prevStep} style={{background:"none",border:"none",color:"var(--gray)",fontFamily:"var(--font-cond)",fontSize:13,letterSpacing:2,cursor:"pointer",padding:0}}>
-              ← {onboardStep===0?"BACK":"PREV"}
+              {onboardStep===0?t('back_label'):t('prev_label')}
             </button>
           </div>
           <div style={{flex:1,overflowY:"auto",padding:"24px 24px 0"}}>
@@ -2548,8 +3156,8 @@ function AppInner() {
                     }
                     setPinMatchError("");
                     nextStep();
-                  }}>Continue</Btn>
-                : <Btn full onClick={nextStep}>Continue</Btn>
+                  }}>{t('continue_btn_label')}</Btn>
+                : <Btn full onClick={nextStep}>{t('continue_btn_label')}</Btn>
               }
             </div>
           )}
@@ -2674,7 +3282,7 @@ function AppInner() {
                       </div>
                       {isActive
                         ? <span style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:1,color:"var(--gray2)"}}>{pCompleted} / {pTotal} SETS</span>
-                        : <span style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:1,color:"var(--gray2)"}}>Not training yet</span>
+                        : <span style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:1,color:"var(--gray2)"}}>{t('not_training_yet')}</span>
                       }
                     </div>
                     <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
@@ -2714,10 +3322,10 @@ function AppInner() {
                   </svg>
                   <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
                     <div style={{fontFamily:"var(--font-display)",fontSize:48,color:"var(--white)",lineHeight:1}}>{restSec}</div>
-                    <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:2}}>SEC</div>
+                    <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:2}}>{t('sec')}</div>
                   </div>
                 </div>
-                <button onClick={skipRest} style={{background:"transparent",border:"1px solid var(--line2)",borderRadius:10,padding:"10px 28px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,color:"var(--gray)",cursor:"pointer"}}>SKIP REST</button>
+                <button onClick={skipRest} style={{background:"transparent",border:"1px solid var(--line2)",borderRadius:10,padding:"10px 28px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,color:"var(--gray)",cursor:"pointer"}}>{t('skip_rest')}</button>
               </div>
             )}
           </div>
@@ -2728,7 +3336,7 @@ function AppInner() {
               </button>
               <div style={{display:"flex",gap:10}}>
                 <button onClick={()=>{setSheet("ai");fetchAI(`I'm doing ${ex.name}, ${ex.reps} reps at ${ex.wA}. Give me 3 form cues and tell me if I should adjust if I'm struggling.`);}} style={{flex:1,background:"var(--card)",border:"1px solid var(--line)",borderRadius:14,padding:"14px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,color:"var(--white)",cursor:"pointer"}}>{t('ai_coach')}</button>
-                <button onClick={()=>setSheet("partner")} style={{flex:1,background:"var(--card)",border:"1px solid var(--line)",borderRadius:14,padding:"14px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,color:"var(--white)",cursor:"pointer"}}>PARTNER</button>
+                <button onClick={()=>setSheet("partner")} style={{flex:1,background:"var(--card)",border:"1px solid var(--line)",borderRadius:14,padding:"14px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,color:"var(--white)",cursor:"pointer"}}>{t('partner_label')}</button>
               </div>
             </div>
           )}
@@ -2739,11 +3347,11 @@ function AppInner() {
                   <div style={{fontFamily:"var(--font-display)",fontSize:36,marginBottom:4}}>{t('ai_coach')}</div>
                   <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:accentColor,marginBottom:20}}>{ex.name.toUpperCase()}</div>
                   {aiLoading
-                    ? <div style={{display:"flex",alignItems:"center",gap:12,color:"var(--gray)",padding:"20px 0"}}><div style={{width:16,height:16,border:`2px solid ${accentColor}`,borderTopColor:"transparent",borderRadius:99,animation:"spin .8s linear infinite"}}/><span style={{fontFamily:"var(--font-cond)",letterSpacing:1}}>ANALYZING...</span></div>
+                    ? <div style={{display:"flex",alignItems:"center",gap:12,color:"var(--gray)",padding:"20px 0"}}><div style={{width:16,height:16,border:`2px solid ${accentColor}`,borderTopColor:"transparent",borderRadius:99,animation:"spin .8s linear infinite"}}/><span style={{fontFamily:"var(--font-cond)",letterSpacing:1}}>{t('analyzing')}</span></div>
                     : <p style={{fontFamily:"var(--font-body)",fontSize:15,lineHeight:1.7,color:"#ccc",marginBottom:20}}>{aiText}</p>}
                   <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                    <Btn variant="red-soft" full onClick={()=>fetchAI(`I feel discomfort doing ${ex.name}. Should I stop, modify, or push through?`)}>⚠️ I FEEL PAIN</Btn>
-                    <Btn variant="ghost" full onClick={()=>setSheet(null)}>CLOSE</Btn>
+                    <Btn variant="red-soft" full onClick={()=>fetchAI(`I feel discomfort doing ${ex.name}. Should I stop, modify, or push through?`)}>{t('pain_btn')}</Btn>
+                    <Btn variant="ghost" full onClick={()=>setSheet(null)}>{t('close')}</Btn>
                   </div>
                 </>}
                 {sheet==="partner" && (
@@ -2754,8 +3362,8 @@ function AppInner() {
                         <div>
                           <div style={{fontFamily:"var(--font-display)",fontSize:28}}>{(partnerProfile.name||"PARTNER").toUpperCase()}</div>
                           {partnerProfile._activeSession && (Date.now() - (partnerProfile._activeSession.startedAt || 0)) < 7_200_000
-                            ? <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:7,height:7,borderRadius:99,background:"#30d158",animation:"pulse 2s infinite"}}/><span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"#30d158"}}>TRAINING NOW</span></div>
-                            : <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)"}}>NOT TRAINING</div>
+                            ? <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:7,height:7,borderRadius:99,background:"#30d158",animation:"pulse 2s infinite"}}/><span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"#30d158"}}>{t('training_now')}</span></div>
+                            : <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)"}}>{t('not_training')}</div>
                           }
                         </div>
                       </div>
@@ -2777,26 +3385,26 @@ function AppInner() {
                     </>
                   ) : (
                     <div style={{textAlign:"center",padding:"20px 0"}}>
-                      <div style={{fontFamily:"var(--font-display)",fontSize:32,marginBottom:8}}>NO PARTNER YET</div>
-                      <p style={{fontFamily:"var(--font-body)",fontSize:14,color:"var(--gray)",lineHeight:1.6,marginBottom:20}}>Share your room code from the Partner tab to connect.</p>
-                      <Btn variant="ghost" full onClick={()=>setSheet(null)}>CLOSE</Btn>
+                      <div style={{fontFamily:"var(--font-display)",fontSize:32,marginBottom:8}}>{t('no_partner_yet')}</div>
+                      <p style={{fontFamily:"var(--font-body)",fontSize:14,color:"var(--gray)",lineHeight:1.6,marginBottom:20}}>{t('share_room_from_partner')}</p>
+                      <Btn variant="ghost" full onClick={()=>setSheet(null)}>{t('close')}</Btn>
                     </div>
                   )
                 )}
                 {sheet==="emergency" && <>
-                  <div style={{fontFamily:"var(--font-display)",fontSize:42,color:"var(--red)",marginBottom:8}}>STOP?</div>
-                  <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:24}}>Your progress is saved. You can always come back.</p>
+                  <div style={{fontFamily:"var(--font-display)",fontSize:42,color:"var(--red)",marginBottom:8}}>{t('stop_label')}</div>
+                  <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:24}}>{t('progress_saved')}</p>
                   <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                    <Btn variant="dark" full onClick={navigateHomeFromWorkout}>Resume Later</Btn>
-                    <Btn variant="red" full onClick={endWorkoutNow}>End Workout Now</Btn>
-                    <Btn variant="ghost" full onClick={()=>setSheet(null)}>Keep Going</Btn>
+                    <Btn variant="dark" full onClick={navigateHomeFromWorkout}>{t('resume_later')}</Btn>
+                    <Btn variant="red" full onClick={endWorkoutNow}>{t('end_workout_now')}</Btn>
+                    <Btn variant="ghost" full onClick={()=>setSheet(null)}>{t('keep_going')}</Btn>
                   </div>
                 </>}
                 {/* Feature 4B — Swap sheet */}
                 {sheet==="swap" && swapExercise && (
                   <div>
-                    <div style={{fontFamily:"var(--font-display)",fontSize:32,marginBottom:4}}>SWAP EXERCISE</div>
-                    <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",marginBottom:20}}>FOR TODAY ONLY — YOUR ROUTINE STAYS UNCHANGED</div>
+                    <div style={{fontFamily:"var(--font-display)",fontSize:32,marginBottom:4}}>{t('swap_exercise')}</div>
+                    <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",marginBottom:20}}>{t('for_today_only')}</div>
                     {(ALTERNATIVES_DB[swapExercise.name] || ["No alternatives"]).map(alt => (
                       <button key={alt} onClick={() => {
                         setRoutine(prev => {
@@ -2812,19 +3420,19 @@ function AppInner() {
                         {alt}
                       </button>
                     ))}
-                    <Btn variant="ghost" full onClick={()=>{setSheet(null);setSwapExercise(null);}}>CANCEL</Btn>
+                    <Btn variant="ghost" full onClick={()=>{setSheet(null);setSwapExercise(null);}}>{t('cancel')}</Btn>
                   </div>
                 )}
                 {sheet==="complete" && (
                   <div style={{textAlign:"center",paddingTop:8}}>
                     <div style={{fontSize:56,marginBottom:12}}>🎉</div>
                     <div style={{fontFamily:"var(--font-display)",fontSize:52,color:accentColor,lineHeight:0.9,marginBottom:8}}>{t('workout_complete')}</div>
-                    <div style={{fontFamily:"var(--font-cond)",fontSize:13,color:"var(--gray)",letterSpacing:2,marginBottom:28}}>{day.name.toUpperCase()} · {day.exercises.length} EXERCISES</div>
+                    <div style={{fontFamily:"var(--font-cond)",fontSize:13,color:"var(--gray)",letterSpacing:2,marginBottom:28}}>{day.name.toUpperCase()} · {day.exercises.length} {t('exercises_upper')}</div>
                     <div style={{display:"flex",gap:12,marginBottom:28}}>
                       {[
-                        ["SETS",`${day.exercises.reduce((a,e)=>a+e.sets,0)}`],
-                        ["EXER.",`${day.exercises.length}`],
-                        ["TIME",`${workoutStartRef.current?Math.max(1,Math.round((Date.now()-workoutStartRef.current)/60000)):45} min`],
+                        [t('sets'),`${day.exercises.reduce((a,e)=>a+e.sets,0)}`],
+                        [t('exercises_upper'),`${day.exercises.length}`],
+                        [t('time_upper'),`${workoutStartRef.current?Math.max(1,Math.round((Date.now()-workoutStartRef.current)/60000)):45} min`],
                       ].map(([l,v])=>(
                         <div key={l} style={{flex:1,background:"var(--card)",borderRadius:14,padding:"14px 8px"}}>
                           <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--gray)",marginBottom:4}}>{l}</div>
@@ -2834,7 +3442,7 @@ function AppInner() {
                     </div>
                     {/* Feature 4E — Workout notes */}
                     <div style={{marginBottom:16,textAlign:"left"}}>
-                      <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>HOW DID IT FEEL? (OPTIONAL)</div>
+                      <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>{t('how_did_it_feel')}</div>
                       <textarea
                         value={workoutNote}
                         onChange={e=>setWorkoutNote(e.target.value)}
@@ -2843,7 +3451,7 @@ function AppInner() {
                       />
                     </div>
                     <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                      <Btn full onClick={()=>{clearActiveSession();setSheet(null);setScreen("home");setExIdx(0);setSetNum(1);setCompletedSets({});}}>DONE</Btn>
+                      <Btn full onClick={()=>{clearActiveSession();setSheet(null);setScreen("home");setExIdx(0);setSetNum(1);setCompletedSets({});}}>{t('done')}</Btn>
                     </div>
                   </div>
                 )}
@@ -2916,7 +3524,7 @@ function AppInner() {
         )}
         <div style={{background:"var(--black)",minHeight:"100vh",maxWidth:430,margin:"0 auto",display:"flex",flexDirection:"column"}}>
           <div style={{padding:"22px 22px 0",display:"flex",alignItems:"center",gap:12}}>
-            <button onClick={()=>{setShowChangePinFlow(false);setScreen("home");}} style={{background:"none",border:"none",color:"var(--gray)",fontFamily:"var(--font-cond)",fontSize:13,letterSpacing:2,cursor:"pointer",padding:0}}>← BACK</button>
+            <button onClick={()=>{setShowChangePinFlow(false);setScreen("home");}} style={{background:"none",border:"none",color:"var(--gray)",fontFamily:"var(--font-cond)",fontSize:13,letterSpacing:2,cursor:"pointer",padding:0}}>{t('back_settings')}</button>
           </div>
           <div style={{flex:1,overflowY:"auto",padding:"24px 22px 40px"}}>
             <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.88,marginBottom:24}}>{t('settings')}</div>
@@ -2951,7 +3559,7 @@ function AppInner() {
 
             {/* Profile */}
             <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
-              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:14}}>EDIT PROFILE</div>
+              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:14}}>{t('edit_profile')}</div>
               <Input label="NAME" placeholder="Your name" value={settingsName} onChange={v=>setSettingsName(v)} maxLength={50}/>
               <div style={{display:"flex",gap:10}}>
                 <div style={{flex:1}}><Input label="WEIGHT" placeholder="80" value={settingsWeight} onChange={v=>setSettingsWeight(v)} type="number" unit="kg"/></div>
@@ -2959,7 +3567,7 @@ function AppInner() {
                 <div style={{flex:1}}><Input label="HEIGHT" placeholder="175" value={settingsHeight} onChange={v=>setSettingsHeight(v)} type="number" unit="cm"/></div>
               </div>
               <div style={{marginBottom:14}}>
-                <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>INJURIES / LIMITATIONS</div>
+                <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>{t('injuries_label')}</div>
                 <textarea maxLength={300} value={settingsInjuries} onChange={e=>setSettingsInjuries(e.target.value)} placeholder="Any injuries or limitations..." rows={2} style={{width:"100%",background:"var(--dark)",border:"1.5px solid var(--line2)",borderRadius:12,padding:"12px 14px",fontFamily:"var(--font-body)",fontSize:14,color:"var(--white)",resize:"none",outline:"none",boxSizing:"border-box"}}/>
               </div>
               <Btn full onClick={()=>{
@@ -2968,13 +3576,13 @@ function AppInner() {
                 if (settingsAge && parseInt(settingsAge) > 0) p("age", settingsAge);
                 if (settingsHeight && parseInt(settingsHeight) > 0) p("height", settingsHeight);
                 p("injuries", settingsInjuries||"");
-                setToast("Profile saved"); setTimeout(()=>setToast(null),2000);
-              }}>SAVE PROFILE</Btn>
+                setToast(t('profile_saved')); setTimeout(()=>setToast(null),2000);
+              }}>{t('save_profile')}</Btn>
             </div>
 
             {/* Training Days */}
             <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
-              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:14}}>TRAINING DAYS</div>
+              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:14}}>{t('training_days_label')}</div>
               <div style={{display:"flex",gap:6,marginBottom:12}}>
                 {ALL_DAYS_SETTINGS.map(d => {
                   const isSelected = settingsTD.includes(d);
@@ -2999,14 +3607,14 @@ function AppInner() {
 
             {/* Security — Change PIN */}
             <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
-              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:14}}>SECURITY</div>
+              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:14}}>{t('security')}</div>
               {!showChangePinFlow ? (
-                <Btn full variant="ghost" onClick={()=>{setShowChangePinFlow(true);setCpStep("verify");setCpEntry("");setCpNew("");setCpConfirm("");setCpError("");}}>CHANGE PIN</Btn>
+                <Btn full variant="ghost" onClick={()=>{setShowChangePinFlow(true);setCpStep("verify");setCpEntry("");setCpNew("");setCpConfirm("");setCpError("");}}>{t('change_pin')}</Btn>
               ) : (
                 <div>
                   {cpStep === "verify" && (
                     <>
-                      <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:10}}>ENTER CURRENT PIN</div>
+                      <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:10}}>{t('enter_current_pin')}</div>
                       <input type="password" inputMode="numeric" maxLength={4} autoComplete="off" value={cpEntry} onChange={e=>{const v=e.target.value.replace(/\D/g,"").slice(0,4);setCpEntry(v);setCpError("");}} placeholder="• • • •" style={{width:"100%",background:"var(--dark)",border:`1.5px solid ${cpError?"var(--red)":"var(--line2)"}`,borderRadius:12,padding:"14px 16px",fontFamily:"var(--font-body)",fontSize:24,letterSpacing:8,color:"var(--white)",textAlign:"center",outline:"none",boxSizing:"border-box",marginBottom:8}}/>
                       {cpError && <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--red)",marginBottom:8}}>{cpError}</div>}
                       <div style={{display:"flex",gap:8}}>
@@ -3015,28 +3623,28 @@ function AppInner() {
                           const h=await hashPIN(cpEntry);
                           if(h===pinHash){setCpStep("new");setCpEntry("");setCpError("");}
                           else{setCpError("Wrong PIN. Try again.");}
-                        }}>VERIFY</Btn>
-                        <Btn full variant="ghost" onClick={()=>{setShowChangePinFlow(false);}}>CANCEL</Btn>
+                        }}>{t('verify')}</Btn>
+                        <Btn full variant="ghost" onClick={()=>{setShowChangePinFlow(false);}}>{t('cancel')}</Btn>
                       </div>
                     </>
                   )}
                   {cpStep === "new" && (
                     <>
-                      <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:10}}>NEW PIN</div>
+                      <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:10}}>{t('new_pin')}</div>
                       <input type="password" inputMode="numeric" maxLength={4} autoComplete="new-password" value={cpNew} onChange={e=>{const v=e.target.value.replace(/\D/g,"").slice(0,4);setCpNew(v);setCpError("");}} placeholder="• • • •" style={{width:"100%",background:"var(--dark)",border:`1.5px solid ${cpError?"var(--red)":"var(--line2)"}`,borderRadius:12,padding:"14px 16px",fontFamily:"var(--font-body)",fontSize:24,letterSpacing:8,color:"var(--white)",textAlign:"center",outline:"none",boxSizing:"border-box",marginBottom:8}}/>
                       {cpError && <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--red)",marginBottom:8}}>{cpError}</div>}
                       <div style={{display:"flex",gap:8}}>
                         <Btn full onClick={()=>{
                           if(cpNew.length!==4||!/^\d{4}$/.test(cpNew)){setCpError("PIN must be 4 digits");return;}
                           setCpStep("confirm");setCpError("");
-                        }}>NEXT</Btn>
-                        <Btn full variant="ghost" onClick={()=>setShowChangePinFlow(false)}>CANCEL</Btn>
+                        }}>{t('next')}</Btn>
+                        <Btn full variant="ghost" onClick={()=>setShowChangePinFlow(false)}>{t('cancel')}</Btn>
                       </div>
                     </>
                   )}
                   {cpStep === "confirm" && (
                     <>
-                      <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:10}}>CONFIRM NEW PIN</div>
+                      <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:10}}>{t('confirm_new_pin')}</div>
                       <input type="password" inputMode="numeric" maxLength={4} autoComplete="new-password" value={cpConfirm} onChange={e=>{const v=e.target.value.replace(/\D/g,"").slice(0,4);setCpConfirm(v);setCpError("");}} placeholder="• • • •" style={{width:"100%",background:"var(--dark)",border:`1.5px solid ${cpError?"var(--red)":"var(--line2)"}`,borderRadius:12,padding:"14px 16px",fontFamily:"var(--font-body)",fontSize:24,letterSpacing:8,color:"var(--white)",textAlign:"center",outline:"none",boxSizing:"border-box",marginBottom:8}}/>
                       {cpError && <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--red)",marginBottom:8}}>{cpError}</div>}
                       <div style={{display:"flex",gap:8}}>
@@ -3045,9 +3653,9 @@ function AppInner() {
                           const h=await hashPIN(cpNew);
                           setPinHash(h);
                           setShowChangePinFlow(false);setCpEntry("");setCpNew("");setCpConfirm("");setCpError("");
-                          setToast("PIN changed"); setTimeout(()=>setToast(null),2500);
-                        }}>SAVE NEW PIN</Btn>
-                        <Btn full variant="ghost" onClick={()=>setShowChangePinFlow(false)}>CANCEL</Btn>
+                          setToast(t('pin_changed')); setTimeout(()=>setToast(null),2500);
+                        }}>{t('save_new_pin')}</Btn>
+                        <Btn full variant="ghost" onClick={()=>setShowChangePinFlow(false)}>{t('cancel')}</Btn>
                       </div>
                     </>
                   )}
@@ -3057,10 +3665,10 @@ function AppInner() {
 
             {/* Routine */}
             <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:40}}>
-              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:14}}>ROUTINE</div>
+              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:14}}>{t('routine_section')}</div>
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                <Btn full onClick={()=>{setScreen("home"); setTimeout(()=>openRebuildModal(),150);}}>CUSTOMIZE ROUTINE</Btn>
-                <Btn full variant="ghost" onClick={()=>{setScreen("home"); setTimeout(()=>generateRoutine(),150);}}>QUICK REBUILD</Btn>
+                <Btn full onClick={()=>{setScreen("home"); setTimeout(()=>openRebuildModal(),150);}}>{t('customize_routine')}</Btn>
+                <Btn full variant="ghost" onClick={()=>{setScreen("home"); setTimeout(()=>generateRoutine(),150);}}>{t('quick_rebuild')}</Btn>
               </div>
             </div>
           </div>
@@ -3123,6 +3731,7 @@ function AppInner() {
 
             const WEEK_DAYS = ["MON","TUE","WED","THU","FRI","SAT","SUN"];
             const WEEK_DAYS_SHORT = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+            const WEEK_DAYS_DISPLAY = STRINGS[lang]?.days_of_week || STRINGS.en.days_of_week;
 
             const trainingDays = profile?.trainingDays || null;
             const todayLabel = WEEK_DAYS[todayDOW === 0 ? 6 : todayDOW - 1];
@@ -3137,7 +3746,7 @@ function AppInner() {
             <div style={{display:"flex",flexDirection:"column",gap:14}}>
               {aiSummary && (
                 <div className="fu" style={{background:"var(--card)",borderRadius:18,border:"1px solid rgba(200,241,53,.2)",padding:20}}>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:8}}>AI COACH NOTE</div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:8}}>{t('ai_coach_note')}</div>
                   <p style={{fontFamily:"var(--font-body)",fontSize:14,color:"#ccc",lineHeight:1.65}}>{aiSummary}</p>
                 </div>
               )}
@@ -3159,25 +3768,25 @@ function AppInner() {
                               ? <div style={{height:4,borderRadius:99,border:"1px solid rgba(200,241,53,0.4)",background:"transparent",marginBottom:5}}/>
                               : <div style={{height:2,borderRadius:99,background:"var(--line)",marginBottom:7}}/>
                         }
-                        <div style={{fontFamily:"var(--font-cond)",fontSize:9,fontWeight:700,color:isTraining?"var(--lime)":"var(--gray2)"}}>{d}</div>
+                        <div style={{fontFamily:"var(--font-cond)",fontSize:9,fontWeight:700,color:isTraining?"var(--lime)":"var(--gray2)"}}>{WEEK_DAYS_DISPLAY[i]}</div>
                         {isToday && isTraining && <div style={{width:4,height:4,borderRadius:99,background:"var(--lime)",margin:"3px auto 0"}}/>}
                       </div>
                     );
                   })}
                 </div>
                 <div style={{fontFamily:"var(--font-display)",fontSize:40,lineHeight:0.9}}>
-                  {workoutHistory.length>0?`${workoutHistory.length} WORKOUT${workoutHistory.length>1?"S":""}`:"START YOUR FIRST"}
+                  {workoutHistory.length>0?`${workoutHistory.length} ${t('workouts').toUpperCase()}`:`${t('start_first').toUpperCase()}`}
                 </div>
-                <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1,marginTop:6}}>WEEK 1 · {routine?.length||3} DAYS/WEEK PLAN</div>
+                <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1,marginTop:6}}>{t('week1_label')} · {routine?.length||3} {t('days_week_plan')}</div>
               </div>
               {activeSession?.isActive && (
                 <div className="fu" style={{background:"var(--card)",borderRadius:18,border:"1px solid rgba(200,241,53,.25)",borderLeft:"4px solid var(--lime)",padding:18,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                   <div>
-                    <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:4}}>ACTIVE SESSION</div>
+                    <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:4}}>{t('active_session')}</div>
                     <div style={{fontFamily:"var(--font-display)",fontSize:24,lineHeight:1}}>{(routine?.[activeSession.dayIdx]?.name||"WORKOUT").toUpperCase()}</div>
-                    <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1,marginTop:2}}>{Object.keys(activeSession.completedSets||{}).length} SETS COMPLETED</div>
+                    <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1,marginTop:2}}>{Object.keys(activeSession.completedSets||{}).length} {t('sets_completed_label')}</div>
                   </div>
-                  <button onClick={resumeWorkout} style={{background:"var(--lime)",border:"none",borderRadius:12,padding:"12px 18px",fontFamily:"var(--font-cond)",fontWeight:800,fontSize:13,letterSpacing:2,color:"var(--black)",cursor:"pointer"}}>RESUME</button>
+                  <button onClick={resumeWorkout} style={{background:"var(--lime)",border:"none",borderRadius:12,padding:"12px 18px",fontFamily:"var(--font-cond)",fontWeight:800,fontSize:13,letterSpacing:2,color:"var(--black)",cursor:"pointer"}}>{t('resume')}</button>
                 </div>
               )}
               {/* Feature 4D — Rest day or training day content */}
@@ -3188,11 +3797,11 @@ function AppInner() {
                     {RECOVERY_TIPS[today.getDate() % 10]}
                   </p>
                   <button onClick={()=>setSheet("stretching")} style={{width:"100%",background:"rgba(200,241,53,0.1)",border:"1px solid rgba(200,241,53,0.3)",borderRadius:12,padding:"14px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,color:"var(--lime)",cursor:"pointer",marginBottom:12}}>
-                    LIGHT STRETCHING ROUTINE
+                    {t('light_stretching')}
                   </button>
                   {partnerProfile?._lastWorkout && (
                     <div style={{background:"var(--dark)",borderRadius:12,padding:14}}>
-                      <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:6}}>{(partnerProfile.name||"PARTNER").toUpperCase()}'S LAST WORKOUT</div>
+                      <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:6}}>{(partnerProfile.name||"PARTNER").toUpperCase()}'{t('last_workout_label')}</div>
                       <div style={{fontFamily:"var(--font-display)",fontSize:22,color:"var(--lime)",marginBottom:4}}>{(partnerProfile._lastWorkout.dayName||"").toUpperCase()}</div>
                       <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>{partnerProfile._lastWorkout.date} · {partnerProfile._lastWorkout.duration}m · {partnerProfile._lastWorkout.totalSets} sets</div>
                     </div>
@@ -3224,8 +3833,8 @@ function AppInner() {
                           </div>
                         </div>
                         <div style={{marginTop:12,display:"flex",gap:16}}>
-                          <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>{d.exercises.length} EXERCISES</span>
-                          <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>~{40+d.exercises.length*3} MIN</span>
+                          <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>{d.exercises.length} {t('exercises_count_label')}</span>
+                          <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>~{40+d.exercises.length*3} {t('min_label')}</span>
                         </div>
                       </div>
                     </div>
@@ -3241,10 +3850,10 @@ function AppInner() {
             <div style={{display:"flex",flexDirection:"column",gap:16}}>
               <div className="fu" style={{background:"var(--card)",borderRadius:18,padding:20,border:"1px solid var(--line)"}}>
                 <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:6}}>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)"}}>AI GENERATED · MONTH 1</div>
-                  <button onClick={openRebuildModal} style={{background:"rgba(200,241,53,.12)",border:"1px solid rgba(200,241,53,.3)",borderRadius:8,padding:"5px 12px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:10,letterSpacing:2,color:"var(--lime)",cursor:"pointer"}}>CUSTOMIZE</button>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)"}}>{t('ai_generated_month1')}</div>
+                  <button onClick={openRebuildModal} style={{background:"rgba(200,241,53,.12)",border:"1px solid rgba(200,241,53,.3)",borderRadius:8,padding:"5px 12px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:10,letterSpacing:2,color:"var(--lime)",cursor:"pointer"}}>{t('customize_btn')}</button>
                 </div>
-                <div style={{fontFamily:"var(--font-display)",fontSize:36,lineHeight:0.9,marginBottom:8}}>YOUR ROUTINE</div>
+                <div style={{fontFamily:"var(--font-display)",fontSize:36,lineHeight:0.9,marginBottom:8}}>{t('your_routine_title')}</div>
                 <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",lineHeight:1.6,marginBottom:16}}>
                   {profile.daysPerWeek}-day plan. Calibrated for {profile.name||"you"}{partnerProfile?` and ${partnerProfile.name||"your partner"}`:""}.
                 </div>
@@ -3294,43 +3903,43 @@ function AppInner() {
                     setRoomCode("");
                     setWaitingForPartner(false);
                     if (supaSubRef.current) { try { supaSubRef.current.unsubscribe(); } catch {} supaSubRef.current = null; }
-                    setToast("Room closed"); setTimeout(() => setToast(null), 2000);
-                  }} style={{background:"rgba(255,59,48,.1)",border:"1px solid rgba(255,59,48,.25)",borderRadius:8,padding:"6px 14px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:2,color:"var(--red)",cursor:"pointer"}}>CLOSE ROOM</button>
+                    setToast(t('room_closed')); setTimeout(() => setToast(null), 2000);
+                  }} style={{background:"rgba(255,59,48,.1)",border:"1px solid rgba(255,59,48,.25)",borderRadius:8,padding:"6px 14px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:2,color:"var(--red)",cursor:"pointer"}}>{t('close_room')}</button>
                 </div>
               )}
               {!partnerProfile ? (
                 <>
                   <div className="fu" style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:28,textAlign:"center"}}>
-                    <div style={{fontFamily:"var(--font-display)",fontSize:36,lineHeight:0.9,marginBottom:10}}>PARTNER NOT<br/>CONNECTED</div>
+                    <div style={{fontFamily:"var(--font-display)",fontSize:36,lineHeight:0.9,marginBottom:10}}>{t('partner_not_connected')}</div>
                     <p style={{fontFamily:"var(--font-body)",fontSize:14,color:"var(--gray)",lineHeight:1.6,marginBottom:24}}>
-                      Share your room code so your partner can join, or enter their code below.
+                      {t('share_code_desc')}
                     </p>
                     {roomCode ? (
                       <>
-                        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>YOUR ROOM CODE</div>
+                        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>{t('your_room_code')}</div>
                         <div style={{fontFamily:"var(--font-display)",fontSize:56,color:"var(--lime)",letterSpacing:4,marginBottom:16,lineHeight:1}}>{roomCode}</div>
-                        <Btn full onClick={handleCopyLink} style={{marginBottom:10}}>{copied?"✓ Copied!":"Copy Invite Link"}</Btn>
+                        <Btn full onClick={handleCopyLink} style={{marginBottom:10}}>{copied?t('copied'):t('copy_code')}</Btn>
                         <div style={{fontFamily:"var(--font-cond)",fontSize:10,color:"var(--gray2)",letterSpacing:1,marginBottom:16}}>stronnger.netlify.app/join/{roomCode}</div>
                         {isSupabaseConfigured ? (
                           <div style={{display:"flex",alignItems:"center",gap:8,justifyContent:"center"}}>
                             <div style={{width:8,height:8,borderRadius:99,background:"var(--lime)",animation:"pulse 1.5s infinite"}}/>
-                            <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)"}}>WAITING FOR PARTNER...</span>
+                            <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)"}}>{t('waiting_for_partner')}</span>
                           </div>
                         ) : (
                           <div style={{background:"rgba(200,241,53,0.08)",border:"1px solid rgba(200,241,53,0.2)",borderRadius:12,padding:"14px 16px",textAlign:"left",marginTop:4}}>
-                            <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:6}}>HOW TO CONNECT</div>
+                            <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:6}}>{t('how_to_connect_label')}</div>
                             <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",lineHeight:1.6}}>
-                              Share your code <span style={{color:"var(--lime)",fontWeight:700}}>{roomCode}</span> with your partner. They open the app, go to the Partner tab, and enter it manually.
+                              {t('how_to_connect_desc')}
                             </div>
                           </div>
                         )}
                       </>
                     ) : (
-                      <Btn full onClick={handleInvite}>Generate My Room Code</Btn>
+                      <Btn full onClick={handleInvite}>{t('generate_room_code')}</Btn>
                     )}
                   </div>
                   <div className="fu1" style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20}}>
-                    <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:12}}>JOIN A PARTNER</div>
+                    <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:12}}>{t('join_a_partner')}</div>
                     <div style={{display:"flex",gap:8}}>
                       <input
                         value={joinInput}
@@ -3338,7 +3947,7 @@ function AppInner() {
                         placeholder="STR-XXXX"
                         style={{flex:1,background:"var(--dark)",border:"1.5px solid var(--line2)",borderRadius:10,padding:"12px 14px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:16,letterSpacing:2,color:"var(--white)",outline:"none"}}
                       />
-                      <button onClick={handleJoin} style={{background:"var(--lime)",border:"none",borderRadius:10,padding:"12px 18px",fontFamily:"var(--font-cond)",fontWeight:900,fontSize:13,letterSpacing:2,color:"var(--black)",cursor:"pointer"}}>JOIN</button>
+                      <button onClick={handleJoin} style={{background:"var(--lime)",border:"none",borderRadius:10,padding:"12px 18px",fontFamily:"var(--font-cond)",fontWeight:900,fontSize:13,letterSpacing:2,color:"var(--black)",cursor:"pointer"}}>{t('join_btn')}</button>
                     </div>
                     {joinError && <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--red)",marginTop:8}}>{joinError}</div>}
                   </div>
@@ -3380,7 +3989,7 @@ function AppInner() {
                   setPartnerProfile(null);
                   setWaitingForPartner(false);
                   if (roomChannelRef.current) { try { supabase?.removeChannel(roomChannelRef.current); } catch {} roomChannelRef.current = null; }
-                  setToast("Left the room"); setTimeout(() => setToast(null), 2000);
+                  setToast(t('left_the_room')); setTimeout(() => setToast(null), 2000);
                 };
                 return (
                   <>
@@ -3411,7 +4020,7 @@ function AppInner() {
                           {/* Exercise progress */}
                           <div style={{marginBottom:12}}>
                             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
-                              <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)"}}>EXERCISES</span>
+                              <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)"}}>{t('exercises_label')}</span>
                               <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:1,color:"var(--white)"}}>{completedExCount} / {pSession.totalExercises}</span>
                             </div>
                             <div style={{height:4,background:"var(--line)",borderRadius:99}}>
@@ -3421,7 +4030,7 @@ function AppInner() {
                           {/* Set progress — total sets from partner's own session data */}
                           <div style={{marginBottom:12}}>
                             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-                              <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)"}}>SETS DONE</span>
+                              <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)"}}>{t('sets_done_label')}</span>
                               <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--white)"}}>{Object.keys(pSession.completedSets||{}).length} / {pSession.totalSetsInRoutine||"?"}</span>
                             </div>
                             <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
@@ -3434,22 +4043,22 @@ function AppInner() {
                           </div>
                           <div style={{display:"flex",gap:10,marginBottom:16}}>
                             <div style={{flex:1,background:"var(--dark)",borderRadius:12,padding:"10px 14px",textAlign:"center"}}>
-                              <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--gray)",marginBottom:3}}>WEIGHT</div>
+                              <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--gray)",marginBottom:3}}>{t('weight_label')}</div>
                               <div style={{fontFamily:"var(--font-display)",fontSize:22,color:"var(--white)"}}>{pSession.currentWeight||"—"}</div>
                             </div>
                             <div style={{flex:1,background:"var(--dark)",borderRadius:12,padding:"10px 14px",textAlign:"center"}}>
-                              <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--gray)",marginBottom:3}}>ELAPSED</div>
+                              <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--gray)",marginBottom:3}}>{t('elapsed_label')}</div>
                               <div style={{fontFamily:"var(--font-display)",fontSize:22,color:"var(--lime)"}}>{fmtElapsed(partnerElapsedSecs)}</div>
                             </div>
                           </div>
-                          <Btn full onClick={()=>sendQuickMsg("You've got this!")}>Cheer them on</Btn>
+                          <Btn full onClick={()=>sendQuickMsg("You've got this!")}>{t('cheer_on_btn')}</Btn>
                         </div>
                       ) : (
                         /* ── Idle view ── */
                         <div>
                           {pLastWorkout ? (
                             <div style={{background:"var(--dark)",borderRadius:12,padding:14,marginBottom:14}}>
-                              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:6}}>LAST WORKOUT</div>
+                              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:6}}>{t('last_workout_label')}</div>
                               <div style={{fontFamily:"var(--font-display)",fontSize:24,marginBottom:4,color:pLastWorkout.color||"var(--lime)"}}>{(pLastWorkout.dayName||"").toUpperCase()}</div>
                               <div style={{display:"flex",gap:14}}>
                                 <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>{pLastWorkout.date}</span>
@@ -3459,9 +4068,9 @@ function AppInner() {
                               </div>
                             </div>
                           ) : (
-                            <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",marginBottom:14}}>No workouts logged yet.</div>
+                            <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",marginBottom:14}}>{t('no_workouts_yet')}</div>
                           )}
-                          <Btn full onClick={()=>sendQuickMsg("Ready to train?")}>Train together?</Btn>
+                          <Btn full onClick={()=>sendQuickMsg("Ready to train?")}>{t('train_together_btn')}</Btn>
                         </div>
                       )}
                     </div>
@@ -3533,8 +4142,8 @@ function AppInner() {
               <div style={{display:"flex",flexDirection:"column",gap:14}}>
                 {storageMB > 4 && (
                   <div style={{background:"rgba(255,159,10,.12)",border:"1px solid rgba(255,159,10,.3)",borderRadius:14,padding:"12px 16px"}}>
-                    <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"#FF9F0A",marginBottom:3}}>STORAGE WARNING</div>
-                    <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",lineHeight:1.5}}>Storage almost full — consider removing older photos.</div>
+                    <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"#FF9F0A",marginBottom:3}}>{t('storage_warning_label')}</div>
+                    <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",lineHeight:1.5}}>{t('storage_full_desc')}</div>
                   </div>
                 )}
 
@@ -3551,8 +4160,8 @@ function AppInner() {
                 {/* Feature 4F — Weight log section */}
                 <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:2}}>
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:weightLog.length>0?16:0}}>
-                    <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--gray)"}}>BODY WEIGHT</div>
-                    <button onClick={()=>{setWeightInput(profile?.weight||"");setShowWeightModal(true);}} style={{background:"rgba(200,241,53,0.1)",border:"1px solid rgba(200,241,53,0.3)",borderRadius:8,padding:"6px 12px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:2,color:"var(--lime)",cursor:"pointer"}}>+ LOG WEIGHT</button>
+                    <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--gray)"}}>{t('body_weight_label')}</div>
+                    <button onClick={()=>{setWeightInput(profile?.weight||"");setShowWeightModal(true);}} style={{background:"rgba(200,241,53,0.1)",border:"1px solid rgba(200,241,53,0.3)",borderRadius:8,padding:"6px 12px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:2,color:"var(--lime)",cursor:"pointer"}}>{t('log_weight')}</button>
                   </div>
                   {weightLog.length >= 2 && (
                     (() => {
@@ -3606,10 +4215,10 @@ function AppInner() {
                       {/* Stats row */}
                       <div style={{display:"flex",gap:0,borderTop:"1px solid var(--line)",borderBottom:photo?"1px solid var(--line)":"none"}}>
                         {[
-                          ["SETS", h.totalSets],
-                          ["EXERCISES", h.exercises],
-                          ["MAX WT", h.maxWeight ? `${h.maxWeight}kg` : "—"],
-                          ["VOLUME", h.totalVolume ? `${h.totalVolume>=1000?(h.totalVolume/1000).toFixed(1)+"k":h.totalVolume}kg` : "—"],
+                          [t('sets_stat'), h.totalSets],
+                          [t('exercises_count_label'), h.exercises],
+                          [t('max_wt_stat'), h.maxWeight ? `${h.maxWeight}kg` : "—"],
+                          [t('volume_stat'), h.totalVolume ? `${h.totalVolume>=1000?(h.totalVolume/1000).toFixed(1)+"k":h.totalVolume}kg` : "—"],
                         ].map(([l,v],si)=>(
                           <div key={l} style={{flex:1,padding:"10px 8px",textAlign:"center",borderRight:si<3?"1px solid var(--line)":"none"}}>
                             <div style={{fontFamily:"var(--font-display)",fontSize:16,color:"var(--white)"}}>{v}</div>
@@ -3637,7 +4246,7 @@ function AppInner() {
                             <button
                               onClick={()=>shareWorkout(h)}
                               style={{background:"rgba(0,0,0,.55)",border:"none",borderRadius:99,padding:"7px 14px",fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"white",cursor:"pointer",backdropFilter:"blur(8px)"}}
-                            >SHARE</button>
+                            >{t('share_btn')}</button>
                             <button
                               onClick={()=>{localStorage.removeItem(photoKey);setWorkoutHistory(p=>[...p]);}}
                               style={{background:"rgba(0,0,0,.55)",border:"none",borderRadius:99,padding:"7px 10px",fontFamily:"var(--font-cond)",fontSize:11,color:"rgba(255,255,255,.6)",cursor:"pointer",backdropFilter:"blur(8px)"}}
@@ -3654,7 +4263,7 @@ function AppInner() {
                               <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
                             </svg>
                           </div>
-                          <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)"}}>ADD PHOTO</span>
+                          <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)"}}>{t('add_photo_label')}</span>
                         </button>
                       )}
                     </div>
@@ -3686,14 +4295,14 @@ function AppInner() {
         {conflictPendingDayIdx !== null && (
           <div onClick={()=>setConflictPendingDayIdx(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:50,backdropFilter:"blur(4px)"}}>
             <div onClick={e=>e.stopPropagation()} style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"#181818",borderRadius:"24px 24px 0 0",padding:28,animation:"slideIn .3s cubic-bezier(.4,0,.2,1)"}}>
-              <div style={{fontFamily:"var(--font-display)",fontSize:36,marginBottom:8}}>ACTIVE SESSION</div>
+              <div style={{fontFamily:"var(--font-display)",fontSize:36,marginBottom:8}}>{t('active_session')}</div>
               <p style={{fontFamily:"var(--font-body)",fontSize:14,color:"var(--gray)",lineHeight:1.6,marginBottom:24}}>
                 You have an unfinished <strong style={{color:"var(--white)"}}>{(routine?.[activeSession?.dayIdx]?.name||"workout").toUpperCase()}</strong>. What do you want to do?
               </p>
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                <Btn full onClick={resumeWorkout}>Resume Current Session</Btn>
-                <Btn variant="red-soft" full onClick={()=>{ endWorkoutNow(); startWorkout(conflictPendingDayIdx); }}>End It &amp; Start New</Btn>
-                <Btn variant="ghost" full onClick={()=>setConflictPendingDayIdx(null)}>Cancel</Btn>
+                <Btn full onClick={resumeWorkout}>{t('resume_current')}</Btn>
+                <Btn variant="red-soft" full onClick={()=>{ endWorkoutNow(); startWorkout(conflictPendingDayIdx); }}>{t('end_start_new')}</Btn>
+                <Btn variant="ghost" full onClick={()=>setConflictPendingDayIdx(null)}>{t('cancel')}</Btn>
               </div>
             </div>
           </div>
@@ -3703,9 +4312,9 @@ function AppInner() {
         {showLogout && (
           <div onClick={()=>setShowLogout(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:50,backdropFilter:"blur(4px)"}}>
             <div onClick={e=>e.stopPropagation()} style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"#181818",borderRadius:"24px 24px 0 0",padding:28,animation:"slideIn .3s cubic-bezier(.4,0,.2,1)"}}>
-              <div style={{fontFamily:"var(--font-display)",fontSize:36,marginBottom:8}}>SIGN OUT</div>
+              <div style={{fontFamily:"var(--font-display)",fontSize:36,marginBottom:8}}>{t('sign_out')}</div>
               <p style={{fontFamily:"var(--font-body)",fontSize:14,color:"var(--gray)",lineHeight:1.6,marginBottom:24}}>
-                Your routine and partner connection are saved in this browser.
+                {t('sign_out_desc')}
               </p>
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
                 {/* Regular logout: return to splash, keep all data so PIN login still works */}
@@ -3727,8 +4336,8 @@ function AppInner() {
         {sheet === "stretching" && (
           <div onClick={()=>setSheet(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:50,backdropFilter:"blur(4px)"}}>
             <div onClick={e=>e.stopPropagation()} style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"#181818",borderRadius:"24px 24px 0 0",padding:28,animation:"slideIn .3s cubic-bezier(.4,0,.2,1)",maxHeight:"85vh",overflowY:"auto"}}>
-              <div style={{fontFamily:"var(--font-display)",fontSize:36,marginBottom:4}}>STRETCHING</div>
-              <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",marginBottom:20}}>LIGHT RECOVERY ROUTINE</div>
+              <div style={{fontFamily:"var(--font-display)",fontSize:36,marginBottom:4}}>{t('stretching_title')}</div>
+              <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",marginBottom:20}}>{t('light_recovery_routine')}</div>
               {[
                 {name:"Hip Flexor Stretch",duration:"60s each side"},
                 {name:"Hamstring Stretch",duration:"45s each leg"},
@@ -3741,7 +4350,7 @@ function AppInner() {
                   <div style={{fontFamily:"var(--font-cond)",fontSize:12,color:"var(--lime)",letterSpacing:1}}>{ex.duration}</div>
                 </div>
               ))}
-              <Btn full variant="ghost" onClick={()=>setSheet(null)} style={{marginTop:8}}>CLOSE</Btn>
+              <Btn full variant="ghost" onClick={()=>setSheet(null)} style={{marginTop:8}}>{t('close')}</Btn>
             </div>
           </div>
         )}
@@ -3750,7 +4359,7 @@ function AppInner() {
         {showWeightModal && (
           <div onClick={()=>setShowWeightModal(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:60,backdropFilter:"blur(4px)"}}>
             <div onClick={e=>e.stopPropagation()} style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"#181818",borderRadius:"24px 24px 0 0",padding:28}}>
-              <div style={{fontFamily:"var(--font-display)",fontSize:36,marginBottom:16}}>LOG WEIGHT</div>
+              <div style={{fontFamily:"var(--font-display)",fontSize:36,marginBottom:16}}>{t('log_weight_title')}</div>
               <input type="number" value={weightInput} onChange={e=>setWeightInput(e.target.value)} placeholder="kg" step="0.1"
                 style={{width:"100%",background:"var(--dark)",border:"1.5px solid var(--line2)",borderRadius:10,padding:"14px 16px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:24,color:"var(--white)",outline:"none",boxSizing:"border-box",marginBottom:16}}/>
               <Btn full onClick={()=>{
@@ -3758,7 +4367,7 @@ function AppInner() {
                 if (!w || w<20||w>300) return;
                 setWeightLog(prev=>[...prev,{date:new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"}),weight:w}]);
                 setShowWeightModal(false);
-              }}>SAVE</Btn>
+              }}>{t('save_btn')}</Btn>
             </div>
           </div>
         )}
@@ -3766,7 +4375,7 @@ function AppInner() {
         {/* Rebuild success toast */}
         {rebuildSuccess && (
           <div style={{position:"fixed",top:24,left:"50%",transform:"translateX(-50%)",background:"var(--lime)",color:"var(--black)",borderRadius:12,padding:"10px 20px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,zIndex:200,animation:"slideIn 0.3s ease",whiteSpace:"nowrap"}}>
-            ✓ ROUTINE REBUILT
+            {t('routine_rebuilt')}
           </div>
         )}
 
@@ -3806,28 +4415,28 @@ function AppInner() {
             <div style={{position:"fixed",inset:0,background:"var(--black)",zIndex:150,overflowY:"auto",display:"flex",flexDirection:"column",alignItems:"center"}}>
               <div style={{width:"100%",maxWidth:430,padding:"max(env(safe-area-inset-top),22px) 22px 140px"}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:24}}>
-                  <button onClick={()=>{setShowRebuildModal(false);setRebuildDraft(null);setRebuildPreview(null);setShowRebuildPreview(false);setRebuildConflict(null);}} style={{background:"none",border:"none",color:"var(--gray)",fontFamily:"var(--font-cond)",fontSize:13,letterSpacing:2,cursor:"pointer",padding:0}}>← CANCEL</button>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)"}}>CUSTOMIZE</div>
+                  <button onClick={()=>{setShowRebuildModal(false);setRebuildDraft(null);setRebuildPreview(null);setShowRebuildPreview(false);setRebuildConflict(null);}} style={{background:"none",border:"none",color:"var(--gray)",fontFamily:"var(--font-cond)",fontSize:13,letterSpacing:2,cursor:"pointer",padding:0}}>{t('cancel_arrow')}</button>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)"}}>{t('customize_label')}</div>
                 </div>
                 <div style={{fontFamily:"var(--font-display)",fontSize:48,lineHeight:0.88,marginBottom:24}}>REBUILD<br/>ROUTINE</div>
 
                 {activeSession?.isActive && (
                   <div style={{background:"rgba(255,59,48,.1)",border:"1px solid rgba(255,59,48,.3)",borderRadius:14,padding:"12px 16px",marginBottom:20}}>
-                    <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--red)",marginBottom:4}}>ACTIVE WORKOUT</div>
-                    <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",lineHeight:1.5}}>You have a workout in progress. Rebuilding will end your current session.</div>
+                    <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--red)",marginBottom:4}}>{t('active_workout_label')}</div>
+                    <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",lineHeight:1.5}}>{t('active_workout_desc')}</div>
                   </div>
                 )}
 
                 {/* A — Training Days */}
                 <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>A — TRAINING DAYS</div>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>DAYS PER WEEK</div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>{t('section_training_days')}</div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>{t('days_per_week_upper')}</div>
                   <div className="chip-select" style={{marginBottom:16}}>
                     {DAYS_COUNT_RD.map(v=>(
                       <button key={v} className={`chip${rd.daysPerWeek===v?" active":""}`} onClick={()=>{setRd("daysPerWeek",v);setRd("trainingDays",getDayPresetRd(parseInt(v)));}}>{v}</button>
                     ))}
                   </div>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>TRAINING DAYS</div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>{t('training_days_upper2')}</div>
                   <div style={{display:"flex",gap:6}}>
                     {ALL_DAYS_RD.map(d => {
                       const td = rd.trainingDays || getDayPresetRd(parseInt(rd.daysPerWeek)||3);
@@ -3843,10 +4452,10 @@ function AppInner() {
 
                 {/* B — Muscle Focus */}
                 <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>B — MUSCLE FOCUS</div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>{t('section_muscle_focus')}</div>
                   <div style={{display:"flex",gap:14,marginBottom:16}}>
                     <div style={{flex:1}}>
-                      <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>UPPER BODY</div>
+                      <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>{t('upper_body_upper')}</div>
                       <div style={{display:"flex",flexDirection:"column",gap:7}}>
                         {["Chest","Back","Shoulders","Arms","Core"].map(v=>(
                           <button key={v} onClick={()=>toggleRdArr("priorityMuscles",v)} className={(rd.priorityMuscles||[]).includes(v)?"chip active":"chip"} style={{textAlign:"left"}}>{v}</button>
@@ -3854,7 +4463,7 @@ function AppInner() {
                       </div>
                     </div>
                     <div style={{flex:1}}>
-                      <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>LOWER BODY</div>
+                      <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>{t('lower_body_upper')}</div>
                       <div style={{display:"flex",flexDirection:"column",gap:7}}>
                         {["Glutes","Quads","Hamstrings","Calves","Full Lower Body"].map(v=>(
                           <button key={v} onClick={()=>toggleRdArr("priorityMuscles",v)} className={(rd.priorityMuscles||[]).includes(v)?"chip active":"chip"} style={{textAlign:"left",fontSize:11}}>{v}</button>
@@ -3862,7 +4471,7 @@ function AppInner() {
                       </div>
                     </div>
                   </div>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>SPLIT FOCUS</div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>{t('split_focus_upper')}</div>
                   <div className="chip-select">
                     {["Balanced","More lower body","More upper body","Full body"].map(v=>(
                       <button key={v} className={`chip${(rd.splitPreference||"Balanced")===v?" active":""}`} onClick={()=>setRd("splitPreference",v)}>{v}</button>
@@ -3872,7 +4481,7 @@ function AppInner() {
 
                 {/* C — Goal */}
                 <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>C — PRIMARY GOAL</div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>{t('section_primary_goal')}</div>
                   <div className="chip-select" style={{marginBottom:rebuildConflict?12:0}}>
                     {GOALS_RD.map(v=>(
                       <button key={v} className={`chip${rd.goal===v?" active":""}`} onClick={()=>handleRdGoal(v)}>{v}</button>
@@ -3882,8 +4491,8 @@ function AppInner() {
                     <div style={{background:"var(--dark)",borderRadius:12,borderLeft:"3px solid var(--lime)",padding:"12px 14px",marginTop:12,animation:"fadeIn 0.2s ease"}}>
                       <p style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",lineHeight:1.6,marginBottom:10}}>{rebuildConflict.explanation}</p>
                       <div style={{display:"flex",gap:8}}>
-                        <button onClick={()=>{setRd("goal",rebuildConflict.pending);setRebuildConflict(null);if(rebuildConflictTimer)clearTimeout(rebuildConflictTimer);}} style={{flex:1,background:"var(--lime)",border:"none",borderRadius:8,padding:"9px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:1,color:"var(--black)",cursor:"pointer"}}>Got it</button>
-                        <button onClick={()=>{setRebuildConflict(null);if(rebuildConflictTimer)clearTimeout(rebuildConflictTimer);}} style={{flex:1,background:"transparent",border:"1px solid var(--line2)",borderRadius:8,padding:"9px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:1,color:"var(--gray)",cursor:"pointer"}}>Keep {rd.goal}</button>
+                        <button onClick={()=>{setRd("goal",rebuildConflict.pending);setRebuildConflict(null);if(rebuildConflictTimer)clearTimeout(rebuildConflictTimer);}} style={{flex:1,background:"var(--lime)",border:"none",borderRadius:8,padding:"9px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:1,color:"var(--black)",cursor:"pointer"}}>{t('got_it')}</button>
+                        <button onClick={()=>{setRebuildConflict(null);if(rebuildConflictTimer)clearTimeout(rebuildConflictTimer);}} style={{flex:1,background:"transparent",border:"1px solid var(--line2)",borderRadius:8,padding:"9px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:1,color:"var(--gray)",cursor:"pointer"}}>{t('keep_goal')} {rd.goal}</button>
                       </div>
                     </div>
                   )}
@@ -3891,7 +4500,7 @@ function AppInner() {
 
                 {/* D — Level */}
                 <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>D — TRAINING LEVEL</div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>{t('section_training_level')}</div>
                   <div className="chip-select" style={{marginBottom:12}}>
                     {LEVELS_RD.map(v=>(
                       <button key={v} className={`chip${(rd.level||"").toLowerCase()===v.toLowerCase()?" active":""}`} onClick={()=>setRd("level",v.toLowerCase())}>{v}</button>
@@ -3904,7 +4513,7 @@ function AppInner() {
 
                 {/* E — Equipment */}
                 <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>E — EQUIPMENT</div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>{t('section_equipment')}</div>
                   <div className="chip-select" style={{marginBottom:equipWarning?12:0}}>
                     {EQUIP_RD.map(v=>(
                       <button key={v} className={`chip${(rd.equipment||[]).includes(v)?" active":""}`} onClick={()=>toggleRdArr("equipment",v)}>{v}</button>
@@ -3920,16 +4529,16 @@ function AppInner() {
                 {/* Preview diff */}
                 {showRebuildPreview && rebuildPreview && (
                   <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
-                    <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>ROUTINE PREVIEW</div>
+                    <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>{t('routine_preview_label')}</div>
                     {rebuildPreview.removed.length > 0 && (
                       <div style={{marginBottom:12}}>
-                        <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--red)",marginBottom:6}}>REMOVED</div>
+                        <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--red)",marginBottom:6}}>{t('removed_label')}</div>
                         {rebuildPreview.removed.map(n=><div key={n} style={{fontFamily:"var(--font-cond)",fontSize:13,color:"var(--red)",padding:"5px 0",borderBottom:"1px solid var(--line)",opacity:0.8}}>− {n}</div>)}
                       </div>
                     )}
                     {rebuildPreview.added.length > 0 && (
                       <div style={{marginBottom:12}}>
-                        <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--lime)",marginBottom:6}}>NEW</div>
+                        <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--lime)",marginBottom:6}}>{t('new_label')}</div>
                         {rebuildPreview.added.map(n=><div key={n} style={{fontFamily:"var(--font-cond)",fontSize:13,color:"var(--lime)",padding:"5px 0",borderBottom:"1px solid var(--line)"}}>+ {n}</div>)}
                       </div>
                     )}
@@ -3946,8 +4555,8 @@ function AppInner() {
 
               {/* Bottom actions */}
               <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"rgba(8,8,8,.97)",backdropFilter:"blur(20px)",borderTop:"1px solid var(--line)",padding:"16px 20px max(env(safe-area-inset-bottom),20px)",display:"flex",flexDirection:"column",gap:10,zIndex:151}}>
-                <Btn full onClick={handleRebuildConfirm}>REBUILD MY ROUTINE</Btn>
-                <button onClick={()=>{const prev=computePreview(rebuildDraft);setRebuildPreview(prev);setShowRebuildPreview(true);}} style={{width:"100%",background:"transparent",border:"1.5px solid rgba(200,241,53,.3)",borderRadius:14,padding:"14px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:14,letterSpacing:2,color:"var(--lime)",cursor:"pointer"}}>PREVIEW CHANGES</button>
+                <Btn full onClick={handleRebuildConfirm}>{t('rebuild_my_routine')}</Btn>
+                <button onClick={()=>{const prev=computePreview(rebuildDraft);setRebuildPreview(prev);setShowRebuildPreview(true);}} style={{width:"100%",background:"transparent",border:"1.5px solid rgba(200,241,53,.3)",borderRadius:14,padding:"14px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:14,letterSpacing:2,color:"var(--lime)",cursor:"pointer"}}>{t('preview_changes')}</button>
               </div>
             </div>
           );
