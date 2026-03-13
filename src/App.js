@@ -719,10 +719,177 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+const STRINGS = {
+  en: {
+    welcome: "Welcome to Stronger",
+    create_account: "Create Account",
+    log_in: "Log In",
+    good_morning: "Good Morning",
+    good_afternoon: "Good Afternoon",
+    good_evening: "Good Evening",
+    today: "TODAY",
+    routine: "ROUTINE",
+    partner: "PARTNER",
+    progress: "PROGRESS",
+    rest_day: "REST DAY",
+    start_workout: "START WORKOUT",
+    complete_set: "COMPLETE SET",
+    next_exercise: "NEXT EXERCISE →",
+    finish_workout: "FINISH WORKOUT",
+    stop: "STOP",
+    swap: "SWAP",
+    sets: "SETS",
+    reps: "REPS",
+    weight: "WEIGHT",
+    rest: "REST",
+    ai_coach: "AI COACH",
+    settings: "SETTINGS",
+    name: "Name",
+    age: "Age",
+    your_goal: "Your Goal",
+    your_level: "Training Level",
+    equipment: "Equipment",
+    training_days: "Training Days",
+    invite_partner: "Invite My Partner",
+    join_partner: "Join a Partner",
+    room_code: "Room Code",
+    train_together: "TRAIN TOGETHER?",
+    leave: "LEAVE",
+    not_training: "NOT TRAINING",
+    training_now: "TRAINING NOW",
+    last_seen_today: "LAST SEEN TODAY",
+    no_workouts_yet: "No workouts logged yet.",
+    rebuild_routine: "REBUILD ROUTINE",
+    regenerate: "REGENERATE ROUTINE",
+    save: "SAVE",
+    cancel: "CANCEL",
+    confirm: "CONFIRM",
+    back: "Back",
+    week: "WEEK",
+    streak: "STREAK",
+    workouts: "WORKOUTS",
+    volume: "VOLUME",
+    first_time: "First time — start conservative",
+    last_time: "Last time",
+    try_today: "Try",
+    days_per_week: "days/week plan",
+    send: "Send",
+    type_message: "Type a message...",
+    quick_replies: ["Set done ✓", "Need help", "On my way", "Rest", "Good job!"],
+    enter_pin: "Enter PIN",
+    wrong_pin: "Wrong PIN",
+    create_pin: "Create PIN",
+    confirm_pin: "Confirm PIN",
+    pins_dont_match: "PINs don't match",
+    logout: "Log Out",
+    logout_erase: "Log Out & Erase Everything",
+    workout_complete: "WORKOUT COMPLETE",
+    personal_record: "NEW PR",
+    something_went_wrong: "SOMETHING WENT WRONG",
+    restart_app: "RESTART APP",
+    clear_data: "CLEAR ALL DATA & START OVER",
+    whats_your_name: "What's your name?",
+    how_old: "How old are you?",
+    your_weight: "Your weight",
+    your_height: "Your height",
+    biological_sex: "Biological sex",
+    male: "Male",
+    female: "Female",
+    beginner: "Beginner",
+    intermediate: "Intermediate",
+    advanced: "Advanced",
+    next: "NEXT",
+    generating_routine: "Building your personalized routine...",
+    routine_ready: "Your routine is ready",
+  },
+  es: {
+    welcome: "Bienvenido a Stronger",
+    create_account: "Crear Cuenta",
+    log_in: "Iniciar Sesión",
+    good_morning: "Buenos Días",
+    good_afternoon: "Buenas Tardes",
+    good_evening: "Buenas Noches",
+    today: "HOY",
+    routine: "RUTINA",
+    partner: "PAREJA",
+    progress: "PROGRESO",
+    rest_day: "DÍA DE DESCANSO",
+    start_workout: "INICIAR ENTRENAMIENTO",
+    complete_set: "COMPLETAR SERIE",
+    next_exercise: "SIGUIENTE EJERCICIO →",
+    finish_workout: "FINALIZAR ENTRENAMIENTO",
+    stop: "PARAR",
+    swap: "CAMBIAR",
+    sets: "SERIES",
+    reps: "REPS",
+    weight: "PESO",
+    rest: "DESCANSO",
+    ai_coach: "ENTRENADOR IA",
+    settings: "AJUSTES",
+    name: "Nombre",
+    age: "Edad",
+    your_goal: "Tu Objetivo",
+    your_level: "Nivel de Entrenamiento",
+    equipment: "Equipamiento",
+    training_days: "Días de Entrenamiento",
+    invite_partner: "Invitar a Mi Pareja",
+    join_partner: "Unirse a una Pareja",
+    room_code: "Código de Sala",
+    train_together: "¿ENTRENAR JUNTOS?",
+    leave: "SALIR",
+    not_training: "SIN ENTRENAR",
+    training_now: "ENTRENANDO AHORA",
+    last_seen_today: "VISTO HOY",
+    no_workouts_yet: "Aún no hay entrenamientos.",
+    rebuild_routine: "RECONSTRUIR RUTINA",
+    regenerate: "REGENERAR RUTINA",
+    save: "GUARDAR",
+    cancel: "CANCELAR",
+    confirm: "CONFIRMAR",
+    back: "Atrás",
+    week: "SEMANA",
+    streak: "RACHA",
+    workouts: "ENTRENOS",
+    volume: "VOLUMEN",
+    first_time: "Primera vez — empieza con poco peso",
+    last_time: "Última vez",
+    try_today: "Prueba",
+    days_per_week: "días/semana",
+    send: "Enviar",
+    type_message: "Escribe un mensaje...",
+    quick_replies: ["Serie lista ✓", "Necesito ayuda", "Ya voy", "Descanso", "¡Buen trabajo!"],
+    enter_pin: "Ingresa tu PIN",
+    wrong_pin: "PIN incorrecto",
+    create_pin: "Crear PIN",
+    confirm_pin: "Confirmar PIN",
+    pins_dont_match: "Los PINs no coinciden",
+    logout: "Cerrar Sesión",
+    logout_erase: "Cerrar Sesión y Borrar Todo",
+    workout_complete: "ENTRENAMIENTO COMPLETADO",
+    personal_record: "NUEVO RÉCORD",
+    something_went_wrong: "ALGO SALIÓ MAL",
+    restart_app: "REINICIAR APP",
+    clear_data: "BORRAR TODO Y EMPEZAR DE NUEVO",
+    whats_your_name: "¿Cómo te llamas?",
+    how_old: "¿Cuántos años tienes?",
+    your_weight: "Tu peso",
+    your_height: "Tu altura",
+    biological_sex: "Sexo biológico",
+    male: "Hombre",
+    female: "Mujer",
+    beginner: "Principiante",
+    intermediate: "Intermedio",
+    advanced: "Avanzado",
+    next: "SIGUIENTE",
+    generating_routine: "Creando tu rutina personalizada...",
+    routine_ready: "Tu rutina está lista",
+  }
+};
+
 /* ════════════════════════════════════════════
    FLOATING CHAT WINDOW (defined outside App so hooks are stable)
 ════════════════════════════════════════════ */
-function ChatWindow({ partnerProfile, messages, userSlot, onSend }) {
+function ChatWindow({ partnerProfile, messages, userSlot, onSend, lang }) {
   const [kbOffset, setKbOffset] = useState(0);
   useEffect(() => {
     if (!window.visualViewport) return;
@@ -753,8 +920,8 @@ function ChatWindow({ partnerProfile, messages, userSlot, onSend }) {
         })}
       </div>
       <div style={{padding:"8px 10px",borderTop:"1px solid var(--line)",display:"flex",flexWrap:"wrap",gap:6}}>
-        {["Done!","Form check?","Let's go!","Break","Almost!","You got this!"].map(t=>(
-          <button key={t} onClick={()=>onSend(t)} style={{background:"var(--dark)",border:"1px solid var(--line)",borderRadius:99,padding:"7px 12px",fontFamily:"var(--font-body)",fontSize:11,color:"var(--white)",cursor:"pointer"}}>{t}</button>
+        {(STRINGS[lang]?.quick_replies || STRINGS.en.quick_replies).map(qr=>(
+          <button key={qr} onClick={()=>onSend(qr)} style={{background:"var(--dark)",border:"1px solid var(--line)",borderRadius:99,padding:"7px 12px",fontFamily:"var(--font-body)",fontSize:11,color:"var(--white)",cursor:"pointer"}}>{qr}</button>
         ))}
       </div>
     </div>
@@ -795,6 +962,9 @@ function AppInner() {
   const [messages, setMessages]           = useState(() => getSaved("str_messages", []));
   const [prs, setPrs]                     = useState(() => getSaved("str_prs", {}));
   const [weightLog, setWeightLog]         = useState(() => getSaved("str_weight_log", []));
+
+  const [lang, setLang] = useState(localStorage.getItem('str_lang') || 'en');
+  const t = (key) => STRINGS[lang]?.[key] || STRINGS.en[key] || key;
 
   // PIN auth (session-only state)
   const [pinEntry, setPinEntry]       = useState("");
@@ -1273,7 +1443,7 @@ function AppInner() {
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
           model:"claude-sonnet-4-20250514", max_tokens:1000,
-          system:"You are an elite strength coach inside a couples gym app called Stronger. Give concise, direct, warm advice. 2–3 short paragraphs. No markdown. Real coach voice.",
+          system:"You are an elite strength coach inside a couples gym app called Stronger. Give concise, direct, warm advice. 2–3 short paragraphs. No markdown. Real coach voice." + (lang === 'es' ? ' Respond in Spanish.' : ''),
           messages:[{role:"user", content:prompt}],
         }),
       });
@@ -1292,7 +1462,7 @@ function AppInner() {
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
           model:"claude-sonnet-4-20250514", max_tokens:1000,
-          system:"You are an elite strength coach. Write a 2-sentence routine summary. Be encouraging, specific, reference goals and level. No markdown.",
+          system:"You are an elite strength coach. Write a 2-sentence routine summary. Be encouraging, specific, reference goals and level. No markdown." + (lang === 'es' ? ' Respond in Spanish.' : ''),
           messages:[{
             role:"user",
             content:`Athlete: ${profile.name||"You"}, ${profile.age}y, ${profile.weight}kg, goal: ${profile.goal||"build muscle"}, level: ${profile.level||"intermediate"}, ${profile.daysPerWeek} days/week${resolvedPartner?`\nPartner: ${resolvedPartner.name||"Partner"}, ${resolvedPartner.weight}kg, goal: ${resolvedPartner.goal||"—"}, level: ${resolvedPartner.level||"—"}`:""}${profile.priorityMuscles?.length?`\nUser wants to prioritize: ${profile.priorityMuscles.join(', ')}. Split preference: ${profile.splitPreference||"Balanced"}.`:""}`,
@@ -1317,7 +1487,7 @@ function AppInner() {
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
           model:"claude-sonnet-4-20250514", max_tokens:1000,
-          system:"You are an elite strength coach. Write a 2-sentence routine summary. Be encouraging, specific. No markdown.",
+          system:"You are an elite strength coach. Write a 2-sentence routine summary. Be encouraging, specific. No markdown." + (lang === 'es' ? ' Respond in Spanish.' : ''),
           messages:[{role:"user", content:`Regenerate a new summary for: ${profile.name||"Athlete"}, goal: ${profile.goal||"build muscle"}, level: ${profile.level||"intermediate"}, ${profile.daysPerWeek} days/week.`}],
         }),
       });
@@ -1375,7 +1545,7 @@ function AppInner() {
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
           model:"claude-sonnet-4-20250514", max_tokens:1000,
-          system:"You are an elite strength coach. Write a 2-sentence routine summary. Be encouraging, specific. No markdown.",
+          system:"You are an elite strength coach. Write a 2-sentence routine summary. Be encouraging, specific. No markdown." + (lang === 'es' ? ' Respond in Spanish.' : ''),
           messages:[{role:"user",content:`Routine rebuilt for: ${rebuildDraft.name||"Athlete"}, goal: ${rebuildDraft.goal||"build muscle"}, level: ${rebuildDraft.level||"intermediate"}, ${rebuildDraft.daysPerWeek} days/week.${rebuildDraft.priorityMuscles?.length?` Focus: ${rebuildDraft.priorityMuscles.join(", ")}.`:""}`}],
         }),
       });
@@ -1933,6 +2103,34 @@ function AppInner() {
         <div style={{position:"absolute",top:"5%",left:"-8px",fontFamily:"var(--font-display)",fontSize:190,color:"rgba(255,255,255,0.025)",lineHeight:0.88,pointerEvents:"none",userSelect:"none",letterSpacing:-4}}>
           STR<br/>ONG<br/>ER
         </div>
+        <div style={{ position:'absolute', top:20, right:20, display:'flex', gap:8, zIndex:10 }}>
+          <button
+            onClick={() => { setLang('en'); localStorage.setItem('str_lang','en'); }}
+            style={{
+              background: lang === 'en' ? '#C8F135' : 'transparent',
+              color: lang === 'en' ? '#080808' : '#888',
+              border: '1px solid',
+              borderColor: lang === 'en' ? '#C8F135' : '#333',
+              borderRadius: 20, padding:'6px 14px',
+              fontFamily:"'Barlow Condensed',sans-serif",
+              fontWeight:700, fontSize:13, letterSpacing:1, cursor:'pointer'
+            }}>
+            EN
+          </button>
+          <button
+            onClick={() => { setLang('es'); localStorage.setItem('str_lang','es'); }}
+            style={{
+              background: lang === 'es' ? '#C8F135' : 'transparent',
+              color: lang === 'es' ? '#080808' : '#888',
+              border: '1px solid',
+              borderColor: lang === 'es' ? '#C8F135' : '#333',
+              borderRadius: 20, padding:'6px 14px',
+              fontFamily:"'Barlow Condensed',sans-serif",
+              fontWeight:700, fontSize:13, letterSpacing:1, cursor:'pointer'
+            }}>
+            ES
+          </button>
+        </div>
         <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"flex-end",padding:"0 28px 56px"}}>
           <div className="fu" style={{marginBottom:44}}>
             <div style={{display:"inline-flex",background:"var(--lime)",borderRadius:6,padding:"4px 12px",marginBottom:18}}>
@@ -1948,7 +2146,7 @@ function AppInner() {
               if (!profile) setProfile({name:"",age:"",weight:"",height:"",sex:"",goal:"",level:"",daysPerWeek:"3",equipment:[],injuries:""});
               setScreen("onboarding");
               setOnboardStep(0);
-            }}>Create Account</Btn>
+            }}>{t('create_account')}</Btn>
             <Btn full variant="ghost" onClick={()=>{
               // profile and pinHash are already in state (lazy-loaded from str_* keys on startup)
               if (profile && pinHash) {
@@ -1959,7 +2157,7 @@ function AppInner() {
               } else {
                 setSplashLoginError("No account found. Please create an account first.");
               }
-            }}>Log In</Btn>
+            }}>{t('log_in')}</Btn>
             {splashLoginError && (
               <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--red)",textAlign:"center",marginTop:4}}>{splashLoginError}</div>
             )}
@@ -2288,7 +2486,7 @@ function AppInner() {
         </p>
         {!roomCode ? (
           <>
-            <Btn full onClick={handleInvite} style={{marginBottom:12}}>Invite My Partner</Btn>
+            <Btn full onClick={handleInvite} style={{marginBottom:12}}>{t('invite_partner')}</Btn>
             <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",textAlign:"center",marginBottom:12}}>OR</div>
             <div style={{background:"var(--card)",border:"1.5px solid var(--line2)",borderRadius:14,padding:16,marginBottom:12}}>
               <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:10}}>ENTER PARTNER'S CODE</div>
@@ -2372,7 +2570,7 @@ function AppInner() {
         {/* Feature 4A — PR notification banner */}
         {prNotification && (
           <div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",background:"var(--lime)",color:"var(--black)",borderRadius:12,padding:"10px 18px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,zIndex:100,animation:"slideIn 0.3s ease",display:"flex",alignItems:"center",gap:8,maxWidth:380,whiteSpace:"nowrap"}}>
-            🏆 NEW PR — {prNotification.exerciseName.toUpperCase()} {prNotification.weight}
+            🏆 {t('personal_record')} — {prNotification.exerciseName.toUpperCase()} {prNotification.weight}
           </div>
         )}
         <div style={{background:"var(--black)",minHeight:"100vh",maxWidth:430,margin:"0 auto",display:"flex",flexDirection:"column"}}>
@@ -2382,7 +2580,7 @@ function AppInner() {
               <div style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:3,color:accentColor}}>{day.name}</div>
               <div style={{fontFamily:"var(--font-cond)",fontWeight:600,fontSize:13,color:"var(--gray)"}}>{exIdx+1} / {day.exercises.length}</div>
             </div>
-            <button onClick={()=>setSheet("emergency")} style={{background:"rgba(255,59,48,.12)",border:"none",borderRadius:10,padding:"8px 14px",color:"var(--red)",fontSize:12,fontWeight:700,fontFamily:"var(--font-cond)",letterSpacing:1,cursor:"pointer"}}>STOP</button>
+            <button onClick={()=>setSheet("emergency")} style={{background:"rgba(255,59,48,.12)",border:"none",borderRadius:10,padding:"8px 14px",color:"var(--red)",fontSize:12,fontWeight:700,fontFamily:"var(--font-cond)",letterSpacing:1,cursor:"pointer"}}>{t('stop')}</button>
           </div>
           <div style={{padding:"14px 20px 0"}}>
             <div style={{height:3,background:"var(--line)",borderRadius:99,overflow:"hidden"}}>
@@ -2394,31 +2592,31 @@ function AppInner() {
               <div style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:3,color:"var(--gray)",marginBottom:6}}>{ex.muscles} · RPE {ex.rpe}</div>
               <div style={{display:"flex",alignItems:"baseline",gap:12,marginBottom:14}}>
                 <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.92,color:"var(--white)"}}>{ex.name.toUpperCase()}</div>
-                <button onClick={()=>{setSwapExercise(ex);setSheet("swap");}} style={{background:"var(--card)",border:"1px solid var(--line2)",borderRadius:8,padding:"4px 10px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:10,letterSpacing:2,color:"var(--gray)",cursor:"pointer",flexShrink:0}}>SWAP</button>
+                <button onClick={()=>{setSwapExercise(ex);setSheet("swap");}} style={{background:"var(--card)",border:"1px solid var(--line2)",borderRadius:8,padding:"4px 10px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:10,letterSpacing:2,color:"var(--gray)",cursor:"pointer",flexShrink:0}}>{t('swap')}</button>
               </div>
               <div style={{display:"flex",gap:8}}>
-                {[{l:"SETS",v:ex.sets},{l:"REPS",v:ex.reps}].map(({l,v})=>(
+                {[{l:t('sets'),v:ex.sets},{l:t('reps'),v:ex.reps}].map(({l,v})=>(
                   <div key={l} style={{flex:1,background:"var(--card)",borderRadius:12,padding:"12px 0",textAlign:"center",border:"1px solid var(--line)"}}>
                     <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"var(--gray)",marginBottom:4}}>{l}</div>
                     <div style={{fontFamily:"var(--font-cond)",fontWeight:800,fontSize:22,color:"var(--white)"}}>{v}</div>
                   </div>
                 ))}
                 <div style={{flex:1,background:"var(--card)",borderRadius:12,padding:"12px 0",textAlign:"center",border:`1px solid ${day.color}33`}}>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"var(--gray)",marginBottom:4}}>WEIGHT</div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"var(--gray)",marginBottom:4}}>{t('weight')}</div>
                   <div style={{fontFamily:"var(--font-display)",fontSize:24,color:day.color||"var(--lime)"}}>
                     {ex.wA === "BW" ? "BW" : ex.wA || "—"}
                   </div>
                 </div>
               </div>
               <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray2)",letterSpacing:1,marginTop:6}}>
-                REST · {ex.rest}s
+                {t('rest')} · {ex.rest}s
               </div>
             </div>
             {/* Feature 4C — Weight progression suggestion */}
             <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1,marginBottom:8}}>
               {prs[ex.name]
-                ? `Last time: ${prs[ex.name].weight}kg · Try ${Math.round(prs[ex.name].weight * 1.025 / 2.5) * 2.5}kg today`
-                : "First time — start conservative"}
+                ? `${t('last_time')}: ${prs[ex.name].weight}kg · ${t('try_today')} ${Math.round(prs[ex.name].weight * 1.025 / 2.5) * 2.5}kg`
+                : t('first_time')}
             </div>
             <div className="fu1" style={{background:"var(--card)",borderRadius:16,border:"1px solid var(--line)",padding:16,marginBottom:16}}>
               {/* ── MY all-sets progress ── */}
@@ -2493,7 +2691,7 @@ function AppInner() {
               })()}
             </div>
             <div className="fu2" style={{background:"var(--card)",borderRadius:16,border:"1px solid var(--line)",padding:16,marginBottom:16}}>
-              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:12}}>SETS</div>
+              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:12}}>{t('sets')}</div>
               <div style={{display:"flex",gap:8}}>
                 {Array.from({length:ex.sets}).map((_,i)=>{
                   const done = completedSets[`${exIdx}-${i+1}`];
@@ -2526,10 +2724,10 @@ function AppInner() {
           {!resting && (
             <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,padding:"12px 20px 34px",background:"linear-gradient(transparent,var(--black) 35%)"}}>
               <button onClick={completeSet} style={{width:"100%",background:accentColor,border:"none",borderRadius:16,padding:"18px 0",fontFamily:"var(--font-cond)",fontWeight:900,fontSize:18,letterSpacing:3,color:"var(--black)",cursor:"pointer",marginBottom:10,textTransform:"uppercase",boxShadow:`0 0 30px ${accentColor}44`}}>
-                {setNum<ex.sets?`COMPLETE SET ${setNum}`:exIdx<day.exercises.length-1?"NEXT EXERCISE →":"FINISH WORKOUT"}
+                {setNum<ex.sets?`${t('complete_set')} ${setNum}`:exIdx<day.exercises.length-1?t('next_exercise'):t('finish_workout')}
               </button>
               <div style={{display:"flex",gap:10}}>
-                <button onClick={()=>{setSheet("ai");fetchAI(`I'm doing ${ex.name}, ${ex.reps} reps at ${ex.wA}. Give me 3 form cues and tell me if I should adjust if I'm struggling.`);}} style={{flex:1,background:"var(--card)",border:"1px solid var(--line)",borderRadius:14,padding:"14px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,color:"var(--white)",cursor:"pointer"}}>AI COACH</button>
+                <button onClick={()=>{setSheet("ai");fetchAI(`I'm doing ${ex.name}, ${ex.reps} reps at ${ex.wA}. Give me 3 form cues and tell me if I should adjust if I'm struggling.`);}} style={{flex:1,background:"var(--card)",border:"1px solid var(--line)",borderRadius:14,padding:"14px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,color:"var(--white)",cursor:"pointer"}}>{t('ai_coach')}</button>
                 <button onClick={()=>setSheet("partner")} style={{flex:1,background:"var(--card)",border:"1px solid var(--line)",borderRadius:14,padding:"14px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,color:"var(--white)",cursor:"pointer"}}>PARTNER</button>
               </div>
             </div>
@@ -2538,7 +2736,7 @@ function AppInner() {
             <div onClick={()=>setSheet(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:50,backdropFilter:"blur(4px)"}}>
               <div onClick={e=>e.stopPropagation()} style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"#181818",borderRadius:"24px 24px 0 0",padding:28,animation:"slideIn .3s cubic-bezier(.4,0,.2,1)",maxHeight:"85vh",overflowY:"auto"}}>
                 {sheet==="ai" && <>
-                  <div style={{fontFamily:"var(--font-display)",fontSize:36,marginBottom:4}}>AI COACH</div>
+                  <div style={{fontFamily:"var(--font-display)",fontSize:36,marginBottom:4}}>{t('ai_coach')}</div>
                   <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:accentColor,marginBottom:20}}>{ex.name.toUpperCase()}</div>
                   {aiLoading
                     ? <div style={{display:"flex",alignItems:"center",gap:12,color:"var(--gray)",padding:"20px 0"}}><div style={{width:16,height:16,border:`2px solid ${accentColor}`,borderTopColor:"transparent",borderRadius:99,animation:"spin .8s linear infinite"}}/><span style={{fontFamily:"var(--font-cond)",letterSpacing:1}}>ANALYZING...</span></div>
@@ -2620,7 +2818,7 @@ function AppInner() {
                 {sheet==="complete" && (
                   <div style={{textAlign:"center",paddingTop:8}}>
                     <div style={{fontSize:56,marginBottom:12}}>🎉</div>
-                    <div style={{fontFamily:"var(--font-display)",fontSize:52,color:accentColor,lineHeight:0.9,marginBottom:8}}>WORKOUT<br/>COMPLETE</div>
+                    <div style={{fontFamily:"var(--font-display)",fontSize:52,color:accentColor,lineHeight:0.9,marginBottom:8}}>{t('workout_complete')}</div>
                     <div style={{fontFamily:"var(--font-cond)",fontSize:13,color:"var(--gray)",letterSpacing:2,marginBottom:28}}>{day.name.toUpperCase()} · {day.exercises.length} EXERCISES</div>
                     <div style={{display:"flex",gap:12,marginBottom:28}}>
                       {[
@@ -2693,6 +2891,7 @@ function AppInner() {
             messages={messages}
             userSlot={userSlot}
             onSend={sendChatMsg}
+            lang={lang}
           />
         )}
       </>
@@ -2720,7 +2919,35 @@ function AppInner() {
             <button onClick={()=>{setShowChangePinFlow(false);setScreen("home");}} style={{background:"none",border:"none",color:"var(--gray)",fontFamily:"var(--font-cond)",fontSize:13,letterSpacing:2,cursor:"pointer",padding:0}}>← BACK</button>
           </div>
           <div style={{flex:1,overflowY:"auto",padding:"24px 22px 40px"}}>
-            <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.88,marginBottom:24}}>SETTINGS</div>
+            <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.88,marginBottom:24}}>{t('settings')}</div>
+            <div style={{ display:'flex', gap:8, marginBottom:20 }}>
+              <button
+                onClick={() => { setLang('en'); localStorage.setItem('str_lang','en'); }}
+                style={{
+                  background: lang === 'en' ? '#C8F135' : 'transparent',
+                  color: lang === 'en' ? '#080808' : '#888',
+                  border: '1px solid',
+                  borderColor: lang === 'en' ? '#C8F135' : '#333',
+                  borderRadius: 20, padding:'6px 14px',
+                  fontFamily:"'Barlow Condensed',sans-serif",
+                  fontWeight:700, fontSize:13, letterSpacing:1, cursor:'pointer'
+                }}>
+                EN
+              </button>
+              <button
+                onClick={() => { setLang('es'); localStorage.setItem('str_lang','es'); }}
+                style={{
+                  background: lang === 'es' ? '#C8F135' : 'transparent',
+                  color: lang === 'es' ? '#080808' : '#888',
+                  border: '1px solid',
+                  borderColor: lang === 'es' ? '#C8F135' : '#333',
+                  borderRadius: 20, padding:'6px 14px',
+                  fontFamily:"'Barlow Condensed',sans-serif",
+                  fontWeight:700, fontSize:13, letterSpacing:1, cursor:'pointer'
+                }}>
+                ES
+              </button>
+            </div>
 
             {/* Profile */}
             <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
@@ -2853,7 +3080,7 @@ function AppInner() {
         {/* Header */}
         <div style={{padding:"22px 22px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
           <div>
-            <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)"}}>GOOD {new Date().getHours()<12?"MORNING":new Date().getHours()<17?"AFTERNOON":"EVENING"}</div>
+            <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)"}}>{new Date().getHours()<12?t('good_morning').toUpperCase():new Date().getHours()<17?t('good_afternoon').toUpperCase():t('good_evening').toUpperCase()}</div>
             <div style={{fontFamily:"var(--font-display)",fontSize:28,lineHeight:1.05,marginTop:2}}>
               {(profile.name||"ATHLETE").toUpperCase()}
               {partnerProfile && partnerProfile.name && partnerProfile.name.toLowerCase() !== (profile.name||"").toLowerCase() ? ` & ${partnerProfile.name.toUpperCase()}` : ""}
@@ -2866,7 +3093,7 @@ function AppInner() {
                 <span style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"#30d158"}}>{(partnerProfile.name||"PARTNER").toUpperCase()}</span>
               </button>
             )}
-            <button onClick={()=>{ setSettingsName(profile?.name||""); setSettingsWeight(profile?.weight||""); setSettingsAge(profile?.age||""); setSettingsHeight(profile?.height||""); setSettingsInjuries(profile?.injuries||""); setShowChangePinFlow(false); setScreen("settings"); }} style={{background:"none",border:"none",fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",cursor:"pointer",padding:"4px 8px"}}>SETTINGS</button>
+            <button onClick={()=>{ setSettingsName(profile?.name||""); setSettingsWeight(profile?.weight||""); setSettingsAge(profile?.age||""); setSettingsHeight(profile?.height||""); setSettingsInjuries(profile?.injuries||""); setShowChangePinFlow(false); setScreen("settings"); }} style={{background:"none",border:"none",fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",cursor:"pointer",padding:"4px 8px"}}>{t('settings')}</button>
             <button onClick={()=>setShowLogout(true)} style={{background:"var(--card)",border:"none",borderRadius:10,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             </button>
@@ -2875,7 +3102,7 @@ function AppInner() {
 
         {/* Tabs */}
         <div style={{display:"flex",gap:8,padding:"18px 22px 0",overflowX:"auto"}}>
-          {[["today","TODAY"],["routine","ROUTINE"],["partner","PARTNER"],["progress","PROGRESS"]].map(([k,l])=>(
+          {[["today",t('today')],["routine",t('routine')],["partner",t('partner')],["progress",t('progress')]].map(([k,l])=>(
             <button key={k} onClick={()=>setTab(k)} style={{flexShrink:0,background:tab===k?"var(--white)":"var(--card)",border:tab===k?"none":"1px solid var(--line)",borderRadius:99,padding:"9px 18px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:12,letterSpacing:2,color:tab===k?"var(--black)":"var(--gray)",cursor:"pointer",transition:"all .2s"}}>{l}</button>
           ))}
         </div>
@@ -2956,7 +3183,7 @@ function AppInner() {
               {/* Feature 4D — Rest day or training day content */}
               {!isTrainingDay ? (
                 <div className="fu2" style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:24}}>
-                  <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.9,marginBottom:16}}>REST<br/>DAY</div>
+                  <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.9,marginBottom:16}}>{t('rest_day')}</div>
                   <p style={{fontFamily:"var(--font-body)",fontSize:14,color:"var(--gray)",lineHeight:1.7,marginBottom:20}}>
                     {RECOVERY_TIPS[today.getDate() % 10]}
                   </p>
@@ -3028,7 +3255,7 @@ function AppInner() {
                 >
                   {regenerating
                     ? <><div style={{width:12,height:12,border:"2px solid var(--lime)",borderTopColor:"transparent",borderRadius:99,animation:"spin .8s linear infinite"}}/> REGENERATING...</>
-                    : "↺ REGENERATE ROUTINE"}
+                    : `↺ ${t('regenerate')}`}
                 </button>
               </div>
               {(routine||[]).map((d,i)=>(
@@ -3126,10 +3353,10 @@ function AppInner() {
                 const isPartnerActive = pSession?.isActive && (pSession.lastActivityAt || pSession.startedAt || 0) > twoHoursAgo;
                 const partnerStatus =
                   isPartnerActive
-                    ? 'TRAINING NOW'
+                    ? t('training_now')
                     : (pSession?.lastActivityAt || 0) > oneDayAgo || pLastWorkout?.date === new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"})
-                      ? 'LAST SEEN TODAY'
-                      : 'NOT TRAINING';
+                      ? t('last_seen_today')
+                      : t('not_training');
                 const statusColor = partnerStatus === 'TRAINING NOW' ? '#C8F135' : partnerStatus === 'LAST SEEN TODAY' ? '#FF9F0A' : '#555';
                 const fmtElapsed = (s) => {
                   const m = Math.floor(s / 60);
@@ -3174,7 +3401,7 @@ function AppInner() {
                             </div>
                           )}
                         </div>
-                        <button onClick={handleLeaveRoom} style={{background:"rgba(255,59,48,.1)",border:"1px solid rgba(255,59,48,.25)",borderRadius:8,padding:"6px 12px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:10,letterSpacing:2,color:"var(--red)",cursor:"pointer",flexShrink:0}}>LEAVE</button>
+                        <button onClick={handleLeaveRoom} style={{background:"rgba(255,59,48,.1)",border:"1px solid rgba(255,59,48,.25)",borderRadius:8,padding:"6px 12px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:10,letterSpacing:2,color:"var(--red)",cursor:"pointer",flexShrink:0}}>{t('leave')}</button>
                       </div>
 
                       {isPartnerActive ? (
@@ -3267,9 +3494,9 @@ function AppInner() {
             })();
 
             const statCards = [
-              { label:"WORKOUTS", value: totalWorkouts, unit:"" },
-              { label:"TOTAL VOLUME", value: totalVolume >= 1000 ? `${(totalVolume/1000).toFixed(1)}k` : totalVolume, unit:"kg" },
-              { label:"STREAK", value: streak, unit:" days" },
+              { label:t('workouts'), value: totalWorkouts, unit:"" },
+              { label:t('volume'), value: totalVolume >= 1000 ? `${(totalVolume/1000).toFixed(1)}k` : totalVolume, unit:"kg" },
+              { label:t('streak'), value: streak, unit:" days" },
             ];
 
             // PRIVACY: photo data never leaves this device — stored as base64 in localStorage only
@@ -3358,7 +3585,7 @@ function AppInner() {
                 {/* Workout feed */}
                 {workoutHistory.length === 0 ? (
                   <div className="fu1" style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:28,textAlign:"center"}}>
-                    <div style={{fontFamily:"var(--font-display)",fontSize:28,marginBottom:8}}>NO WORKOUTS YET</div>
+                    <div style={{fontFamily:"var(--font-display)",fontSize:28,marginBottom:8}}>{t('no_workouts_yet')}</div>
                     <p style={{fontFamily:"var(--font-body)",fontSize:14,color:"var(--gray)",lineHeight:1.6}}>Complete your first workout to see your journal here.</p>
                   </div>
                 ) : workoutHistory.map((h, i) => {
@@ -3440,7 +3667,7 @@ function AppInner() {
 
         {/* Bottom nav — safe area aware */}
         <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"rgba(8,8,8,.94)",backdropFilter:"blur(20px)",borderTop:"1px solid var(--line)",display:"flex",paddingBottom:"env(safe-area-inset-bottom)"}}>
-          {[["today","TODAY"],["routine","ROUTINE"],["partner","PARTNER"],["progress","PROGRESS"]].map(([k,l])=>(
+          {[["today",t('today')],["routine",t('routine')],["partner",t('partner')],["progress",t('progress')]].map(([k,l])=>(
             <button key={k} onClick={()=>setTab(k)} className="nav-btn" style={{color:tab===k?"var(--white)":"var(--gray2)"}}>
               {l}
               {tab===k && <div style={{width:20,height:2,background:"var(--lime)",borderRadius:99,margin:"4px auto 0"}}/>}
@@ -3482,7 +3709,7 @@ function AppInner() {
               </p>
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
                 {/* Regular logout: return to splash, keep all data so PIN login still works */}
-                <Btn full onClick={()=>{setShowLogout(false);setScreen("splash");}}>Log Out</Btn>
+                <Btn full onClick={()=>{setShowLogout(false);setScreen("splash");}}>{t('logout')}</Btn>
                 {/* Full erase: clear everything and restart from scratch */}
                 <Btn variant="red-soft" full onClick={()=>{
                   localStorage.clear();
@@ -3490,8 +3717,8 @@ function AppInner() {
                   setNewPIN(""); setConfirmPin("");
                   setRoomCode(""); setRoomRole(""); setPartnerProfile(null); setWaitingForPartner(false);
                   setShowLogout(false); setScreen("splash");
-                }}>Log Out &amp; Erase Everything</Btn>
-                <Btn variant="ghost" full onClick={()=>setShowLogout(false)}>Cancel</Btn>
+                }}>{t('logout_erase')}</Btn>
+                <Btn variant="ghost" full onClick={()=>setShowLogout(false)}>{t('cancel')}</Btn>
               </div>
             </div>
           </div>
@@ -3767,6 +3994,7 @@ function AppInner() {
             messages={messages}
             userSlot={userSlot}
             onSend={sendChatMsg}
+            lang={lang}
           />
         )}
 
