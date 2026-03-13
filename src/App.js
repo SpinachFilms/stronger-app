@@ -1120,15 +1120,10 @@ const STRINGS = {
     age_label2: "AGE",
     weight_label2: "WEIGHT",
     height_label2: "HEIGHT",
+    height_label: "HEIGHT",
     biological_sex_label2: "BIOLOGICAL SEX",
-    primary_goal_label: "PRIMARY GOAL",
     training_level_label2: "TRAINING LEVEL",
-    upper_body_label: "UPPER BODY",
-    lower_body_label: "LOWER BODY",
-    split_focus_label: "SPLIT FOCUS",
-    days_per_week_label: "DAYS PER WEEK",
     training_days_label2: "TRAINING DAYS",
-    available_equipment_label: "AVAILABLE EQUIPMENT (select all)",
     injuries_label2: "INJURIES / LIMITATIONS (optional)",
     injuries_placeholder: "e.g. left knee pain, lower back issues...",
     // Sex options
@@ -1599,15 +1594,10 @@ const STRINGS = {
     age_label2: "EDAD",
     weight_label2: "PESO",
     height_label2: "ALTURA",
+    height_label: "ALTURA",
     biological_sex_label2: "SEXO BIOLÓGICO",
-    primary_goal_label: "OBJETIVO PRINCIPAL",
     training_level_label2: "NIVEL DE ENTRENAMIENTO",
-    upper_body_label: "TREN SUPERIOR",
-    lower_body_label: "TREN INFERIOR",
-    split_focus_label: "ENFOQUE DE RUTINA",
-    days_per_week_label: "DÍAS POR SEMANA",
     training_days_label2: "DÍAS DE ENTRENAMIENTO",
-    available_equipment_label: "EQUIPAMIENTO DISPONIBLE (selecciona todo)",
     injuries_label2: "LESIONES / LIMITACIONES (opcional)",
     injuries_placeholder: "ej. dolor de rodilla, problemas de espalda...",
     // Sex options
@@ -1678,6 +1668,53 @@ const STRINGS = {
     exercises_count: "EJERCICIOS",
     approx_min: "MIN",
   }
+};
+
+/* ─── Translation lookup maps ─── */
+const MUSCLE_KEYS = {
+  'Chest':'muscle_chest', 'Back':'muscle_back', 'Shoulders':'muscle_shoulders',
+  'Arms':'muscle_arms', 'Core':'muscle_core', 'Glutes':'muscle_glutes',
+  'Quads':'muscle_quads', 'Hamstrings':'muscle_hamstrings', 'Calves':'muscle_calves',
+  'Full Lower Body':'muscle_full_lower'
+};
+
+const EQUIP_KEYS = {
+  'Full gym':'equip_full_gym', 'Dumbbells only':'equip_dumbbells',
+  'Barbell + rack':'equip_barbell', 'Cables':'equip_cables',
+  'Machines':'equip_machines', 'Resistance bands':'equip_bands'
+};
+
+const DAY_KEYS = {
+  'Push Day':'day_push', 'Pull Day':'day_pull', 'Legs Day':'day_legs',
+  'Leg Day':'day_legs',
+  'Upper Body':'day_upper', 'Lower Body':'day_lower',
+  'Full Body A':'day_full_body_a', 'Full Body B':'day_full_body_b',
+  'Full Body C':'day_full_body_c'
+};
+
+const MUSCLE_LABEL_KEYS = {
+  'chest':'muscle_chest', 'back':'muscle_back', 'shoulders':'muscle_shoulders',
+  'lats':'muscle_lats', 'triceps':'muscle_triceps', 'biceps':'muscle_bis',
+  'upper chest':'muscle_upper_chest', 'side delt':'muscle_side_delt',
+  'rear delt':'muscle_rear_delt', 'posterior chain':'muscle_posterior',
+  'quads':'muscle_quads', 'hamstrings':'muscle_hamstrings',
+  'glutes':'muscle_glutes', 'core':'muscle_core', 'calves':'muscle_calves'
+};
+
+const GOAL_KEYS = {
+  'Gain Muscle Mass':'goal_muscle_mass', 'Increase Strength':'goal_strength',
+  'Improve Physical Fitness':'goal_fitness', 'Definition':'goal_definition',
+  'Body Toning':'goal_toning', 'Cardiovascular':'goal_cardio',
+  'Weight / Fat Loss':'goal_fat_loss', 'Stay Active':'goal_active'
+};
+
+const LEVEL_KEYS = {
+  'Beginner':'level_beginner', 'Intermediate':'level_intermediate', 'Advanced':'level_advanced'
+};
+
+const SPLIT_KEYS = {
+  'Balanced':'split_balanced', 'More lower body':'split_more_lower',
+  'More upper body':'split_more_upper', 'Full body':'split_full_body'
 };
 
 /* ════════════════════════════════════════════
@@ -2249,7 +2286,7 @@ function AppInner() {
 
   const generateRoutine = async (resolvedPartner = null) => {
     setScreen("generating");
-    let summary = "Your personalized routine is ready. Progressive overload built in — you'll be stronger every week.";
+    let summary = t('ai_coach_default');
     try {
       const r = await fetch("https://api.anthropic.com/v1/messages", {
         method:"POST",
@@ -2999,12 +3036,12 @@ function AppInner() {
     const isPartnerStep = onboardStep===6;
 
     /* ── Chip (fixed: case-insensitive comparison) ── */
-    const Chip = ({value, current, onToggle, single, currentSingle, onSelect}) => {
+    const Chip = ({value, label, current, onToggle, single, currentSingle, onSelect}) => {
       const active = single
         ? (currentSingle||"").toLowerCase()===(value||"").toLowerCase()
         : current?.includes(value);
       return (
-        <button className={`chip${active?" active":""}`} onClick={()=>single?onSelect(value):onToggle(value)}>{value}</button>
+        <button className={`chip${active?" active":""}`} onClick={()=>single?onSelect(value):onToggle(value)}>{label || value}</button>
       );
     };
 
@@ -3067,11 +3104,11 @@ function AppInner() {
       /* 0 — Name + PIN */
       <div key={0} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
         <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>{t('step_1_of_7')}</div>
-        <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>WHO<br/>ARE<br/>YOU?</div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>{t('who_are_you')}</div>
         <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:24}}>{t('just_you_here')}</p>
-        <Input label="YOUR NAME" placeholder="Alex" value={profile.name} onChange={v=>p("name",v)} />
+        <Input label={t('your_name_label')} placeholder="Alex" value={profile.name} onChange={v=>p("name",v)} />
         <div style={{marginTop:16}}>
-          <Label text="CREATE A 4-DIGIT PIN" />
+          <Label text={t('create_pin_label')} />
           <p style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray2)",marginBottom:14,lineHeight:1.5}}>{t('protects_profile')}</p>
           <div style={{marginBottom:14}}>
             <input
@@ -3093,7 +3130,7 @@ function AppInner() {
               }}
             />
           </div>
-          <Label text="CONFIRM PIN" />
+          <Label text={t('confirm_pin_label')} />
           <div style={{marginBottom:6}}>
             <input
               type="password"
@@ -3123,27 +3160,27 @@ function AppInner() {
       /* 1 — Stats */
       <div key={1} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
         <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>{t('step_2_of_7')}</div>
-        <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>YOUR<br/>STATS</div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>{t('your_stats')}</div>
         <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:32}}>{t('calibrate_desc')}</p>
         <div style={{display:"flex",gap:12}}>
-          <div style={{flex:1}}><Input label="AGE" placeholder="28" value={profile.age} onChange={v=>p("age",v)} type="number"/></div>
-          <div style={{flex:1}}><Input label="WEIGHT" placeholder="80" value={profile.weight} onChange={v=>p("weight",v)} type="number" unit="kg"/></div>
-          <div style={{flex:1}}><Input label="HEIGHT" placeholder="175" value={profile.height} onChange={v=>p("height",v)} type="number" unit="cm"/></div>
+          <div style={{flex:1}}><Input label={t('age_label')} placeholder="28" value={profile.age} onChange={v=>p("age",v)} type="number"/></div>
+          <div style={{flex:1}}><Input label={t('weight_label')} placeholder="80" value={profile.weight} onChange={v=>p("weight",v)} type="number" unit="kg"/></div>
+          <div style={{flex:1}}><Input label={t('height_label')} placeholder="175" value={profile.height} onChange={v=>p("height",v)} type="number" unit="cm"/></div>
         </div>
-        <Label text="BIOLOGICAL SEX"/>
+        <Label text={t('biological_sex_label')}/>
         <div className="chip-select">
-          {["Male","Female","Other"].map(v=><Chip key={v} value={v} single currentSingle={profile.sex} onSelect={v=>p("sex",v)}/>)}
+          {["Male","Female","Other"].map(v=><Chip key={v} value={v} label={t(v==="Male"?'male_opt':v==="Female"?'female_opt':'other_opt')} single currentSingle={profile.sex} onSelect={v=>p("sex",v)}/>)}
         </div>
       </div>,
 
       /* 2 — Goals & level */
       <div key={2} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
         <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>{t('step_3_of_7')}</div>
-        <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>YOUR<br/>GOALS</div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>{t('your_goals')}</div>
         <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:28}}>{t('what_training_for')}, {profile.name||"you"}?</p>
-        <Label text="PRIMARY GOAL"/>
+        <Label text={t('primary_goal_label')}/>
         <div className="chip-select" style={{marginBottom:goalConflict?12:28}}>
-          {GOALS.map(v=><Chip key={v} value={v} single currentSingle={profile.goal} onSelect={handleGoalSelect}/>)}
+          {GOALS.map(v=><Chip key={v} value={v} label={t(GOAL_KEYS[v])||v} single currentSingle={profile.goal} onSelect={handleGoalSelect}/>)}
         </div>
         {goalConflict && (
           <div style={{background:"var(--card)",borderRadius:14,borderLeft:"3px solid var(--lime)",padding:"14px 16px",marginBottom:20,animation:"fadeIn 0.2s ease"}}>
@@ -3160,43 +3197,43 @@ function AppInner() {
             </div>
           </div>
         )}
-        <Label text="TRAINING LEVEL"/>
+        <Label text={t('training_level_label')}/>
         <div className="chip-select">
-          {LEVELS.map(v=><Chip key={v} value={v} single currentSingle={profile.level} onSelect={v=>p("level",v.toLowerCase())}/>)}
+          {LEVELS.map(v=><Chip key={v} value={v} label={t(LEVEL_KEYS[v])||v} single currentSingle={profile.level} onSelect={v=>p("level",v.toLowerCase())}/>)}
         </div>
       </div>,
 
       /* 3 — Muscle priorities (NEW) */
       <div key={3} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
         <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>{t('step_4_of_7')}</div>
-        <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.88,marginBottom:16}}>WHAT DO<br/>YOU WANT<br/>TO BUILD?</div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.88,marginBottom:16}}>{t('what_to_build')}</div>
         <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:24}}>{t('select_focus_areas')}</p>
         <div style={{display:"flex",gap:16,marginBottom:24}}>
           <div style={{flex:1}}>
-            <Label text="UPPER BODY"/>
+            <Label text={t('upper_body_label')}/>
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
               {["Chest","Back","Shoulders","Arms","Core"].map(v=>(
                 <button key={v} onClick={()=>toggleMuscle(v)}
                   className={(profile.priorityMuscles||[]).includes(v)?"chip active":"chip"}
-                  style={{textAlign:"left"}}>{v}</button>
+                  style={{textAlign:"left"}}>{t(MUSCLE_KEYS[v])||v}</button>
               ))}
             </div>
           </div>
           <div style={{flex:1}}>
-            <Label text="LOWER BODY"/>
+            <Label text={t('lower_body_label')}/>
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
               {["Glutes","Quads","Hamstrings","Calves","Full Lower Body"].map(v=>(
                 <button key={v} onClick={()=>toggleMuscle(v)}
                   className={(profile.priorityMuscles||[]).includes(v)?"chip active":"chip"}
-                  style={{textAlign:"left",fontSize:11}}>{v}</button>
+                  style={{textAlign:"left",fontSize:11}}>{t(MUSCLE_KEYS[v])||v}</button>
               ))}
             </div>
           </div>
         </div>
-        <Label text="SPLIT FOCUS"/>
+        <Label text={t('split_focus_label')}/>
         <div className="chip-select">
           {["Balanced","More lower body","More upper body","Full body"].map(v=>(
-            <Chip key={v} value={v} single currentSingle={profile.splitPreference||"Balanced"} onSelect={v=>p("splitPreference",v)}/>
+            <Chip key={v} value={v} label={t(SPLIT_KEYS[v])||v} single currentSingle={profile.splitPreference||"Balanced"} onSelect={v=>p("splitPreference",v)}/>
           ))}
         </div>
       </div>,
@@ -3204,16 +3241,16 @@ function AppInner() {
       /* 4 — Schedule + equipment (was 3) */
       <div key={4} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
         <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>{t('step_5_of_7')}</div>
-        <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>YOUR<br/>GYM</div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>{t('your_gym')}</div>
         <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:28}}>{t('when_what_train')}</p>
-        <Label text="DAYS PER WEEK"/>
+        <Label text={t('days_per_week_label')}/>
         <div className="chip-select" style={{marginBottom:20}}>
           {DAYS.map(v=><Chip key={v} value={v} single currentSingle={profile.daysPerWeek} onSelect={v=>{
             p("daysPerWeek",v);
             p("trainingDays", getDayPreset(parseInt(v)));
           }}/>)}
         </div>
-        <Label text="TRAINING DAYS"/>
+        <Label text={t('training_days_label')}/>
         <div style={{display:"flex",gap:6,marginBottom:24}}>
           {ALL_DAYS_LABELS.map(d => {
             const td = profile.trainingDays || getDayPreset(parseInt(profile.daysPerWeek)||3);
@@ -3239,28 +3276,28 @@ function AppInner() {
             );
           })}
         </div>
-        <Label text="AVAILABLE EQUIPMENT (select all)"/>
+        <Label text={t('available_equipment_label')}/>
         <div className="chip-select">
-          {EQUIP.map(v=><Chip key={v} value={v} current={profile.equipment} onToggle={toggleEquip}/>)}
+          {EQUIP.map(v=><Chip key={v} value={v} label={t(EQUIP_KEYS[v])||v} current={profile.equipment} onToggle={toggleEquip}/>)}
         </div>
       </div>,
 
       /* 5 — Injuries (was 4) */
       <div key={5} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
         <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>{t('step_6_of_7')}</div>
-        <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>ANY<br/>LIMITS?</div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>{t('any_limits')}</div>
         <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:28}}>{t('injuries_desc')}</p>
-        <Label text="INJURIES / LIMITATIONS (optional)"/>
+        <Label text={t('injuries_label2')}/>
         <textarea
           value={profile.injuries} onChange={e=>p("injuries",e.target.value)}
-          placeholder="e.g. left knee pain, lower back issues..." rows={4}
+          placeholder={t('injuries_placeholder')} rows={4}
           style={{width:"100%",background:"var(--card)",border:"1.5px solid var(--line2)",borderRadius:12,padding:14,fontFamily:"var(--font-body)",fontSize:16,color:"var(--white)",resize:"none",marginBottom:24}}
         />
         <div style={{background:"var(--card)",borderRadius:16,border:"1px solid var(--line)",padding:18}}>
           <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:12}}>{t('your_profile_summary')}</div>
           {[
             [profile.name||"You", `${profile.goal||"—"} · ${profile.level||"—"}`],
-            [t('schedule_label'), `${profile.daysPerWeek} days/week`],
+            [t('schedule_label'), `${profile.daysPerWeek} ${t('days_week_suffix')}`],
             [t('equipment_label'), (profile.equipment||[]).length?(profile.equipment||[]).join(", "):t('full_gym')],
           ].map(([l,v])=>(
             <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid var(--line)"}}>
@@ -3274,7 +3311,7 @@ function AppInner() {
       /* 6 — Partner connection (was 5) */
       <div key={6} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
         <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>{t('step_7_of_7')}</div>
-        <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>CONNECT<br/>PARTNER</div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>{t('connect_partner')}</div>
         <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:28}}>
           {t('connect_partner_desc')}
         </p>
@@ -3371,7 +3408,7 @@ function AppInner() {
           <div style={{padding:"16px 20px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
             <button onClick={navigateHomeFromWorkout} style={{background:"var(--card)",border:"none",borderRadius:10,width:38,height:38,color:"var(--white)",fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>←</button>
             <div style={{textAlign:"center"}}>
-              <div style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:3,color:accentColor}}>{day.name}</div>
+              <div style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:3,color:accentColor}}>{t(DAY_KEYS[day.name])||day.name}</div>
               <div style={{fontFamily:"var(--font-cond)",fontWeight:600,fontSize:13,color:"var(--gray)"}}>{exIdx+1} / {day.exercises.length}</div>
             </div>
             <button onClick={()=>setSheet("emergency")} style={{background:"rgba(255,59,48,.12)",border:"none",borderRadius:10,padding:"8px 14px",color:"var(--red)",fontSize:12,fontWeight:700,fontFamily:"var(--font-cond)",letterSpacing:1,cursor:"pointer"}}>{t('stop')}</button>
@@ -3383,7 +3420,7 @@ function AppInner() {
           </div>
           <div style={{flex:1,overflowY:"auto",padding:"20px 20px 130px"}}>
             <div className="fu" style={{marginBottom:20}}>
-              <div style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:3,color:"var(--gray)",marginBottom:6}}>{ex.muscles} · RPE {ex.rpe}</div>
+              <div style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:3,color:"var(--gray)",marginBottom:6}}>{(t(MUSCLE_LABEL_KEYS[ex.muscles?.toLowerCase()])||ex.muscles||"").toUpperCase()} · RPE {ex.rpe}</div>
               <div style={{display:"flex",alignItems:"baseline",gap:12,marginBottom:14}}>
                 <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.92,color:"var(--white)"}}>{ex.name.toUpperCase()}</div>
                 <button onClick={()=>{setSwapExercise(ex);setSheet("swap");}} style={{background:"var(--card)",border:"1px solid var(--line2)",borderRadius:8,padding:"4px 10px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:10,letterSpacing:2,color:"var(--gray)",cursor:"pointer",flexShrink:0}}>{t('swap')}</button>
@@ -3613,7 +3650,7 @@ function AppInner() {
                   <div style={{textAlign:"center",paddingTop:8}}>
                     <div style={{fontSize:56,marginBottom:12}}>🎉</div>
                     <div style={{fontFamily:"var(--font-display)",fontSize:52,color:accentColor,lineHeight:0.9,marginBottom:8}}>{t('workout_complete')}</div>
-                    <div style={{fontFamily:"var(--font-cond)",fontSize:13,color:"var(--gray)",letterSpacing:2,marginBottom:28}}>{day.name.toUpperCase()} · {day.exercises.length} {t('exercises_upper')}</div>
+                    <div style={{fontFamily:"var(--font-cond)",fontSize:13,color:"var(--gray)",letterSpacing:2,marginBottom:28}}>{(t(DAY_KEYS[day.name])||day.name).toUpperCase()} · {day.exercises.length} {t('exercises_upper')}</div>
                     <div style={{display:"flex",gap:12,marginBottom:28}}>
                       {[
                         [t('sets'),`${day.exercises.reduce((a,e)=>a+e.sets,0)}`],
@@ -3969,7 +4006,7 @@ function AppInner() {
                 <div className="fu" style={{background:"var(--card)",borderRadius:18,border:"1px solid rgba(200,241,53,.25)",borderLeft:"4px solid var(--lime)",padding:18,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                   <div>
                     <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:4}}>{t('active_session')}</div>
-                    <div style={{fontFamily:"var(--font-display)",fontSize:24,lineHeight:1}}>{(routine?.[activeSession.dayIdx]?.name||"WORKOUT").toUpperCase()}</div>
+                    <div style={{fontFamily:"var(--font-display)",fontSize:24,lineHeight:1}}>{(t(DAY_KEYS[routine?.[activeSession.dayIdx]?.name])||routine?.[activeSession.dayIdx]?.name||"WORKOUT").toUpperCase()}</div>
                     <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1,marginTop:2}}>{Object.keys(activeSession.completedSets||{}).length} {t('sets_completed_label')}</div>
                   </div>
                   <button onClick={resumeWorkout} style={{background:"var(--lime)",border:"none",borderRadius:12,padding:"12px 18px",fontFamily:"var(--font-cond)",fontWeight:800,fontSize:13,letterSpacing:2,color:"var(--black)",cursor:"pointer"}}>{t('resume')}</button>
@@ -4011,7 +4048,7 @@ function AppInner() {
                         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
                           <div>
                             <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:d.color,marginBottom:4}}>{d.label}</div>
-                            <div style={{fontFamily:"var(--font-display)",fontSize:30,lineHeight:0.95,marginBottom:5}}>{d.name.toUpperCase()}</div>
+                            <div style={{fontFamily:"var(--font-display)",fontSize:30,lineHeight:0.95,marginBottom:5}}>{(t(DAY_KEYS[d.name])||d.name).toUpperCase()}</div>
                             <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)"}}>{d.tag}</div>
                           </div>
                           <div style={{background:d.color,borderRadius:99,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
@@ -4055,7 +4092,7 @@ function AppInner() {
               </div>
               {(routine||[]).map((d,i)=>(
                 <div key={i} className="fu1">
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:d.color,marginBottom:10,paddingLeft:4}}>{d.label} — {d.name.toUpperCase()}</div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:d.color,marginBottom:10,paddingLeft:4}}>{d.label} — {(t(DAY_KEYS[d.name])||d.name).toUpperCase()}</div>
                   {d.exercises.map((e,j)=>(
                     <div key={j} style={{background:"var(--card)",borderRadius:12,padding:"13px 16px",border:"1px solid var(--line)",marginBottom:7,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                       <div>
@@ -4644,7 +4681,7 @@ function AppInner() {
                       <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>{t('upper_body_upper')}</div>
                       <div style={{display:"flex",flexDirection:"column",gap:7}}>
                         {["Chest","Back","Shoulders","Arms","Core"].map(v=>(
-                          <button key={v} onClick={()=>toggleRdArr("priorityMuscles",v)} className={(rd.priorityMuscles||[]).includes(v)?"chip active":"chip"} style={{textAlign:"left"}}>{v}</button>
+                          <button key={v} onClick={()=>toggleRdArr("priorityMuscles",v)} className={(rd.priorityMuscles||[]).includes(v)?"chip active":"chip"} style={{textAlign:"left"}}>{t(MUSCLE_KEYS[v])||v}</button>
                         ))}
                       </div>
                     </div>
@@ -4652,7 +4689,7 @@ function AppInner() {
                       <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>{t('lower_body_upper')}</div>
                       <div style={{display:"flex",flexDirection:"column",gap:7}}>
                         {["Glutes","Quads","Hamstrings","Calves","Full Lower Body"].map(v=>(
-                          <button key={v} onClick={()=>toggleRdArr("priorityMuscles",v)} className={(rd.priorityMuscles||[]).includes(v)?"chip active":"chip"} style={{textAlign:"left",fontSize:11}}>{v}</button>
+                          <button key={v} onClick={()=>toggleRdArr("priorityMuscles",v)} className={(rd.priorityMuscles||[]).includes(v)?"chip active":"chip"} style={{textAlign:"left",fontSize:11}}>{t(MUSCLE_KEYS[v])||v}</button>
                         ))}
                       </div>
                     </div>
@@ -4660,7 +4697,7 @@ function AppInner() {
                   <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>{t('split_focus_upper')}</div>
                   <div className="chip-select">
                     {["Balanced","More lower body","More upper body","Full body"].map(v=>(
-                      <button key={v} className={`chip${(rd.splitPreference||"Balanced")===v?" active":""}`} onClick={()=>setRd("splitPreference",v)}>{v}</button>
+                      <button key={v} className={`chip${(rd.splitPreference||"Balanced")===v?" active":""}`} onClick={()=>setRd("splitPreference",v)}>{t(SPLIT_KEYS[v])||v}</button>
                     ))}
                   </div>
                 </div>
@@ -4670,7 +4707,7 @@ function AppInner() {
                   <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>{t('section_primary_goal')}</div>
                   <div className="chip-select" style={{marginBottom:rebuildConflict?12:0}}>
                     {GOALS_RD.map(v=>(
-                      <button key={v} className={`chip${rd.goal===v?" active":""}`} onClick={()=>handleRdGoal(v)}>{v}</button>
+                      <button key={v} className={`chip${rd.goal===v?" active":""}`} onClick={()=>handleRdGoal(v)}>{t(GOAL_KEYS[v])||v}</button>
                     ))}
                   </div>
                   {rebuildConflict && (
@@ -4689,7 +4726,7 @@ function AppInner() {
                   <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>{t('section_training_level')}</div>
                   <div className="chip-select" style={{marginBottom:12}}>
                     {LEVELS_RD.map(v=>(
-                      <button key={v} className={`chip${(rd.level||"").toLowerCase()===v.toLowerCase()?" active":""}`} onClick={()=>setRd("level",v.toLowerCase())}>{v}</button>
+                      <button key={v} className={`chip${(rd.level||"").toLowerCase()===v.toLowerCase()?" active":""}`} onClick={()=>setRd("level",v.toLowerCase())}>{t(LEVEL_KEYS[v])||v}</button>
                     ))}
                   </div>
                   <div style={{background:"var(--dark)",borderRadius:10,padding:"10px 12px"}}>
@@ -4702,7 +4739,7 @@ function AppInner() {
                   <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>{t('section_equipment')}</div>
                   <div className="chip-select" style={{marginBottom:equipWarning?12:0}}>
                     {EQUIP_RD.map(v=>(
-                      <button key={v} className={`chip${(rd.equipment||[]).includes(v)?" active":""}`} onClick={()=>toggleRdArr("equipment",v)}>{v}</button>
+                      <button key={v} className={`chip${(rd.equipment||[]).includes(v)?" active":""}`} onClick={()=>toggleRdArr("equipment",v)}>{t(EQUIP_KEYS[v])||v}</button>
                     ))}
                   </div>
                   {equipWarning && (
