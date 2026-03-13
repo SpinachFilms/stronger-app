@@ -719,10 +719,177 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+const STRINGS = {
+  en: {
+    welcome: "Welcome to Stronger",
+    create_account: "Create Account",
+    log_in: "Log In",
+    good_morning: "Good Morning",
+    good_afternoon: "Good Afternoon",
+    good_evening: "Good Evening",
+    today: "TODAY",
+    routine: "ROUTINE",
+    partner: "PARTNER",
+    progress: "PROGRESS",
+    rest_day: "REST DAY",
+    start_workout: "START WORKOUT",
+    complete_set: "COMPLETE SET",
+    next_exercise: "NEXT EXERCISE →",
+    finish_workout: "FINISH WORKOUT",
+    stop: "STOP",
+    swap: "SWAP",
+    sets: "SETS",
+    reps: "REPS",
+    weight: "WEIGHT",
+    rest: "REST",
+    ai_coach: "AI COACH",
+    settings: "SETTINGS",
+    name: "Name",
+    age: "Age",
+    your_goal: "Your Goal",
+    your_level: "Training Level",
+    equipment: "Equipment",
+    training_days: "Training Days",
+    invite_partner: "Invite My Partner",
+    join_partner: "Join a Partner",
+    room_code: "Room Code",
+    train_together: "TRAIN TOGETHER?",
+    leave: "LEAVE",
+    not_training: "NOT TRAINING",
+    training_now: "TRAINING NOW",
+    last_seen_today: "LAST SEEN TODAY",
+    no_workouts_yet: "No workouts logged yet.",
+    rebuild_routine: "REBUILD ROUTINE",
+    regenerate: "REGENERATE ROUTINE",
+    save: "SAVE",
+    cancel: "CANCEL",
+    confirm: "CONFIRM",
+    back: "Back",
+    week: "WEEK",
+    streak: "STREAK",
+    workouts: "WORKOUTS",
+    volume: "VOLUME",
+    first_time: "First time — start conservative",
+    last_time: "Last time",
+    try_today: "Try",
+    days_per_week: "days/week plan",
+    send: "Send",
+    type_message: "Type a message...",
+    quick_replies: ["Set done ✓", "Need help", "On my way", "Rest", "Good job!"],
+    enter_pin: "Enter PIN",
+    wrong_pin: "Wrong PIN",
+    create_pin: "Create PIN",
+    confirm_pin: "Confirm PIN",
+    pins_dont_match: "PINs don't match",
+    logout: "Log Out",
+    logout_erase: "Log Out & Erase Everything",
+    workout_complete: "WORKOUT COMPLETE",
+    personal_record: "NEW PR",
+    something_went_wrong: "SOMETHING WENT WRONG",
+    restart_app: "RESTART APP",
+    clear_data: "CLEAR ALL DATA & START OVER",
+    whats_your_name: "What's your name?",
+    how_old: "How old are you?",
+    your_weight: "Your weight",
+    your_height: "Your height",
+    biological_sex: "Biological sex",
+    male: "Male",
+    female: "Female",
+    beginner: "Beginner",
+    intermediate: "Intermediate",
+    advanced: "Advanced",
+    next: "NEXT",
+    generating_routine: "Building your personalized routine...",
+    routine_ready: "Your routine is ready",
+  },
+  es: {
+    welcome: "Bienvenido a Stronger",
+    create_account: "Crear Cuenta",
+    log_in: "Iniciar Sesión",
+    good_morning: "Buenos Días",
+    good_afternoon: "Buenas Tardes",
+    good_evening: "Buenas Noches",
+    today: "HOY",
+    routine: "RUTINA",
+    partner: "PAREJA",
+    progress: "PROGRESO",
+    rest_day: "DÍA DE DESCANSO",
+    start_workout: "INICIAR ENTRENAMIENTO",
+    complete_set: "COMPLETAR SERIE",
+    next_exercise: "SIGUIENTE EJERCICIO →",
+    finish_workout: "FINALIZAR ENTRENAMIENTO",
+    stop: "PARAR",
+    swap: "CAMBIAR",
+    sets: "SERIES",
+    reps: "REPS",
+    weight: "PESO",
+    rest: "DESCANSO",
+    ai_coach: "ENTRENADOR IA",
+    settings: "AJUSTES",
+    name: "Nombre",
+    age: "Edad",
+    your_goal: "Tu Objetivo",
+    your_level: "Nivel de Entrenamiento",
+    equipment: "Equipamiento",
+    training_days: "Días de Entrenamiento",
+    invite_partner: "Invitar a Mi Pareja",
+    join_partner: "Unirse a una Pareja",
+    room_code: "Código de Sala",
+    train_together: "¿ENTRENAR JUNTOS?",
+    leave: "SALIR",
+    not_training: "SIN ENTRENAR",
+    training_now: "ENTRENANDO AHORA",
+    last_seen_today: "VISTO HOY",
+    no_workouts_yet: "Aún no hay entrenamientos.",
+    rebuild_routine: "RECONSTRUIR RUTINA",
+    regenerate: "REGENERAR RUTINA",
+    save: "GUARDAR",
+    cancel: "CANCELAR",
+    confirm: "CONFIRMAR",
+    back: "Atrás",
+    week: "SEMANA",
+    streak: "RACHA",
+    workouts: "ENTRENOS",
+    volume: "VOLUMEN",
+    first_time: "Primera vez — empieza con poco peso",
+    last_time: "Última vez",
+    try_today: "Prueba",
+    days_per_week: "días/semana",
+    send: "Enviar",
+    type_message: "Escribe un mensaje...",
+    quick_replies: ["Serie lista ✓", "Necesito ayuda", "Ya voy", "Descanso", "¡Buen trabajo!"],
+    enter_pin: "Ingresa tu PIN",
+    wrong_pin: "PIN incorrecto",
+    create_pin: "Crear PIN",
+    confirm_pin: "Confirmar PIN",
+    pins_dont_match: "Los PINs no coinciden",
+    logout: "Cerrar Sesión",
+    logout_erase: "Cerrar Sesión y Borrar Todo",
+    workout_complete: "ENTRENAMIENTO COMPLETADO",
+    personal_record: "NUEVO RÉCORD",
+    something_went_wrong: "ALGO SALIÓ MAL",
+    restart_app: "REINICIAR APP",
+    clear_data: "BORRAR TODO Y EMPEZAR DE NUEVO",
+    whats_your_name: "¿Cómo te llamas?",
+    how_old: "¿Cuántos años tienes?",
+    your_weight: "Tu peso",
+    your_height: "Tu altura",
+    biological_sex: "Sexo biológico",
+    male: "Hombre",
+    female: "Mujer",
+    beginner: "Principiante",
+    intermediate: "Intermedio",
+    advanced: "Avanzado",
+    next: "SIGUIENTE",
+    generating_routine: "Creando tu rutina personalizada...",
+    routine_ready: "Tu rutina está lista",
+  }
+};
+
 /* ════════════════════════════════════════════
    FLOATING CHAT WINDOW (defined outside App so hooks are stable)
 ════════════════════════════════════════════ */
-function ChatWindow({ partnerProfile, messages, userSlot, onSend }) {
+function ChatWindow({ partnerProfile, messages, userSlot, onSend, lang }) {
   const [kbOffset, setKbOffset] = useState(0);
   useEffect(() => {
     if (!window.visualViewport) return;
@@ -795,6 +962,9 @@ function AppInner() {
   const [messages, setMessages]           = useState(() => getSaved("str_messages", []));
   const [prs, setPrs]                     = useState(() => getSaved("str_prs", {}));
   const [weightLog, setWeightLog]         = useState(() => getSaved("str_weight_log", []));
+
+  const [lang, setLang] = useState(localStorage.getItem('str_lang') || 'en');
+  const t = (key) => STRINGS[lang]?.[key] || STRINGS.en[key] || key;
 
   // PIN auth (session-only state)
   const [pinEntry, setPinEntry]       = useState("");
@@ -1933,6 +2103,34 @@ function AppInner() {
         <div style={{position:"absolute",top:"5%",left:"-8px",fontFamily:"var(--font-display)",fontSize:190,color:"rgba(255,255,255,0.025)",lineHeight:0.88,pointerEvents:"none",userSelect:"none",letterSpacing:-4}}>
           STR<br/>ONG<br/>ER
         </div>
+        <div style={{ position:'absolute', top:20, right:20, display:'flex', gap:8, zIndex:10 }}>
+          <button
+            onClick={() => { setLang('en'); localStorage.setItem('str_lang','en'); }}
+            style={{
+              background: lang === 'en' ? '#C8F135' : 'transparent',
+              color: lang === 'en' ? '#080808' : '#888',
+              border: '1px solid',
+              borderColor: lang === 'en' ? '#C8F135' : '#333',
+              borderRadius: 20, padding:'6px 14px',
+              fontFamily:"'Barlow Condensed',sans-serif",
+              fontWeight:700, fontSize:13, letterSpacing:1, cursor:'pointer'
+            }}>
+            EN
+          </button>
+          <button
+            onClick={() => { setLang('es'); localStorage.setItem('str_lang','es'); }}
+            style={{
+              background: lang === 'es' ? '#C8F135' : 'transparent',
+              color: lang === 'es' ? '#080808' : '#888',
+              border: '1px solid',
+              borderColor: lang === 'es' ? '#C8F135' : '#333',
+              borderRadius: 20, padding:'6px 14px',
+              fontFamily:"'Barlow Condensed',sans-serif",
+              fontWeight:700, fontSize:13, letterSpacing:1, cursor:'pointer'
+            }}>
+            ES
+          </button>
+        </div>
         <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"flex-end",padding:"0 28px 56px"}}>
           <div className="fu" style={{marginBottom:44}}>
             <div style={{display:"inline-flex",background:"var(--lime)",borderRadius:6,padding:"4px 12px",marginBottom:18}}>
@@ -1948,7 +2146,7 @@ function AppInner() {
               if (!profile) setProfile({name:"",age:"",weight:"",height:"",sex:"",goal:"",level:"",daysPerWeek:"3",equipment:[],injuries:""});
               setScreen("onboarding");
               setOnboardStep(0);
-            }}>Create Account</Btn>
+            }}>{t('create_account')}</Btn>
             <Btn full variant="ghost" onClick={()=>{
               // profile and pinHash are already in state (lazy-loaded from str_* keys on startup)
               if (profile && pinHash) {
@@ -1959,7 +2157,7 @@ function AppInner() {
               } else {
                 setSplashLoginError("No account found. Please create an account first.");
               }
-            }}>Log In</Btn>
+            }}>{t('log_in')}</Btn>
             {splashLoginError && (
               <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--red)",textAlign:"center",marginTop:4}}>{splashLoginError}</div>
             )}
