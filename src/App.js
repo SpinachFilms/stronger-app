@@ -525,6 +525,42 @@ const buildRoutine = (profile, partnerProfile = null) => {
   return [PUSH, PULL, LEGS, UPPER, LOWER2, ACTIVE];
 };
 
+/* ─── FIX 2 — Week schedule builder ─── */
+const buildWeekSchedule = (trainingDays, routineLength) => {
+  const ALL = ["MON","TUE","WED","THU","FRI","SAT","SUN"];
+  const schedule = {};
+  ALL.forEach(d => { schedule[d] = null; });
+  (trainingDays || []).forEach((d, i) => {
+    schedule[d] = i % routineLength;
+  });
+  return schedule;
+};
+
+/* ─── FIX 5 — Cool-down buffer options ─── */
+const BUFFER_OPTIONS = [
+  { id:'stretching', titleKey:'buffer_stretch_title', descKey:'buffer_stretch_desc', duration:'10 MIN',
+    exercises:[
+      {name:'Hip Flexor Stretch',duration:60,side:true},{name:'Hamstring Stretch',duration:60,side:true},
+      {name:'Chest Doorway Stretch',duration:45},{name:'Lat Stretch',duration:45,side:true},
+      {name:'Quad Stretch',duration:45,side:true},{name:'Shoulder Cross-Body Stretch',duration:45,side:true},
+      {name:"Child's Pose",duration:60},{name:'Pigeon Pose',duration:60,side:true},
+      {name:'Thoracic Rotation',duration:45,side:true},{name:'Standing Calf Stretch',duration:30,side:true},
+    ]},
+  { id:'abs', titleKey:'buffer_abs_title', descKey:'buffer_abs_desc', duration:'12 MIN',
+    exercises:[
+      {name:'Plank',sets:3,duration:45},{name:'Bicycle Crunch',sets:3,reps:20},
+      {name:'Leg Raises',sets:3,reps:15},{name:'Russian Twist',sets:3,reps:20},
+      {name:'Dead Bug',sets:3,reps:12},{name:'Side Plank',sets:2,duration:30,side:true},
+      {name:'Mountain Climber',sets:3,duration:30},{name:'Hollow Body Hold',sets:3,duration:20},
+    ]},
+  { id:'cardio', titleKey:'buffer_cardio_title', descKey:'buffer_cardio_desc', duration:'15 MIN',
+    exercises:[
+      {name:'Jump Rope / Running in place',duration:180},{name:'Burpees',sets:3,reps:10},
+      {name:'High Knees',duration:60},{name:'Jump Squats',sets:3,reps:12},
+      {name:'Mountain Climbers',duration:45},{name:'Jumping Jacks',duration:60},
+    ]},
+];
+
 /* ─── Global styles ─── */
 const GlobalStyles = () => (
   <style>{`
@@ -652,6 +688,15 @@ const Numpad = ({onDigit, onDelete}) => {
     </div>
   );
 };
+
+/* ─── Sheet wrapper for bottom sheets on home screen ─── */
+const SheetWrapper = ({ children, onClose }) => (
+  <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:50,backdropFilter:"blur(4px)"}}>
+    <div onClick={e=>e.stopPropagation()} style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"#181818",borderRadius:"24px 24px 0 0",padding:28,animation:"slideIn .3s cubic-bezier(.4,0,.2,1)",maxHeight:"85vh",overflowY:"auto"}}>
+      {children}
+    </div>
+  </div>
+);
 
 /* ════════════════════════════════════════════
    ERROR BOUNDARY — catches React render errors gracefully
@@ -1193,6 +1238,36 @@ const STRINGS = {
     // Count labels
     exercises_count: "EXERCISES",
     approx_min: "MIN",
+    // FIX 2
+    edit_schedule: "EDIT SCHEDULE",
+    assign_workouts: "ASSIGN YOUR WORKOUTS",
+    // FIX 3
+    can_you_lift: "Can you lift",
+    yes_i_can: "Yes, I can",
+    no_adjust: "No, adjust",
+    adjust_weight: "ADJUST WEIGHT",
+    use_this_weight: "USE THIS WEIGHT",
+    // FIX 4
+    train_invite_sent: "Invite sent to {name}! Go to Today to start.",
+    wants_to_train: "WANTS TO TRAIN TOGETHER!",
+    // FIX 5
+    while_you_wait: "WHILE YOU WAIT",
+    partner_still_training: "STILL TRAINING",
+    sets_left: "sets left",
+    buffer_stretch_title: "Full Body Stretching",
+    buffer_stretch_desc: "Recover and stay loose",
+    buffer_abs_title: "Core & Abs Blast",
+    buffer_abs_desc: "10 min ab finisher",
+    buffer_cardio_title: "Cardio Finisher",
+    buffer_cardio_desc: "Keep the heart rate up",
+    // Day abbreviations for FIX 8
+    day_mon: "MON",
+    day_tue: "TUE",
+    day_wed: "WED",
+    day_thu: "THU",
+    day_fri: "FRI",
+    day_sat: "SAT",
+    day_sun: "SUN",
   },
   es: {
     welcome: "Bienvenido a Stronger",
@@ -1667,6 +1742,36 @@ const STRINGS = {
     // Count labels
     exercises_count: "EJERCICIOS",
     approx_min: "MIN",
+    // FIX 2
+    edit_schedule: "EDITAR HORARIO",
+    assign_workouts: "ASIGNA TUS ENTRENAMIENTOS",
+    // FIX 3
+    can_you_lift: "¿Puedes levantar",
+    yes_i_can: "Sí, puedo",
+    no_adjust: "No, ajustar",
+    adjust_weight: "AJUSTAR PESO",
+    use_this_weight: "USAR ESTE PESO",
+    // FIX 4
+    train_invite_sent: "¡Invitación enviada a {name}! Ve a Hoy para empezar.",
+    wants_to_train: "¡QUIERE ENTRENAR JUNTOS!",
+    // FIX 5
+    while_you_wait: "MIENTRAS ESPERAS",
+    partner_still_training: "AÚN ENTRENANDO",
+    sets_left: "series restantes",
+    buffer_stretch_title: "Estiramientos Completos",
+    buffer_stretch_desc: "Recupera y mantente flexible",
+    buffer_abs_title: "Rutina de Core y Abdomen",
+    buffer_abs_desc: "Finisher de abdominales",
+    buffer_cardio_title: "Finisher Cardiovascular",
+    buffer_cardio_desc: "Mantén el ritmo cardíaco",
+    // Day abbreviations for FIX 8
+    day_mon: "LUN",
+    day_tue: "MAR",
+    day_wed: "MIÉ",
+    day_thu: "JUE",
+    day_fri: "VIE",
+    day_sat: "SÁB",
+    day_sun: "DOM",
   }
 };
 
@@ -1914,11 +2019,36 @@ function AppInner() {
   // Live room data for partner tab status
   const [roomData, setRoomData] = useState(null);
 
+  // FIX 1 — iOS WebSocket reconnect
+  const [channelVersion, setChannelVersion] = useState(0);
+
+  // FIX 3 — Editable weight with first-set confirmation
+  const [editingWeight, setEditingWeight] = useState(false);
+  const [tempWeight, setTempWeight] = useState("");
+  const [firstSetConfirmed, setFirstSetConfirmed] = useState({});
+
+  // FIX 4 — Train Together banner
+  const [trainTogetherBanner, setTrainTogetherBanner] = useState(null);
+
+  // FIX 5 — Cool-down buffer
+  const [bufferActivity, setBufferActivity] = useState(null);
+  const [bufferExIdx, setBufferExIdx] = useState(0);
+
   // Keep profileRef current for use inside async channel callbacks
   useEffect(() => { profileRef.current = profile; }, [profile]);
 
   // null-safe profile updater (profile starts null before onboarding)
   const p = (k, v) => setProfile(prev => ({...(prev || {}), [k]: v}));
+
+  /* ─── FIX 7 — parseHistoryDate handles timestamp field and year-boundary edge case ─── */
+  const parseHistoryDate = (h) => {
+    if (h.timestamp) return new Date(h.timestamp);
+    try {
+      const d = new Date(`${h.date} ${new Date().getFullYear()}`);
+      if (d > new Date() && (d - new Date()) > 180 * 86400000) d.setFullYear(d.getFullYear()-1);
+      return d;
+    } catch { return null; }
+  };
 
   /* ─── Week progress: recalculates whenever workoutHistory or routine changes ─── */
   const weekProgress = useMemo(() => {
@@ -1931,14 +2061,17 @@ function AppInner() {
       monday.setHours(0,0,0,0);
       const weekStart = monday.getTime();
       const weekEnd = weekStart + 7 * 86400000;
-      const currentYear = new Date().getFullYear();
       // Read fresh from state (also mirrors localStorage via persistence effect)
       const hist = workoutHistory.length
         ? workoutHistory
         : (() => { try { return JSON.parse(localStorage.getItem("str_history") || "[]"); } catch { return []; } })();
       const thisWeek = hist.filter(h => {
-        if (!h.date) return false;
-        try { const d = new Date(h.date + ` ${currentYear}`); return d.getTime() >= weekStart && d.getTime() < weekEnd; } catch { return false; }
+        if (!h.date && !h.timestamp) return false;
+        try {
+          const d = parseHistoryDate(h);
+          if (!d) return false;
+          return d.getTime() >= weekStart && d.getTime() < weekEnd;
+        } catch { return false; }
       });
       const map = {};
       thisWeek.forEach(h => { if (h.dayOfWeek) map[h.dayOfWeek] = h; });
@@ -2240,6 +2373,7 @@ function AppInner() {
       const maxWeight = Math.max(...day.exercises.map(e => parseFloat(e.wA) || 0));
       const entry = {
         id: Date.now(),
+        timestamp: Date.now(),
         date: new Date().toLocaleDateString("en-US", {month:"short", day:"numeric"}),
         dayOfWeek: new Date().toLocaleDateString("en-US", {weekday:"short"}),
         dayName: day.name,
@@ -2305,6 +2439,9 @@ function AppInner() {
     } catch {}
     const builtRoutine = buildRoutine(profile, resolvedPartner);
     setRoutine(builtRoutine);
+    // FIX 2 — Save week schedule
+    const ws = buildWeekSchedule(profile.trainingDays || [], builtRoutine.length);
+    p("weekSchedule", ws);
     setAiSummary(summary);
     setTimeout(() => setScreen("home"), 600);
   };
@@ -2360,6 +2497,9 @@ function AppInner() {
     setProfile(prev => ({ ...prev, ...rebuildDraft }));
     const newRoutine = buildRoutine(rebuildDraft, partnerProfile);
     setRoutine(newRoutine);
+    // FIX 2 — Save week schedule
+    const wsr = buildWeekSchedule(rebuildDraft.trainingDays || [], newRoutine.length);
+    setProfile(prev => ({...(prev||{}), ...rebuildDraft, weekSchedule: wsr}));
     // Synchronously write to localStorage so Today tab sees it on next render
     try { localStorage.setItem("str_routine", JSON.stringify(newRoutine)); } catch {}
     // Increment version to force Today tab to re-key and re-render
@@ -2526,6 +2666,11 @@ function AppInner() {
           navigator.vibrate?.(100);
         }
       })
+      // FIX 4 — Train Together invite broadcast
+      .on('broadcast', { event: 'train_together_invite' }, ({ payload }) => {
+        setTrainTogetherBanner(payload?.fromName || 'Your partner');
+        setTimeout(() => setTrainTogetherBanner(null), 8000);
+      })
       .subscribe((status) => {
         console.log('Room broadcast channel:', status);
       });
@@ -2544,6 +2689,34 @@ function AppInner() {
     return () => {
       supabase.removeChannel(channel);
       roomChannelRef.current = null;
+    };
+  }, [roomCode, userSlot, channelVersion]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ─── FIX 1 — iOS WebSocket reconnect on app resume ─── */
+  useEffect(() => {
+    const handleResume = async () => {
+      if (document.visibilityState !== 'visible' || !roomCode || !supabase) return;
+      const state = roomChannelRef.current?.state;
+      if (state === 'joined') return;
+      console.log('Reconnecting room channel after background...');
+      if (roomChannelRef.current) {
+        try { await supabase.removeChannel(roomChannelRef.current); } catch {}
+        roomChannelRef.current = null;
+      }
+      setChannelVersion(v => v + 1);
+      // Fetch latest partner session snapshot
+      const partnerDataSlot = userSlot === 'a' ? 'active_session_b' : 'active_session_a';
+      supabase.from('rooms').select('active_session_a,active_session_b')
+        .eq('room_code', roomCode).single()
+        .then(({ data }) => {
+          if (data?.[partnerDataSlot]?.isActive) setPartnerSession(data[partnerDataSlot]);
+        });
+    };
+    document.addEventListener('visibilitychange', handleResume);
+    window.addEventListener('online', handleResume);
+    return () => {
+      document.removeEventListener('visibilitychange', handleResume);
+      window.removeEventListener('online', handleResume);
     };
   }, [roomCode, userSlot]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -2668,6 +2841,7 @@ function AppInner() {
         }, 0));
         const entry = {
           id: Date.now(),
+          timestamp: Date.now(),
           date: new Date().toLocaleDateString("en-US", {month:"short", day:"numeric"}),
           dayOfWeek: new Date().toLocaleDateString("en-US", {weekday:"short"}),
           dayName: currentDay.name,
@@ -2795,6 +2969,12 @@ function AppInner() {
   };
 
   const pct = day && ex ? ((exIdx + setNum / ex.sets) / day.exercises.length) * 100 : 0;
+
+  /* ─── FIX 8 — Translate day label abbreviations ─── */
+  const tDayLabel = (label) => {
+    const dayAbbrevs = { MON: t('day_mon')||'MON', TUE: t('day_tue')||'TUE', WED: t('day_wed')||'WED', THU: t('day_thu')||'THU', FRI: t('day_fri')||'FRI', SAT: t('day_sat')||'SAT', SUN: t('day_sun')||'SUN' };
+    return dayAbbrevs[label] || label;
+  };
 
   /* ════════════════════════
      PIN SCREEN
@@ -3257,14 +3437,19 @@ function AppInner() {
             const isSelected = td.includes(d);
             const n = parseInt(profile.daysPerWeek)||3;
             return (
-              <button key={d} onClick={()=>{
-                const current = profile.trainingDays || getDayPreset(n);
+              <button key={d} onClick={() => {
+                const current = profile.trainingDays || getDayPreset(parseInt(profile.daysPerWeek)||3);
                 if (isSelected) {
-                  // Shake — don't allow deselect (must keep exactly N)
-                  return;
+                  if (current.length <= n) {
+                    setToast(`Select exactly ${n} training days`);
+                    setTimeout(()=>setToast(null),2000);
+                    return;
+                  }
+                  p("trainingDays", current.filter(x=>x!==d));
                 } else {
-                  // Deselect first selected, then add new
-                  const newDays = [...current.slice(1), d];
+                  const newDays = current.length >= n
+                    ? [...current.slice(0,-1), d].sort((a,b)=>ALL_DAYS_LABELS.indexOf(a)-ALL_DAYS_LABELS.indexOf(b))
+                    : [...current, d].sort((a,b)=>ALL_DAYS_LABELS.indexOf(a)-ALL_DAYS_LABELS.indexOf(b));
                   p("trainingDays", newDays);
                 }
               }} style={{
@@ -3432,8 +3617,10 @@ function AppInner() {
                     <div style={{fontFamily:"var(--font-cond)",fontWeight:800,fontSize:22,color:"var(--white)"}}>{v}</div>
                   </div>
                 ))}
-                <div style={{flex:1,background:"var(--card)",borderRadius:12,padding:"12px 0",textAlign:"center",border:`1px solid ${day.color}33`}}>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"var(--gray)",marginBottom:4}}>{t('weight')}</div>
+                <div onClick={()=>{ setTempWeight(ex.wA?.replace('kg','').replace('lb','') || ''); setEditingWeight(true); }}
+                  style={{flex:1,background:"var(--card)",borderRadius:12,padding:"12px 0",textAlign:"center",
+                    border:`1px solid ${day.color}33`,cursor:"pointer"}}>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--gray)",marginBottom:2}}>{t('weight')||'WEIGHT'} · TAP</div>
                   <div style={{fontFamily:"var(--font-display)",fontSize:24,color:day.color||"var(--lime)"}}>
                     {ex.wA === "BW" ? "BW" : ex.wA || "—"}
                   </div>
@@ -3554,6 +3741,25 @@ function AppInner() {
           </div>
           {!resting && (
             <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,padding:"12px 20px 34px",background:"linear-gradient(transparent,var(--black) 35%)"}}>
+              {setNum === 1 && !firstSetConfirmed[ex.name] && ex.wA && ex.wA !== "BW" && (
+                <div style={{background:"var(--card)",borderRadius:14,border:`1px solid ${day.color}33`,padding:14,marginBottom:10}}>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"var(--gray)",marginBottom:10,textAlign:"center"}}>
+                    {t('can_you_lift')||'Can you lift this?'} {ex.wA}?
+                  </div>
+                  <div style={{display:"flex",gap:8}}>
+                    <button onClick={()=>setFirstSetConfirmed(prev=>({...prev,[ex.name]:true}))}
+                      style={{flex:1,background:"rgba(200,241,53,0.15)",border:"1px solid var(--lime)",borderRadius:10,padding:"10px 0",
+                        fontFamily:"var(--font-cond)",fontWeight:700,fontSize:12,letterSpacing:1,color:"var(--lime)",cursor:"pointer"}}>
+                      ✓ {t('yes_i_can')||'Yes, I can'}
+                    </button>
+                    <button onClick={()=>{ setTempWeight(ex.wA?.replace('kg','').replace('lb','') || ''); setEditingWeight(true); }}
+                      style={{flex:1,background:"rgba(255,59,48,0.1)",border:"1px solid rgba(255,59,48,0.3)",borderRadius:10,padding:"10px 0",
+                        fontFamily:"var(--font-cond)",fontWeight:700,fontSize:12,letterSpacing:1,color:"#FF3B30",cursor:"pointer"}}>
+                      ✗ {t('no_adjust')||'No, adjust'}
+                    </button>
+                  </div>
+                </div>
+              )}
               <button onClick={completeSet} style={{width:"100%",background:accentColor,border:"none",borderRadius:16,padding:"18px 0",fontFamily:"var(--font-cond)",fontWeight:900,fontSize:18,letterSpacing:3,color:"var(--black)",cursor:"pointer",marginBottom:10,textTransform:"uppercase",boxShadow:`0 0 30px ${accentColor}44`}}>
                 {setNum<ex.sets?`${t('complete_set')} ${setNum}`:exIdx<day.exercises.length-1?t('next_exercise'):t('finish_workout')}
               </button>
@@ -3663,6 +3869,57 @@ function AppInner() {
                         </div>
                       ))}
                     </div>
+                    {/* FIX 5 — Cool-down buffer when partner is still training */}
+                    {partnerSession?.isActive && !bufferActivity && (
+                      <div style={{background:"#111",borderRadius:16,padding:18,marginBottom:18,border:"1px solid var(--line)",textAlign:"left"}}>
+                        <div style={{fontFamily:"var(--font-cond)",fontSize:10,color:accentColor,letterSpacing:2,marginBottom:4}}>
+                          {(partnerProfile?.name||'PARTNER').toUpperCase()} {t('partner_still_training')||'STILL TRAINING'}
+                        </div>
+                        <div style={{fontFamily:"var(--font-display)",fontSize:28,marginBottom:14}}>{t('while_you_wait')||'WHILE YOU WAIT'}</div>
+                        {BUFFER_OPTIONS.map(opt=>(
+                          <button key={opt.id} onClick={()=>{setBufferActivity(opt);setBufferExIdx(0);}}
+                            style={{width:"100%",background:"var(--card)",border:"1px solid var(--line)",borderRadius:12,
+                              padding:"12px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",
+                              cursor:"pointer",marginBottom:8,textAlign:"left"}}>
+                            <div>
+                              <div style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:14,color:"var(--white)"}}>{t(opt.titleKey)||opt.titleKey}</div>
+                              <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",marginTop:2}}>{t(opt.descKey)||opt.descKey}</div>
+                            </div>
+                            <div style={{fontFamily:"var(--font-display)",fontSize:18,color:accentColor,flexShrink:0,marginLeft:12}}>{opt.duration}</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {bufferActivity && (
+                      <div style={{marginBottom:18,textAlign:"left"}}>
+                        <button onClick={()=>setBufferActivity(null)} style={{background:"none",border:"none",color:"var(--gray)",fontFamily:"var(--font-cond)",fontSize:12,letterSpacing:2,cursor:"pointer",padding:"0 0 12px"}}>← BACK</button>
+                        <div style={{fontFamily:"var(--font-display)",fontSize:28,marginBottom:4}}>{t(bufferActivity.titleKey)||bufferActivity.titleKey}</div>
+                        {bufferExIdx < bufferActivity.exercises.length ? (() => {
+                          const bEx = bufferActivity.exercises[bufferExIdx];
+                          return (
+                            <div style={{background:"var(--card)",borderRadius:16,padding:20,textAlign:"center"}}>
+                              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"var(--gray)",marginBottom:4}}>
+                                {bufferExIdx+1} / {bufferActivity.exercises.length}
+                              </div>
+                              <div style={{fontFamily:"var(--font-display)",fontSize:36,marginBottom:8}}>{bEx.name.toUpperCase()}</div>
+                              <div style={{fontFamily:"var(--font-cond)",fontSize:14,color:accentColor,marginBottom:20}}>
+                                {bEx.duration ? `${bEx.duration}s` : bEx.reps ? `${bEx.sets}×${bEx.reps}` : `${bEx.sets} sets`}
+                                {bEx.side ? ' each side' : ''}
+                              </div>
+                              <Btn full onClick={()=>setBufferExIdx(i=>i+1)}>
+                                {bufferExIdx < bufferActivity.exercises.length - 1 ? t('next_exercise')||'NEXT' : t('done')||'DONE'}
+                              </Btn>
+                            </div>
+                          );
+                        })() : (
+                          <div style={{background:"var(--card)",borderRadius:16,padding:24,textAlign:"center"}}>
+                            <div style={{fontSize:40,marginBottom:8}}>🙌</div>
+                            <div style={{fontFamily:"var(--font-display)",fontSize:28,marginBottom:8}}>GREAT WORK!</div>
+                            <div style={{fontFamily:"var(--font-cond)",fontSize:12,color:"var(--gray)",letterSpacing:1}}>Your partner is almost done</div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     {/* Feature 4E — Workout notes */}
                     <div style={{marginBottom:16,textAlign:"left"}}>
                       <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>{t('how_did_it_feel')}</div>
@@ -3674,7 +3931,7 @@ function AppInner() {
                       />
                     </div>
                     <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                      <Btn full onClick={()=>{clearActiveSession();setSheet(null);setScreen("home");setExIdx(0);setSetNum(1);setCompletedSets({});}}>{t('done')}</Btn>
+                      <Btn full onClick={()=>{clearActiveSession();setSheet(null);setScreen("home");setExIdx(0);setSetNum(1);setCompletedSets({});setBufferActivity(null);setBufferExIdx(0);}}>{t('done')}</Btn>
                     </div>
                   </div>
                 )}
@@ -3682,6 +3939,41 @@ function AppInner() {
             </div>
           )}
         </div>
+
+        {/* FIX 3 — Weight edit modal */}
+        {editingWeight && (
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:200,display:"flex",alignItems:"flex-end"}}>
+            <div style={{background:"#111",borderRadius:"20px 20px 0 0",padding:24,width:"100%",maxWidth:430,margin:"0 auto"}}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:32,marginBottom:16}}>{t('adjust_weight')||'ADJUST WEIGHT'}</div>
+              <input type="number" inputMode="decimal" step="0.5" value={tempWeight}
+                onChange={e=>setTempWeight(e.target.value)}
+                style={{width:"100%",background:"var(--card)",border:"1px solid var(--line2)",borderRadius:12,
+                  padding:16,fontSize:28,color:"var(--white)",textAlign:"center",
+                  fontFamily:"var(--font-display)",outline:"none",boxSizing:"border-box",marginBottom:12}}/>
+              <div style={{display:"flex",gap:8,marginBottom:14}}>
+                {[-5,-2.5,2.5,5].map(delta=>(
+                  <button key={delta} onClick={()=>setTempWeight(w=>String(Math.max(0,parseFloat(w||0)+delta)))}
+                    style={{flex:1,background:"var(--card)",border:"1px solid var(--line)",borderRadius:10,
+                      padding:12,color:"var(--white)",fontFamily:"var(--font-cond)",fontSize:14,cursor:"pointer"}}>
+                    {delta>0?`+${delta}`:delta}
+                  </button>
+                ))}
+              </div>
+              <Btn full onClick={()=>{
+                const newW = parseFloat(tempWeight);
+                if (!newW || newW <= 0) { setEditingWeight(false); return; }
+                const newWStr = `${newW}kg`;
+                setRoutine(prev => prev.map((d,di) => di !== dayIdx ? d : {
+                  ...d, exercises: d.exercises.map((e,ei) => ei !== exIdx ? e : { ...e, wA: newWStr })
+                }));
+                setPrs(prev => ({ ...prev, [ex.name]: { weight: newW, date: new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"}) }}));
+                setFirstSetConfirmed(prev => ({...prev, [ex.name]: true}));
+                setEditingWeight(false);
+              }}>{t('use_this_weight')||'USE THIS WEIGHT'}</Btn>
+              <button onClick={()=>setEditingWeight(false)} style={{width:"100%",background:"transparent",border:"none",padding:12,color:"var(--gray)",fontFamily:"var(--font-cond)",fontSize:13,cursor:"pointer"}}>{t('cancel')||'CANCEL'}</button>
+            </div>
+          </div>
+        )}
 
         {/* ── Floating chat bubble during workout ── */}
         {partnerProfile && (
@@ -3908,6 +4200,19 @@ function AppInner() {
       <GlobalStyles/>
       <div style={{background:"var(--black)",minHeight:"100vh",maxWidth:430,margin:"0 auto",display:"flex",flexDirection:"column",paddingBottom:72}}>
 
+        {/* FIX 4 — Train Together invite banner */}
+        {trainTogetherBanner && (
+          <div onClick={()=>{ setTab('today'); setTrainTogetherBanner(null); }}
+            style={{position:'fixed',top:0,left:'50%',transform:'translateX(-50%)',
+              width:'100%',maxWidth:430,zIndex:500,background:'#C8F135',
+              padding:'14px 20px',cursor:'pointer',
+              fontFamily:"var(--font-cond)",fontWeight:700,fontSize:14,
+              color:'#080808',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <span>💪 {(trainTogetherBanner).toUpperCase()} {t('wants_to_train')||'WANTS TO TRAIN TOGETHER!'}</span>
+            <span>→ {t('today')||'TODAY'}</span>
+          </div>
+        )}
+
         {/* Header */}
         <div style={{padding:"22px 22px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
           <div>
@@ -3959,7 +4264,13 @@ function AppInner() {
             const trainingDays = profile?.trainingDays || null;
             const todayLabel = WEEK_DAYS[todayDOW === 0 ? 6 : todayDOW - 1];
 
-            const isTrainingDay = trainingDays ? trainingDays.includes(todayLabel) : true;
+            // FIX 2 — weekSchedule-based today workout
+            const WEEK_KEYS = ["SUN","MON","TUE","WED","THU","FRI","SAT"];
+            const todayKey = WEEK_KEYS[new Date().getDay()];
+            const weekSchedule = profile?.weekSchedule || {};
+            const todayWorkoutIdx = weekSchedule[todayKey] ?? null;
+            const todayRoutineDay = todayWorkoutIdx !== null ? routine?.[todayWorkoutIdx] : null;
+            const isTrainingDay = todayWorkoutIdx !== null;
 
             // Use the weekProgress memo (updates whenever workoutHistory or routine changes)
             const completedDayMap = weekProgress; // { "Mon": historyEntry, ... }
@@ -4012,58 +4323,51 @@ function AppInner() {
                   <button onClick={resumeWorkout} style={{background:"var(--lime)",border:"none",borderRadius:12,padding:"12px 18px",fontFamily:"var(--font-cond)",fontWeight:800,fontSize:13,letterSpacing:2,color:"var(--black)",cursor:"pointer"}}>{t('resume')}</button>
                 </div>
               )}
-              {/* Feature 4D — Rest day or training day content */}
-              {!isTrainingDay ? (
-                <div className="fu2" style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:24}}>
-                  <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.9,marginBottom:16}}>{t('rest_day')}</div>
-                  <p style={{fontFamily:"var(--font-body)",fontSize:14,color:"var(--gray)",lineHeight:1.7,marginBottom:20}}>
+              {/* FIX 2 — Today's workout primary card + this week row */}
+              {isTrainingDay && todayRoutineDay && (
+                <div onClick={() => startWorkout(todayWorkoutIdx)} style={{background:"var(--card)",borderRadius:18,padding:24,marginBottom:16,cursor:"pointer",border:`1px solid ${todayRoutineDay.color}44`,borderLeft:`4px solid ${todayRoutineDay.color}`}}>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:todayRoutineDay.color,marginBottom:4}}>TODAY</div>
+                  <div style={{fontFamily:"var(--font-display)",fontSize:44,lineHeight:0.9}}>{(t(DAY_KEYS[todayRoutineDay.name])||todayRoutineDay.name).toUpperCase()}</div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:2,marginTop:8}}>{todayRoutineDay.tag}</div>
+                  <div style={{display:"flex",gap:16,marginTop:12}}>
+                    <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)"}}>{todayRoutineDay.exercises.length} {t('exercises_count_label')||'EXERCISES'}</span>
+                    <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:todayRoutineDay.color}}>{t('start_workout')||'START'} →</span>
+                  </div>
+                </div>
+              )}
+              {!isTrainingDay && (
+                <div style={{background:"var(--card)",borderRadius:18,padding:24,marginBottom:16,textAlign:"center"}}>
+                  <div style={{fontFamily:"var(--font-display)",fontSize:32,marginBottom:8}}>REST DAY</div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:12,color:"var(--gray)",letterSpacing:2}}>RECOVERY IS PROGRESS</div>
+                  <p style={{fontFamily:"var(--font-body)",fontSize:14,color:"var(--gray)",lineHeight:1.7,marginTop:12,marginBottom:16}}>
                     {RECOVERY_TIPS[today.getDate() % 10]}
                   </p>
-                  <button onClick={()=>setSheet("stretching")} style={{width:"100%",background:"rgba(200,241,53,0.1)",border:"1px solid rgba(200,241,53,0.3)",borderRadius:12,padding:"14px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,color:"var(--lime)",cursor:"pointer",marginBottom:12}}>
+                  <button onClick={()=>setSheet("stretching")} style={{width:"100%",background:"rgba(200,241,53,0.1)",border:"1px solid rgba(200,241,53,0.3)",borderRadius:12,padding:"14px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,color:"var(--lime)",cursor:"pointer"}}>
                     {t('light_stretching')}
                   </button>
-                  {partnerProfile?._lastWorkout && (
-                    <div style={{background:"var(--dark)",borderRadius:12,padding:14}}>
-                      <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:6}}>{(partnerProfile.name||"PARTNER").toUpperCase()}'{t('last_workout_label')}</div>
-                      <div style={{fontFamily:"var(--font-display)",fontSize:22,color:"var(--lime)",marginBottom:4}}>{(partnerProfile._lastWorkout.dayName||"").toUpperCase()}</div>
-                      <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>{partnerProfile._lastWorkout.date} · {partnerProfile._lastWorkout.duration}m · {partnerProfile._lastWorkout.totalSets} sets</div>
-                    </div>
-                  )}
                 </div>
-              ) : (
-                <>
-                  {(routine||[]).map((d,i)=>(
-                    <div key={i} className="fu2" onClick={()=>{
-                      if (activeSession?.isActive && activeSession.dayIdx !== i) {
-                        setConflictPendingDayIdx(i);
-                      } else if (activeSession?.isActive && activeSession.dayIdx === i) {
-                        resumeWorkout();
-                      } else {
-                        startWorkout(i);
-                      }
-                    }}
-                      style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,cursor:"pointer",position:"relative",overflow:"hidden"}}>
-                      <div style={{position:"absolute",top:0,left:0,width:4,height:"100%",background:d.color}}/>
-                      <div style={{paddingLeft:12}}>
-                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-                          <div>
-                            <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:d.color,marginBottom:4}}>{d.label}</div>
-                            <div style={{fontFamily:"var(--font-display)",fontSize:30,lineHeight:0.95,marginBottom:5}}>{(t(DAY_KEYS[d.name])||d.name).toUpperCase()}</div>
-                            <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)"}}>{d.tag}</div>
-                          </div>
-                          <div style={{background:d.color,borderRadius:99,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--black)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
-                          </div>
-                        </div>
-                        <div style={{marginTop:12,display:"flex",gap:16}}>
-                          <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>{d.exercises.length} {t('exercises_count_label')}</span>
-                          <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>~{40+d.exercises.length*3} {t('min_label')}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </>
               )}
+
+              {/* This week — compact row */}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)"}}>THIS WEEK</div>
+                <button onClick={()=>setSheet("schedule")} style={{background:"rgba(200,241,53,0.1)",border:"1px solid rgba(200,241,53,0.3)",borderRadius:8,padding:"5px 12px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:10,letterSpacing:2,color:"var(--lime)",cursor:"pointer"}}>
+                  {t('edit_schedule')||'EDIT SCHEDULE'}
+                </button>
+              </div>
+              <div style={{overflowX:"auto",display:"flex",gap:10,paddingBottom:4,marginBottom:20}}>
+                {(routine||[]).map((d, i) => {
+                  const assignedDays = Object.entries(weekSchedule).filter(([,v])=>v===i).map(([k])=>k);
+                  return (
+                    <div key={i} onClick={() => startWorkout(i)}
+                      style={{flexShrink:0,width:130,background:"var(--card)",borderRadius:14,border:`1px solid ${d.color}33`,padding:"12px 14px",cursor:"pointer"}}>
+                      <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:d.color,marginBottom:4}}>{assignedDays.join(" · ")||"UNASSIGNED"}</div>
+                      <div style={{fontFamily:"var(--font-display)",fontSize:18,lineHeight:1}}>{(t(DAY_KEYS[d.name])||d.name).toUpperCase()}</div>
+                      <div style={{fontFamily:"var(--font-cond)",fontSize:10,color:"var(--gray)",marginTop:4,letterSpacing:1}}>{d.exercises.length} {t('exercises_count_label')||'EX'}</div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
             );
           })()}
@@ -4092,7 +4396,7 @@ function AppInner() {
               </div>
               {(routine||[]).map((d,i)=>(
                 <div key={i} className="fu1">
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:d.color,marginBottom:10,paddingLeft:4}}>{d.label} — {(t(DAY_KEYS[d.name])||d.name).toUpperCase()}</div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:d.color,marginBottom:10,paddingLeft:4}}>{tDayLabel(d.label)} — {(t(DAY_KEYS[d.name])||d.name).toUpperCase()}</div>
                   {d.exercises.map((e,j)=>(
                     <div key={j} style={{background:"var(--card)",borderRadius:12,padding:"13px 16px",border:"1px solid var(--line)",marginBottom:7,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                       <div>
@@ -4293,7 +4597,17 @@ function AppInner() {
                           ) : (
                             <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",marginBottom:14}}>{t('no_workouts_yet')}</div>
                           )}
-                          <Btn full onClick={()=>sendQuickMsg("Ready to train?")}>{t('train_together_btn')}</Btn>
+                          <Btn full onClick={()=>{
+                            if (roomChannelRef.current) {
+                              roomChannelRef.current.send({
+                                type:'broadcast', event:'train_together_invite',
+                                payload:{ fromName: profile.name, ts: Date.now() }
+                              }).catch(()=>{});
+                            }
+                            setTab('today');
+                            setToast((t('train_invite_sent')||'Invite sent! Go to Today to start.').replace('{name}', partnerProfile?.name||'partner'));
+                            setTimeout(()=>setToast(null), 4000);
+                          }}>{t('train_together_btn')||'TRAIN TOGETHER?'}</Btn>
                         </div>
                       )}
                     </div>
@@ -4555,6 +4869,38 @@ function AppInner() {
             </div>
           </div>
         )}
+        {/* FIX 2 — Schedule sheet */}
+        {sheet === "schedule" && (
+          <SheetWrapper onClose={()=>setSheet(null)}>
+            <div style={{fontFamily:"var(--font-display)",fontSize:36,marginBottom:4}}>{t('edit_schedule')||'EDIT SCHEDULE'}</div>
+            <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:2,marginBottom:20}}>ASSIGN YOUR WORKOUTS</div>
+            {["MON","TUE","WED","THU","FRI","SAT","SUN"].map(day => (
+              <div key={day} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 0",borderBottom:"1px solid var(--line)"}}>
+                <span style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:14,color:"var(--gray)",width:36}}>{day}</span>
+                <div style={{display:"flex",gap:6,flex:1,flexWrap:"wrap"}}>
+                  <button onClick={()=>p("weekSchedule",{...profile.weekSchedule,[day]:null})}
+                    style={{padding:"5px 10px",borderRadius:99,fontSize:11,fontFamily:"var(--font-cond)",
+                      background:profile.weekSchedule?.[day]==null?"#333":"transparent",
+                      color:profile.weekSchedule?.[day]==null?"#fff":"#555",
+                      border:"1px solid #333",cursor:"pointer"}}>REST</button>
+                  {(routine||[]).map((rd,i)=>(
+                    <button key={i} onClick={()=>p("weekSchedule",{...profile.weekSchedule,[day]:i})}
+                      style={{padding:"5px 10px",borderRadius:99,fontSize:11,fontFamily:"var(--font-cond)",
+                        background:profile.weekSchedule?.[day]===i?rd.color:"transparent",
+                        color:profile.weekSchedule?.[day]===i?"#080808":"#555",
+                        border:`1px solid ${profile.weekSchedule?.[day]===i?rd.color:"#333"}`,cursor:"pointer"}}>
+                      {(t(DAY_KEYS[rd.name])||rd.name).split(" ")[0]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <div style={{marginTop:20}}>
+              <Btn full onClick={()=>setSheet(null)}>{t('save')||'SAVE'}</Btn>
+            </div>
+          </SheetWrapper>
+        )}
+
         {/* Feature 4D — Stretching sheet */}
         {sheet === "stretching" && (
           <div onClick={()=>setSheet(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:50,backdropFilter:"blur(4px)"}}>
