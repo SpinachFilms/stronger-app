@@ -2401,20 +2401,29 @@ function AppInner() {
   };
 
   const fetchAI = async (prompt) => {
-    setAiLoading(true); setAiText("");
+    setAiLoading(true);
+    setAiText("");
     try {
-      const r = await fetch("https://api.anthropic.com/v1/messages", {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-          model:"claude-sonnet-4-20250514", max_tokens:1000,
-          system:"You are an elite strength coach inside a couples gym app called Stronger. Give concise, direct, warm advice. 2–3 short paragraphs. No markdown. Real coach voice." + (lang === 'es' ? ' Respond in Spanish.' : ''),
-          messages:[{role:"user", content:prompt}],
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          system: "You are an elite strength coach inside a couples gym app called Stronger. Give concise, direct, warm advice. 2–3 short paragraphs maximum. No markdown, no bullet points. Real coach voice, not clinical." + (lang === 'es' ? ' Respond in Spanish.' : ''),
+          messages: [{ role: "user", content: prompt }],
         }),
       });
-      const d = await r.json();
-      setAiText(d.content?.find(b=>b.type==="text")?.text || "Trust your body. If it hurts sharp, stop.");
-    } catch { setAiText("Can't connect. If pain is sharp — stop. If it's a burn — keep going."); }
+      if (!response.ok) throw new Error(`API error ${response.status}`);
+      const data = await response.json();
+      const text = data.content?.find(b => b.type === "text")?.text;
+      setAiText(text || (lang === 'es' ? "Confía en tu cuerpo. Si duele con intensidad, para. Si es quemazón muscular, sigue." : "Trust your body. If pain is sharp — stop. If it's a burn — keep going."));
+    } catch (e) {
+      console.warn("AI Coach error:", e);
+      setAiText(lang === 'es'
+        ? "Sin conexión al entrenador. Si el dolor es agudo, detente. Si es quemazón muscular, continúa."
+        : "Can't reach coach right now. If pain is sharp — stop. If it's a burn — keep going.");
+    }
     setAiLoading(false);
   };
 
@@ -2422,21 +2431,23 @@ function AppInner() {
     setScreen("generating");
     let summary = t('ai_coach_default');
     try {
-      const r = await fetch("https://api.anthropic.com/v1/messages", {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-          model:"claude-sonnet-4-20250514", max_tokens:1000,
-          system:"You are an elite strength coach. Write a 2-sentence routine summary. Be encouraging, specific, reference goals and level. No markdown." + (lang === 'es' ? ' Respond in Spanish.' : ''),
-          messages:[{
-            role:"user",
-            content:`Athlete: ${profile.name||"You"}, ${profile.age}y, ${profile.weight}kg, goal: ${profile.goal||"build muscle"}, level: ${profile.level||"intermediate"}, ${profile.daysPerWeek} days/week${resolvedPartner?`\nPartner: ${resolvedPartner.name||"Partner"}, ${resolvedPartner.weight}kg, goal: ${resolvedPartner.goal||"—"}, level: ${resolvedPartner.level||"—"}`:""}${profile.priorityMuscles?.length?`\nUser wants to prioritize: ${profile.priorityMuscles.join(', ')}. Split preference: ${profile.splitPreference||"Balanced"}.`:""}`,
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          system: "You are an elite strength coach. Write a 2-sentence routine summary. Be encouraging, specific, reference goals and level. No markdown." + (lang === 'es' ? ' Respond in Spanish.' : ''),
+          messages: [{
+            role: "user",
+            content: `Athlete: ${profile.name||"You"}, ${profile.age}y, ${profile.weight}kg, goal: ${profile.goal||"build muscle"}, level: ${profile.level||"intermediate"}, ${profile.daysPerWeek} days/week${resolvedPartner?`\nPartner: ${resolvedPartner.name||"Partner"}, ${resolvedPartner.weight}kg, goal: ${resolvedPartner.goal||"—"}, level: ${resolvedPartner.level||"—"}`:""}${profile.priorityMuscles?.length?`\nUser wants to prioritize: ${profile.priorityMuscles.join(', ')}. Split preference: ${profile.splitPreference||"Balanced"}.`:""}`,
           }],
         }),
       });
-      const d = await r.json();
-      summary = d.content?.find(b=>b.type==="text")?.text || summary;
-    } catch {}
+      if (!response.ok) throw new Error(`API error ${response.status}`);
+      const data = await response.json();
+      summary = data.content?.find(b => b.type === "text")?.text || summary;
+    } catch (e) { console.warn("generateRoutine AI error:", e); }
     const builtRoutine = buildRoutine(profile, resolvedPartner);
     setRoutine(builtRoutine);
     // FIX 2 — Save week schedule
@@ -2450,18 +2461,20 @@ function AppInner() {
     setRegenerating(true);
     let summary = "Your routine has been refreshed with updated targets. Keep pushing!";
     try {
-      const r = await fetch("https://api.anthropic.com/v1/messages", {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-          model:"claude-sonnet-4-20250514", max_tokens:1000,
-          system:"You are an elite strength coach. Write a 2-sentence routine summary. Be encouraging, specific. No markdown." + (lang === 'es' ? ' Respond in Spanish.' : ''),
-          messages:[{role:"user", content:`Regenerate a new summary for: ${profile.name||"Athlete"}, goal: ${profile.goal||"build muscle"}, level: ${profile.level||"intermediate"}, ${profile.daysPerWeek} days/week.`}],
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          system: "You are an elite strength coach. Write a 2-sentence routine summary. Be encouraging, specific. No markdown." + (lang === 'es' ? ' Respond in Spanish.' : ''),
+          messages: [{ role: "user", content: `Regenerate a new summary for: ${profile.name||"Athlete"}, goal: ${profile.goal||"build muscle"}, level: ${profile.level||"intermediate"}, ${profile.daysPerWeek} days/week.` }],
         }),
       });
-      const d = await r.json();
-      summary = d.content?.find(b=>b.type==="text")?.text || summary;
-    } catch {}
+      if (!response.ok) throw new Error(`API error ${response.status}`);
+      const data = await response.json();
+      summary = data.content?.find(b => b.type === "text")?.text || summary;
+    } catch (e) { console.warn("regenerateRoutine AI error:", e); }
     setRoutine(buildRoutine(profile, partnerProfile));
     setAiSummary(summary);
     setRegenerating(false);
@@ -2511,19 +2524,21 @@ function AppInner() {
     setRebuildSuccess(true);
     setTimeout(() => setRebuildSuccess(false), 3000);
     try {
-      const r = await fetch("https://api.anthropic.com/v1/messages", {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-          model:"claude-sonnet-4-20250514", max_tokens:1000,
-          system:"You are an elite strength coach. Write a 2-sentence routine summary. Be encouraging, specific. No markdown." + (lang === 'es' ? ' Respond in Spanish.' : ''),
-          messages:[{role:"user",content:`Routine rebuilt for: ${rebuildDraft.name||"Athlete"}, goal: ${rebuildDraft.goal||"build muscle"}, level: ${rebuildDraft.level||"intermediate"}, ${rebuildDraft.daysPerWeek} days/week.${rebuildDraft.priorityMuscles?.length?` Focus: ${rebuildDraft.priorityMuscles.join(", ")}.`:""}`}],
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          system: "You are an elite strength coach. Write a 2-sentence routine summary. Be encouraging, specific. No markdown." + (lang === 'es' ? ' Respond in Spanish.' : ''),
+          messages: [{ role: "user", content: `Routine rebuilt for: ${rebuildDraft.name||"Athlete"}, goal: ${rebuildDraft.goal||"build muscle"}, level: ${rebuildDraft.level||"intermediate"}, ${rebuildDraft.daysPerWeek} days/week.${rebuildDraft.priorityMuscles?.length?` Focus: ${rebuildDraft.priorityMuscles.join(", ")}.`:""}` }],
         }),
       });
-      const d = await r.json();
-      const txt = d.content?.find(b=>b.type==="text")?.text;
+      if (!response.ok) throw new Error(`API error ${response.status}`);
+      const data = await response.json();
+      const txt = data.content?.find(b => b.type === "text")?.text;
       if (txt) setAiSummary(txt);
-    } catch {}
+    } catch (e) { console.warn("handleRebuildConfirm AI error:", e); }
   };
 
   const handleInvite = async () => {
@@ -2972,8 +2987,26 @@ function AppInner() {
 
   /* ─── FIX 8 — Translate day label abbreviations ─── */
   const tDayLabel = (label) => {
-    const dayAbbrevs = { MON: t('day_mon')||'MON', TUE: t('day_tue')||'TUE', WED: t('day_wed')||'WED', THU: t('day_thu')||'THU', FRI: t('day_fri')||'FRI', SAT: t('day_sat')||'SAT', SUN: t('day_sun')||'SUN' };
-    return dayAbbrevs[label] || label;
+    const WEEK_EN = ["MON","TUE","WED","THU","FRI","SAT","SUN"];
+    const display = STRINGS[lang]?.days_of_week || STRINGS.en.days_of_week;
+    const idx = WEEK_EN.indexOf(label?.toUpperCase());
+    return idx >= 0 ? display[idx] : (label || "");
+  };
+
+  /* ─── FIX 2 — Translate muscle group tags ─── */
+  const tTag = (tag) => {
+    if (!tag) return tag;
+    const TAG_MAP = {
+      'CHEST': t('muscle_chest'), 'BACK': t('muscle_back'),
+      'SHOULDERS': t('muscle_shoulders'), 'TRIS': t('muscle_tris'),
+      'TRICEPS': t('muscle_triceps'), 'BICEPS': t('muscle_bis'),
+      'REAR DELT': t('muscle_rear_delt'), 'LATS': t('muscle_lats'),
+      'QUADS': t('muscle_quads'), 'HAMSTRINGS': t('muscle_hamstrings'),
+      'GLUTES': t('muscle_glutes'), 'CALVES': t('muscle_calves'),
+      'ABS': t('muscle_core'), 'CORE': t('muscle_core'),
+      'BRACHIALIS': 'BRACHIALIS',
+    };
+    return tag.split(' · ').map(part => TAG_MAP[part.trim()] || part).join(' · ');
   };
 
   /* ════════════════════════
@@ -3617,12 +3650,17 @@ function AppInner() {
                     <div style={{fontFamily:"var(--font-cond)",fontWeight:800,fontSize:22,color:"var(--white)"}}>{v}</div>
                   </div>
                 ))}
-                <div onClick={()=>{ setTempWeight(ex.wA?.replace('kg','').replace('lb','') || ''); setEditingWeight(true); }}
+                <div onClick={()=>{ setTempWeight((ex.wA||'').replace('kg','').replace('KG','')); setEditingWeight(true); }}
                   style={{flex:1,background:"var(--card)",borderRadius:12,padding:"12px 0",textAlign:"center",
-                    border:`1px solid ${day.color}33`,cursor:"pointer"}}>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--gray)",marginBottom:2}}>{t('weight')||'WEIGHT'} · TAP</div>
+                    border:`1px solid ${day.color}33`,cursor:"pointer",userSelect:"none"}}>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--gray)",marginBottom:4}}>
+                    {t('weight')}
+                  </div>
                   <div style={{fontFamily:"var(--font-display)",fontSize:24,color:day.color||"var(--lime)"}}>
-                    {ex.wA === "BW" ? "BW" : ex.wA || "—"}
+                    {ex.wA === "BW" || !ex.wA ? (ex.wA || "—") : ex.wA}
+                  </div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:8,color:"var(--gray2)",letterSpacing:1,marginTop:2}}>
+                    {lang==='es'?'TOCAR PARA EDITAR':'TAP TO EDIT'}
                   </div>
                 </div>
               </div>
@@ -3636,6 +3674,27 @@ function AppInner() {
                 ? `${t('last_time')}: ${prs[ex.name].weight}kg · ${t('try_today')} ${Math.round(prs[ex.name].weight * 1.025 / 2.5) * 2.5}kg`
                 : t('first_time')}
             </div>
+            {setNum === 1 && !firstSetConfirmed[`${dayIdx}-${exIdx}`] && ex.wA && ex.wA !== "BW" && !resting && (
+              <div style={{background:"rgba(200,241,53,0.06)",borderRadius:14,border:`1px dashed ${day.color}55`,padding:14,marginBottom:12}}>
+                <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"var(--gray)",marginBottom:10,textAlign:"center"}}>
+                  {lang==='es'?`¿Puedes levantar ${ex.wA}?`:`Can you lift ${ex.wA}?`}
+                </div>
+                <div style={{display:"flex",gap:8}}>
+                  <button onClick={()=>setFirstSetConfirmed(prev=>({...prev,[`${dayIdx}-${exIdx}`]:true}))}
+                    style={{flex:1,background:"rgba(200,241,53,0.12)",border:"1px solid var(--lime)",borderRadius:10,
+                      padding:"10px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:12,
+                      letterSpacing:1,color:"var(--lime)",cursor:"pointer"}}>
+                    ✓ {lang==='es'?'Sí, puedo':'Yes, I can'}
+                  </button>
+                  <button onClick={()=>{ setTempWeight((ex.wA||'').replace('kg','').replace('KG','')); setEditingWeight(true); }}
+                    style={{flex:1,background:"rgba(255,59,48,0.08)",border:"1px solid rgba(255,59,48,0.3)",borderRadius:10,
+                      padding:"10px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:12,
+                      letterSpacing:1,color:"var(--red)",cursor:"pointer"}}>
+                    ✗ {lang==='es'?'No, ajustar':'No, adjust'}
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="fu1" style={{background:"var(--card)",borderRadius:16,border:"1px solid var(--line)",padding:16,marginBottom:16}}>
               {/* ── MY all-sets progress ── */}
               {(() => {
@@ -3940,37 +3999,57 @@ function AppInner() {
           )}
         </div>
 
-        {/* FIX 3 — Weight edit modal */}
+        {/* FIX 4 — Weight edit modal */}
         {editingWeight && (
-          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:200,display:"flex",alignItems:"flex-end"}}>
-            <div style={{background:"#111",borderRadius:"20px 20px 0 0",padding:24,width:"100%",maxWidth:430,margin:"0 auto"}}>
-              <div style={{fontFamily:"var(--font-display)",fontSize:32,marginBottom:16}}>{t('adjust_weight')||'ADJUST WEIGHT'}</div>
-              <input type="number" inputMode="decimal" step="0.5" value={tempWeight}
-                onChange={e=>setTempWeight(e.target.value)}
-                style={{width:"100%",background:"var(--card)",border:"1px solid var(--line2)",borderRadius:12,
-                  padding:16,fontSize:28,color:"var(--white)",textAlign:"center",
-                  fontFamily:"var(--font-display)",outline:"none",boxSizing:"border-box",marginBottom:12}}/>
-              <div style={{display:"flex",gap:8,marginBottom:14}}>
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",zIndex:200,
+            display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+            <div style={{background:"#111",borderRadius:"20px 20px 0 0",padding:24,
+              width:"100%",maxWidth:430,paddingBottom:"max(24px,env(safe-area-inset-bottom))"}}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:32,marginBottom:6}}>
+                {lang==='es'?'AJUSTAR PESO':'ADJUST WEIGHT'}
+              </div>
+              <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:2,marginBottom:16}}>
+                {ex.name.toUpperCase()}
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+                <input type="number" inputMode="decimal" step="0.5" value={tempWeight}
+                  onChange={e=>setTempWeight(e.target.value)}
+                  style={{flex:1,background:"var(--card)",border:`1px solid ${day.color}`,borderRadius:12,
+                    padding:"16px 0",fontSize:32,color:"var(--white)",textAlign:"center",
+                    fontFamily:"var(--font-display)",outline:"none",boxSizing:"border-box"}}/>
+                <span style={{fontFamily:"var(--font-cond)",fontSize:16,color:"var(--gray)"}}>KG</span>
+              </div>
+              <div style={{display:"flex",gap:8,marginBottom:16}}>
                 {[-5,-2.5,2.5,5].map(delta=>(
-                  <button key={delta} onClick={()=>setTempWeight(w=>String(Math.max(0,parseFloat(w||0)+delta)))}
+                  <button key={delta} onClick={()=>setTempWeight(w=>String(Math.max(0,Math.round((parseFloat(w||0)+delta)*10)/10)))}
                     style={{flex:1,background:"var(--card)",border:"1px solid var(--line)",borderRadius:10,
-                      padding:12,color:"var(--white)",fontFamily:"var(--font-cond)",fontSize:14,cursor:"pointer"}}>
+                      padding:12,color:"var(--white)",fontFamily:"var(--font-cond)",fontWeight:700,
+                      fontSize:14,cursor:"pointer",letterSpacing:1}}>
                     {delta>0?`+${delta}`:delta}
                   </button>
                 ))}
               </div>
-              <Btn full onClick={()=>{
+              <button onClick={()=>{
                 const newW = parseFloat(tempWeight);
-                if (!newW || newW <= 0) { setEditingWeight(false); return; }
-                const newWStr = `${newW}kg`;
-                setRoutine(prev => prev.map((d,di) => di !== dayIdx ? d : {
-                  ...d, exercises: d.exercises.map((e,ei) => ei !== exIdx ? e : { ...e, wA: newWStr })
-                }));
-                setPrs(prev => ({ ...prev, [ex.name]: { weight: newW, date: new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"}) }}));
-                setFirstSetConfirmed(prev => ({...prev, [ex.name]: true}));
+                if (newW > 0) {
+                  const newWStr = `${newW}kg`;
+                  setRoutine(prev => prev.map((d,di) => di !== dayIdx ? d : {
+                    ...d, exercises: d.exercises.map((e,ei) => ei !== exIdx ? e : { ...e, wA: newWStr })
+                  }));
+                  setPrs(prev => ({...prev, [ex.name]: { weight: newW, date: new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"}) }}));
+                  setFirstSetConfirmed(prev=>({...prev,[`${dayIdx}-${exIdx}`]:true}));
+                }
                 setEditingWeight(false);
-              }}>{t('use_this_weight')||'USE THIS WEIGHT'}</Btn>
-              <button onClick={()=>setEditingWeight(false)} style={{width:"100%",background:"transparent",border:"none",padding:12,color:"var(--gray)",fontFamily:"var(--font-cond)",fontSize:13,cursor:"pointer"}}>{t('cancel')||'CANCEL'}</button>
+              }} style={{width:"100%",background:day.color,border:"none",borderRadius:14,padding:"17px 0",
+                fontFamily:"var(--font-cond)",fontWeight:900,fontSize:16,letterSpacing:2,
+                color:"var(--black)",cursor:"pointer",marginBottom:10}}>
+                {lang==='es'?'USAR ESTE PESO':'USE THIS WEIGHT'}
+              </button>
+              <button onClick={()=>setEditingWeight(false)}
+                style={{width:"100%",background:"transparent",border:"none",padding:"12px 0",
+                  color:"var(--gray)",fontFamily:"var(--font-cond)",fontSize:14,letterSpacing:2,cursor:"pointer"}}>
+                {t('cancel')}
+              </button>
             </div>
           </div>
         )}
@@ -4268,9 +4347,7 @@ function AppInner() {
             const WEEK_KEYS = ["SUN","MON","TUE","WED","THU","FRI","SAT"];
             const todayKey = WEEK_KEYS[new Date().getDay()];
             const weekSchedule = profile?.weekSchedule || {};
-            const todayWorkoutIdx = weekSchedule[todayKey] ?? null;
-            const todayRoutineDay = todayWorkoutIdx !== null ? routine?.[todayWorkoutIdx] : null;
-            const isTrainingDay = todayWorkoutIdx !== null;
+            const todayWorkoutIdx = weekSchedule[todayKey] ?? null; // eslint-disable-line no-unused-vars
 
             // Use the weekProgress memo (updates whenever workoutHistory or routine changes)
             const completedDayMap = weekProgress; // { "Mon": historyEntry, ... }
@@ -4323,51 +4400,106 @@ function AppInner() {
                   <button onClick={resumeWorkout} style={{background:"var(--lime)",border:"none",borderRadius:12,padding:"12px 18px",fontFamily:"var(--font-cond)",fontWeight:800,fontSize:13,letterSpacing:2,color:"var(--black)",cursor:"pointer"}}>{t('resume')}</button>
                 </div>
               )}
-              {/* FIX 2 — Today's workout primary card + this week row */}
-              {isTrainingDay && todayRoutineDay && (
-                <div onClick={() => startWorkout(todayWorkoutIdx)} style={{background:"var(--card)",borderRadius:18,padding:24,marginBottom:16,cursor:"pointer",border:`1px solid ${todayRoutineDay.color}44`,borderLeft:`4px solid ${todayRoutineDay.color}`}}>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:todayRoutineDay.color,marginBottom:4}}>TODAY</div>
-                  <div style={{fontFamily:"var(--font-display)",fontSize:44,lineHeight:0.9}}>{(t(DAY_KEYS[todayRoutineDay.name])||todayRoutineDay.name).toUpperCase()}</div>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:2,marginTop:8}}>{todayRoutineDay.tag}</div>
-                  <div style={{display:"flex",gap:16,marginTop:12}}>
-                    <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)"}}>{todayRoutineDay.exercises.length} {t('exercises_count_label')||'EXERCISES'}</span>
-                    <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:todayRoutineDay.color}}>{t('start_workout')||'START'} →</span>
-                  </div>
-                </div>
-              )}
-              {!isTrainingDay && (
-                <div style={{background:"var(--card)",borderRadius:18,padding:24,marginBottom:16,textAlign:"center"}}>
-                  <div style={{fontFamily:"var(--font-display)",fontSize:32,marginBottom:8}}>REST DAY</div>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:12,color:"var(--gray)",letterSpacing:2}}>RECOVERY IS PROGRESS</div>
-                  <p style={{fontFamily:"var(--font-body)",fontSize:14,color:"var(--gray)",lineHeight:1.7,marginTop:12,marginBottom:16}}>
-                    {RECOVERY_TIPS[today.getDate() % 10]}
-                  </p>
-                  <button onClick={()=>setSheet("stretching")} style={{width:"100%",background:"rgba(200,241,53,0.1)",border:"1px solid rgba(200,241,53,0.3)",borderRadius:12,padding:"14px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,color:"var(--lime)",cursor:"pointer"}}>
-                    {t('light_stretching')}
-                  </button>
-                </div>
-              )}
-
-              {/* This week — compact row */}
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-                <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)"}}>THIS WEEK</div>
-                <button onClick={()=>setSheet("schedule")} style={{background:"rgba(200,241,53,0.1)",border:"1px solid rgba(200,241,53,0.3)",borderRadius:8,padding:"5px 12px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:10,letterSpacing:2,color:"var(--lime)",cursor:"pointer"}}>
-                  {t('edit_schedule')||'EDIT SCHEDULE'}
-                </button>
-              </div>
-              <div style={{overflowX:"auto",display:"flex",gap:10,paddingBottom:4,marginBottom:20}}>
-                {(routine||[]).map((d, i) => {
-                  const assignedDays = Object.entries(weekSchedule).filter(([,v])=>v===i).map(([k])=>k);
-                  return (
-                    <div key={i} onClick={() => startWorkout(i)}
-                      style={{flexShrink:0,width:130,background:"var(--card)",borderRadius:14,border:`1px solid ${d.color}33`,padding:"12px 14px",cursor:"pointer"}}>
-                      <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:d.color,marginBottom:4}}>{assignedDays.join(" · ")||"UNASSIGNED"}</div>
-                      <div style={{fontFamily:"var(--font-display)",fontSize:18,lineHeight:1}}>{(t(DAY_KEYS[d.name])||d.name).toUpperCase()}</div>
-                      <div style={{fontFamily:"var(--font-cond)",fontSize:10,color:"var(--gray)",marginTop:4,letterSpacing:1}}>{d.exercises.length} {t('exercises_count_label')||'EX'}</div>
+              {/* FIX 3 — Today-first schedule display */}
+              {(() => {
+                const WEEK_KEYS = ["SUN","MON","TUE","WED","THU","FRI","SAT"];
+                const todayKey = WEEK_KEYS[new Date().getDay()];
+                const effectiveSchedule = (() => {
+                  if (profile?.weekSchedule) return profile.weekSchedule;
+                  const sched = {};
+                  ["MON","TUE","WED","THU","FRI","SAT","SUN"].forEach(dk => { sched[dk] = null; });
+                  (profile?.trainingDays || []).forEach((dk, i) => { sched[dk] = i % (routine?.length || 1); });
+                  return sched;
+                })();
+                const todayWorkoutIdx2 = effectiveSchedule[todayKey];
+                const todayDay2 = (todayWorkoutIdx2 !== null && todayWorkoutIdx2 !== undefined) ? routine?.[todayWorkoutIdx2] : null;
+                const isTrainingDay2 = todayDay2 !== null && todayDay2 !== undefined;
+                return (
+                  <>
+                    {isTrainingDay2 && todayDay2 ? (
+                      <div onClick={() => {
+                        if (activeSession?.isActive && activeSession.dayIdx !== todayWorkoutIdx2) {
+                          setConflictPendingDayIdx(todayWorkoutIdx2);
+                        } else if (activeSession?.isActive && activeSession.dayIdx === todayWorkoutIdx2) {
+                          resumeWorkout();
+                        } else {
+                          startWorkout(todayWorkoutIdx2);
+                        }
+                      }} style={{background:"var(--card)",borderRadius:18,border:`1px solid ${todayDay2.color}44`,padding:24,cursor:"pointer",position:"relative",overflow:"hidden",marginBottom:8}}>
+                        <div style={{position:"absolute",top:0,left:0,width:4,height:"100%",background:todayDay2.color}}/>
+                        <div style={{paddingLeft:14}}>
+                          <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:todayDay2.color,marginBottom:4}}>
+                            {t('today').toUpperCase()} · {tDayLabel(todayDay2.label)}
+                          </div>
+                          <div style={{fontFamily:"var(--font-display)",fontSize:44,lineHeight:0.9,marginBottom:8}}>
+                            {(t(DAY_KEYS[todayDay2.name])||todayDay2.name).toUpperCase()}
+                          </div>
+                          <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",marginBottom:14}}>{tTag(todayDay2.tag)}</div>
+                          <div style={{display:"flex",gap:16,alignItems:"center"}}>
+                            <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>{todayDay2.exercises.length} {t('exercises_count_label')}</span>
+                            <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>~{40+todayDay2.exercises.length*3} {t('min_label')}</span>
+                            <span style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,color:todayDay2.color,letterSpacing:1,marginLeft:"auto"}}>▶ {t('start_workout')}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:24,marginBottom:8}}>
+                        <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.9,marginBottom:12}}>{t('rest_day')}</div>
+                        <p style={{fontFamily:"var(--font-body)",fontSize:14,color:"var(--gray)",lineHeight:1.7,marginBottom:16}}>
+                          {RECOVERY_TIPS[new Date().getDate() % 10]}
+                        </p>
+                        <button onClick={()=>setSheet("stretching")} style={{width:"100%",background:"rgba(200,241,53,0.1)",border:"1px solid rgba(200,241,53,0.3)",borderRadius:12,padding:"14px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,color:"var(--lime)",cursor:"pointer"}}>
+                          {t('light_stretching')}
+                        </button>
+                      </div>
+                    )}
+                    <div style={{marginTop:4,marginBottom:4}}>
+                      <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:3,color:"var(--gray)",marginBottom:10}}>
+                        {lang === 'es' ? 'ESTA SEMANA' : 'THIS WEEK'}
+                      </div>
+                      <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:6}}>
+                        {(routine||[]).map((d, i) => {
+                          const assignedDays = Object.entries(effectiveSchedule)
+                            .filter(([,v]) => v === i).map(([k]) => k);
+                          const completedToday = assignedDays.some(dayKey => {
+                            const shortDays = ["MON","TUE","WED","THU","FRI","SAT","SUN"];
+                            const shortLabels = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+                            const di = shortDays.indexOf(dayKey);
+                            const entry = weekProgress[di >= 0 ? shortLabels[di] : dayKey];
+                            return !!entry;
+                          });
+                          return (
+                            <div key={i} onClick={() => {
+                              if (activeSession?.isActive && activeSession.dayIdx !== i) setConflictPendingDayIdx(i);
+                              else if (activeSession?.isActive && activeSession.dayIdx === i) resumeWorkout();
+                              else startWorkout(i);
+                            }} style={{flexShrink:0,width:130,background:"var(--card)",borderRadius:14,
+                              border:`1px solid ${i === todayWorkoutIdx2 ? d.color+'66' : 'var(--line)'}`,
+                              padding:"12px 14px",cursor:"pointer",position:"relative",overflow:"hidden"}}>
+                              <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:completedToday?d.color:"transparent"}}/>
+                              <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:d.color,marginBottom:4}}>
+                                {assignedDays.map(dayKey => tDayLabel(dayKey)).join(' · ') || (lang==='es'?'SIN ASIGNAR':'UNASSIGNED')}
+                              </div>
+                              <div style={{fontFamily:"var(--font-display)",fontSize:16,lineHeight:1,marginBottom:4}}>
+                                {(t(DAY_KEYS[d.name])||d.name).toUpperCase()}
+                              </div>
+                              <div style={{fontFamily:"var(--font-cond)",fontSize:10,color:"var(--gray)",letterSpacing:1}}>
+                                {d.exercises.length} {t('exercises_count_label')}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
+                    <button onClick={()=>setSheet("schedule")}
+                      style={{width:"100%",background:"transparent",border:"1px dashed var(--line2)",borderRadius:12,
+                        padding:"10px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,
+                        letterSpacing:2,color:"var(--gray2)",cursor:"pointer"}}>
+                      {lang==='es'?'✦ EDITAR HORARIO':'✦ EDIT SCHEDULE'}
+                    </button>
+                  </>
+                );
+              })()}
             </div>
             );
           })()}
