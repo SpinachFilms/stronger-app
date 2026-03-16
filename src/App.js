@@ -2025,7 +2025,8 @@ function AppInner() {
   // FIX 3 — Editable weight with first-set confirmation
   const [editingWeight, setEditingWeight] = useState(false);
   const [tempWeight, setTempWeight] = useState("");
-  const [firstSetConfirmed, setFirstSetConfirmed] = useState({});
+  const [weightCheckState, setWeightCheckState] = useState({});
+  const [postExerciseCheck, setPostExerciseCheck] = useState(null);
 
   // FIX 4 — Train Together banner
   const [trainTogetherBanner, setTrainTogetherBanner] = useState(null);
@@ -2033,6 +2034,9 @@ function AppInner() {
   // FIX 5 — Cool-down buffer
   const [bufferActivity, setBufferActivity] = useState(null);
   const [bufferExIdx, setBufferExIdx] = useState(0);
+  const [bufferTimer, setBufferTimer] = useState(0);
+  const [bufferRunning, setBufferRunning] = useState(false);
+  const bufferTimerRef = useRef(null);
 
   // Keep profileRef current for use inside async channel callbacks
   useEffect(() => { profileRef.current = profile; }, [profile]);
@@ -2264,6 +2268,65 @@ function AppInner() {
     return () => clearInterval(timerRef.current);
   }, [resting]);
 
+  /* ─── Buffer exercise timer — start/reset on exercise change ─── */
+  useEffect(() => {
+    if (!bufferActivity) return;
+    const ex = bufferActivity.exercises[bufferExIdx];
+    if (!ex) return;
+    clearInterval(bufferTimerRef.current);
+    if (ex.duration) {
+      setBufferTimer(ex.duration);
+      setBufferRunning(true);
+    } else {
+      setBufferTimer(0);
+      setBufferRunning(false);
+    }
+  }, [bufferActivity, bufferExIdx]);
+
+  /* ─── Buffer exercise timer — countdown interval ─── */
+  useEffect(() => {
+    if (!bufferRunning) return;
+    bufferTimerRef.current = setInterval(() => {
+      setBufferTimer(s => {
+        if (s <= 1) {
+          clearInterval(bufferTimerRef.current);
+          setBufferRunning(false);
+          playBeep();
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(bufferTimerRef.current);
+  }, [bufferRunning]);
+
+  /* ─── Buffer timer — auto-advance timed exercises after 1.5s ─── */
+  useEffect(() => {
+    if (bufferTimer === 0 && !bufferRunning && bufferActivity &&
+        bufferExIdx < bufferActivity.exercises.length) {
+      const bEx = bufferActivity.exercises[bufferExIdx];
+      if (bEx?.duration) {
+        const t = setTimeout(() => setBufferExIdx(i => i + 1), 1500);
+        return () => clearTimeout(t);
+      }
+    }
+  }, [bufferTimer, bufferRunning]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ─── Weight check state — set 'pending' when exercise changes ─── */
+  useEffect(() => {
+    const key = `${dayIdx}-${exIdx}`;
+    if (!weightCheckState[key] && ex?.wA && ex.wA !== 'BW' && ex.wA !== '— kg') {
+      setWeightCheckState(prev => ({...prev, [key]: 'pending'}));
+    }
+  }, [dayIdx, exIdx]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ─── Post-exercise check banner — auto-dismiss after 8s ─── */
+  useEffect(() => {
+    if (!postExerciseCheck) return;
+    const t = setTimeout(() => setPostExerciseCheck(null), 8000);
+    return () => clearTimeout(t);
+  }, [postExerciseCheck]);
+
   /* ─── PIN lockout countdown timer ─── */
   useEffect(() => {
     if (!pinLockedUntil) { setPinLockCountdown(0); return; }
@@ -2305,7 +2368,16 @@ function AppInner() {
   // Session sync is now handled synchronously inside completeSet via
   // broadcastSessionUpdate (Broadcast) + persistSessionToSupabase (REST fire-and-forget)
 
-  const startRest = (s) => { setRestMax(s); setRestSec(s); setResting(true); };
+  const saveRestPreference = (secs) => {
+    setProfile(prev => ({
+      ...prev,
+      restPreferences: { ...(prev?.restPreferences || {}), [prev?.goal || 'default']: secs }
+    }));
+  };
+  const startRest = (s, savePreference = false) => {
+    setRestMax(s); setRestSec(s); setResting(true);
+    if (savePreference) saveRestPreference(s);
+  };
   const skipRest  = () => { clearInterval(timerRef.current); setResting(false); setRestSec(0); };
 
   const day         = routine?.[dayIdx];
@@ -2357,6 +2429,11 @@ function AppInner() {
       setExIdx(i => i + 1);
       setSetNum(1);
       startRest(ex.rest);
+      // Ask post-exercise weight check
+      const currentKey = `${dayIdx}-${exIdx}`;
+      if (weightCheckState[currentKey] === 'confirmed') {
+        setPostExerciseCheck({ dayIdx, exIdx, exerciseName: ex.name, weight: ex.wA });
+      }
     } else {
       // Workout complete — show completion sheet IMMEDIATELY, then persist async
       setSheet("complete");
@@ -2806,11 +2883,23 @@ function AppInner() {
     setSetNum(1);
     setCompletedSets({});
     setResting(false);
+    setWeightCheckState({});
+    setPostExerciseCheck(null);
+    setBufferActivity(null);
+    setBufferExIdx(0);
+    clearInterval(bufferTimerRef.current);
     if (timerRef.current) clearInterval(timerRef.current);
     workoutStartRef.current = now;
     const session = { isActive:true, dayIdx:idx, exIdx:0, setNum:1, completedSets:{}, startedAt:now, lastActivityAt:now, restMax:90, resting:false, restSecondsLeft:0 };
     localStorage.setItem("str_active_session", JSON.stringify(session));
     setActiveSession(session);
+    // Apply saved rest preference to all exercises for this session
+    const savedRest = profile?.restPreferences?.[profile?.goal] || null;
+    if (savedRest) {
+      setRoutine(prev => prev.map((d, di) => di !== idx ? d : {
+        ...d, exercises: d.exercises.map(e => ({ ...e, rest: savedRest }))
+      }));
+    }
     setScreen("workout");
   };
 
@@ -3622,6 +3711,40 @@ function AppInner() {
             🏆 {t('personal_record')} — {prNotification.exerciseName.toUpperCase()} {prNotification.weight}
           </div>
         )}
+        {/* Post-exercise weight check banner */}
+        {postExerciseCheck && (
+          <div style={{position:"fixed",top:0,left:"50%",transform:"translateX(-50%)",
+            width:"100%",maxWidth:430,zIndex:150,
+            background:"#181818",borderTop:`3px solid ${day?.color||"var(--lime)"}`,
+            padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",
+            boxShadow:"0 4px 24px rgba(0,0,0,0.6)"}}>
+            <div>
+              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"var(--gray)",marginBottom:2}}>
+                {postExerciseCheck.exerciseName.toUpperCase()} · {postExerciseCheck.weight}
+              </div>
+              <div style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,color:"var(--white)"}}>
+                {lang==='es'?'¿Lograste completar todas las series?':'Did you complete all sets at this weight?'}
+              </div>
+            </div>
+            <div style={{display:"flex",gap:8,flexShrink:0,marginLeft:12}}>
+              <button onClick={()=>setPostExerciseCheck(null)}
+                style={{background:"rgba(200,241,53,0.15)",border:`1px solid ${day?.color||"var(--lime)"}`,
+                  borderRadius:8,padding:"8px 12px",fontFamily:"var(--font-cond)",fontWeight:700,
+                  fontSize:12,color:day?.color||"var(--lime)",cursor:"pointer"}}>
+                ✓ {lang==='es'?'SÍ':'YES'}
+              </button>
+              <button onClick={()=>{
+                setTempWeight((postExerciseCheck.weight||'').replace('kg','').trim());
+                setEditingWeight(true);
+                setPostExerciseCheck(null);
+              }} style={{background:"rgba(255,59,48,0.1)",border:"1px solid rgba(255,59,48,0.3)",
+                borderRadius:8,padding:"8px 12px",fontFamily:"var(--font-cond)",fontWeight:700,
+                fontSize:12,color:"var(--red)",cursor:"pointer"}}>
+                ✗ {lang==='es'?'NO':'NO'}
+              </button>
+            </div>
+          </div>
+        )}
         <div style={{background:"var(--black)",minHeight:"100vh",maxWidth:430,margin:"0 auto",display:"flex",flexDirection:"column"}}>
           <div style={{padding:"16px 20px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
             <button onClick={navigateHomeFromWorkout} style={{background:"var(--card)",border:"none",borderRadius:10,width:38,height:38,color:"var(--white)",fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>←</button>
@@ -3674,23 +3797,39 @@ function AppInner() {
                 ? `${t('last_time')}: ${prs[ex.name].weight}kg · ${t('try_today')} ${Math.round(prs[ex.name].weight * 1.025 / 2.5) * 2.5}kg`
                 : t('first_time')}
             </div>
-            {setNum === 1 && !firstSetConfirmed[`${dayIdx}-${exIdx}`] && ex.wA && ex.wA !== "BW" && !resting && (
-              <div style={{background:"rgba(200,241,53,0.06)",borderRadius:14,border:`1px dashed ${day.color}55`,padding:14,marginBottom:12}}>
-                <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"var(--gray)",marginBottom:10,textAlign:"center"}}>
-                  {lang==='es'?`¿Puedes levantar ${ex.wA}?`:`Can you lift ${ex.wA}?`}
+            {weightCheckState[`${dayIdx}-${exIdx}`] === 'pending' && ex?.wA && ex.wA !== 'BW' && (
+              <div style={{background:"rgba(200,241,53,0.06)",borderRadius:14,
+                border:`1px dashed ${day.color}66`,padding:16,marginBottom:14}}>
+                <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,
+                  color:"var(--gray)",marginBottom:4,textAlign:"center"}}>
+                  {lang==='es'?'PESO SUGERIDO':'SUGGESTED WEIGHT'}
                 </div>
-                <div style={{display:"flex",gap:8}}>
-                  <button onClick={()=>setFirstSetConfirmed(prev=>({...prev,[`${dayIdx}-${exIdx}`]:true}))}
-                    style={{flex:1,background:"rgba(200,241,53,0.12)",border:"1px solid var(--lime)",borderRadius:10,
-                      padding:"10px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:12,
-                      letterSpacing:1,color:"var(--lime)",cursor:"pointer"}}>
-                    ✓ {lang==='es'?'Sí, puedo':'Yes, I can'}
+                <div style={{fontFamily:"var(--font-display)",fontSize:48,color:day.color,
+                  textAlign:"center",lineHeight:1,marginBottom:12}}>
+                  {ex.wA}
+                </div>
+                <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",
+                  textAlign:"center",letterSpacing:1,marginBottom:14}}>
+                  {prs[ex.name]
+                    ? (lang==='es'?`Última vez: ${prs[ex.name].weight}kg`:`Last time: ${prs[ex.name].weight}kg`)
+                    : (lang==='es'?'Primera vez — empieza conservador':'First time — start conservative')}
+                </div>
+                <div style={{display:"flex",gap:10}}>
+                  <button onClick={()=>{
+                    setWeightCheckState(prev=>({...prev,[`${dayIdx}-${exIdx}`]:'confirmed'}));
+                  }} style={{flex:1,background:"rgba(200,241,53,0.15)",border:`1px solid ${day.color}`,
+                    borderRadius:12,padding:"13px 0",fontFamily:"var(--font-cond)",fontWeight:700,
+                    fontSize:13,letterSpacing:1,color:day.color,cursor:"pointer"}}>
+                    ✓ {lang==='es'?'SÍ, PUEDO':'YES, I CAN'}
                   </button>
-                  <button onClick={()=>{ setTempWeight((ex.wA||'').replace('kg','').replace('KG','')); setEditingWeight(true); }}
-                    style={{flex:1,background:"rgba(255,59,48,0.08)",border:"1px solid rgba(255,59,48,0.3)",borderRadius:10,
-                      padding:"10px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:12,
-                      letterSpacing:1,color:"var(--red)",cursor:"pointer"}}>
-                    ✗ {lang==='es'?'No, ajustar':'No, adjust'}
+                  <button onClick={()=>{
+                    setTempWeight((ex.wA||'').replace('kg','').replace('KG','').trim());
+                    setWeightCheckState(prev=>({...prev,[`${dayIdx}-${exIdx}`]:'adjusting'}));
+                    setEditingWeight(true);
+                  }} style={{flex:1,background:"rgba(255,59,48,0.08)",border:"1px solid rgba(255,59,48,0.3)",
+                    borderRadius:12,padding:"13px 0",fontFamily:"var(--font-cond)",fontWeight:700,
+                    fontSize:13,letterSpacing:1,color:"var(--red)",cursor:"pointer"}}>
+                    ✗ {lang==='es'?'AJUSTAR':'ADJUST'}
                   </button>
                 </div>
               </div>
@@ -3794,31 +3933,32 @@ function AppInner() {
                     <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:2}}>{t('sec')}</div>
                   </div>
                 </div>
-                <button onClick={skipRest} style={{background:"transparent",border:"1px solid var(--line2)",borderRadius:10,padding:"10px 28px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,color:"var(--gray)",cursor:"pointer"}}>{t('skip_rest')}</button>
+                <div style={{fontFamily:"var(--font-cond)",fontSize:10,color:"var(--gray2)",
+                  letterSpacing:2,marginTop:8,marginBottom:4}}>
+                  {lang==='es'?'DESCANSO SUGERIDO':'SUGGESTED REST'}
+                </div>
+                <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:16}}>
+                  {[30,60,90,120,180].map(secs => (
+                    <button key={secs} onClick={()=>{ skipRest(); startRest(secs, true); }}
+                      style={{background:restMax===secs?"var(--card)":"transparent",
+                        border:`1px solid ${restMax===secs?"var(--line2)":"var(--line)"}`,
+                        borderRadius:8,padding:"5px 10px",fontFamily:"var(--font-cond)",
+                        fontWeight:700,fontSize:11,letterSpacing:1,
+                        color:restMax===secs?"var(--white)":"var(--gray2)",cursor:"pointer"}}>
+                      {secs}s
+                    </button>
+                  ))}
+                </div>
+                <button onClick={skipRest} style={{
+                  background:"var(--card)",border:`1.5px solid ${accentColor}`,borderRadius:12,
+                  padding:"12px 32px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:14,
+                  letterSpacing:2,color:accentColor,cursor:"pointer",marginTop:8
+                }}>{t('skip_rest')}</button>
               </div>
             )}
           </div>
           {!resting && (
             <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,padding:"12px 20px 34px",background:"linear-gradient(transparent,var(--black) 35%)"}}>
-              {setNum === 1 && !firstSetConfirmed[ex.name] && ex.wA && ex.wA !== "BW" && (
-                <div style={{background:"var(--card)",borderRadius:14,border:`1px solid ${day.color}33`,padding:14,marginBottom:10}}>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"var(--gray)",marginBottom:10,textAlign:"center"}}>
-                    {t('can_you_lift')||'Can you lift this?'} {ex.wA}?
-                  </div>
-                  <div style={{display:"flex",gap:8}}>
-                    <button onClick={()=>setFirstSetConfirmed(prev=>({...prev,[ex.name]:true}))}
-                      style={{flex:1,background:"rgba(200,241,53,0.15)",border:"1px solid var(--lime)",borderRadius:10,padding:"10px 0",
-                        fontFamily:"var(--font-cond)",fontWeight:700,fontSize:12,letterSpacing:1,color:"var(--lime)",cursor:"pointer"}}>
-                      ✓ {t('yes_i_can')||'Yes, I can'}
-                    </button>
-                    <button onClick={()=>{ setTempWeight(ex.wA?.replace('kg','').replace('lb','') || ''); setEditingWeight(true); }}
-                      style={{flex:1,background:"rgba(255,59,48,0.1)",border:"1px solid rgba(255,59,48,0.3)",borderRadius:10,padding:"10px 0",
-                        fontFamily:"var(--font-cond)",fontWeight:700,fontSize:12,letterSpacing:1,color:"#FF3B30",cursor:"pointer"}}>
-                      ✗ {t('no_adjust')||'No, adjust'}
-                    </button>
-                  </div>
-                </div>
-              )}
               <button onClick={completeSet} style={{width:"100%",background:accentColor,border:"none",borderRadius:16,padding:"18px 0",fontFamily:"var(--font-cond)",fontWeight:900,fontSize:18,letterSpacing:3,color:"var(--black)",cursor:"pointer",marginBottom:10,textTransform:"uppercase",boxShadow:`0 0 30px ${accentColor}44`}}>
                 {setNum<ex.sets?`${t('complete_set')} ${setNum}`:exIdx<day.exercises.length-1?t('next_exercise'):t('finish_workout')}
               </button>
@@ -3829,7 +3969,7 @@ function AppInner() {
             </div>
           )}
           {sheet && (
-            <div onClick={()=>setSheet(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:50,backdropFilter:"blur(4px)"}}>
+            <div onClick={()=>{setSheet(null); clearInterval(bufferTimerRef.current);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:50,backdropFilter:"blur(4px)"}}>
               <div onClick={e=>e.stopPropagation()} style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"#181818",borderRadius:"24px 24px 0 0",padding:28,animation:"slideIn .3s cubic-bezier(.4,0,.2,1)",maxHeight:"85vh",overflowY:"auto"}}>
                 {sheet==="ai" && <>
                   <div style={{fontFamily:"var(--font-display)",fontSize:36,marginBottom:4}}>{t('ai_coach')}</div>
@@ -3951,26 +4091,87 @@ function AppInner() {
                     )}
                     {bufferActivity && (
                       <div style={{marginBottom:18,textAlign:"left"}}>
-                        <button onClick={()=>setBufferActivity(null)} style={{background:"none",border:"none",color:"var(--gray)",fontFamily:"var(--font-cond)",fontSize:12,letterSpacing:2,cursor:"pointer",padding:"0 0 12px"}}>← BACK</button>
+                        <button onClick={()=>{clearInterval(bufferTimerRef.current);setBufferActivity(null);}} style={{background:"none",border:"none",color:"var(--gray)",fontFamily:"var(--font-cond)",fontSize:12,letterSpacing:2,cursor:"pointer",padding:"0 0 12px"}}>← BACK</button>
                         <div style={{fontFamily:"var(--font-display)",fontSize:28,marginBottom:4}}>{t(bufferActivity.titleKey)||bufferActivity.titleKey}</div>
-                        {bufferExIdx < bufferActivity.exercises.length ? (() => {
+                        {bufferExIdx < bufferActivity.exercises.length && (() => {
                           const bEx = bufferActivity.exercises[bufferExIdx];
+                          const isTimedEx = !!bEx.duration;
+                          const totalDuration = bEx.duration || 0;
+                          const progress = totalDuration > 0 ? (bufferTimer / totalDuration) : 0;
+                          const circumference = 2 * Math.PI * 54;
                           return (
-                            <div style={{background:"var(--card)",borderRadius:16,padding:20,textAlign:"center"}}>
-                              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"var(--gray)",marginBottom:4}}>
-                                {bufferExIdx+1} / {bufferActivity.exercises.length}
+                            <div style={{background:"var(--card)",borderRadius:16,padding:24,textAlign:"center"}}>
+                              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:4}}>
+                                {bufferExIdx + 1} / {bufferActivity.exercises.length}
                               </div>
-                              <div style={{fontFamily:"var(--font-display)",fontSize:36,marginBottom:8}}>{bEx.name.toUpperCase()}</div>
-                              <div style={{fontFamily:"var(--font-cond)",fontSize:14,color:accentColor,marginBottom:20}}>
-                                {bEx.duration ? `${bEx.duration}s` : bEx.reps ? `${bEx.sets}×${bEx.reps}` : `${bEx.sets} sets`}
-                                {bEx.side ? ' each side' : ''}
+                              <div style={{fontFamily:"var(--font-display)",fontSize:30,lineHeight:0.95,marginBottom:4}}>
+                                {bEx.name.toUpperCase()}
                               </div>
-                              <Btn full onClick={()=>setBufferExIdx(i=>i+1)}>
-                                {bufferExIdx < bufferActivity.exercises.length - 1 ? t('next_exercise')||'NEXT' : t('done')||'DONE'}
-                              </Btn>
+                              {bEx.side && (
+                                <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:2,marginBottom:12}}>
+                                  {lang==='es'?'CADA LADO':'EACH SIDE'}
+                                </div>
+                              )}
+                              {isTimedEx ? (
+                                <div style={{margin:"16px auto",position:"relative",width:120,height:120}}>
+                                  <svg width="120" height="120" style={{position:"absolute",top:0,left:0,transform:"rotate(-90deg)"}}>
+                                    <circle cx="60" cy="60" r="54" fill="none" stroke="var(--line)" strokeWidth="4"/>
+                                    <circle cx="60" cy="60" r="54" fill="none" stroke={day?.color||"var(--lime)"} strokeWidth="4"
+                                      strokeDasharray={circumference}
+                                      strokeDashoffset={circumference * (1 - progress)}
+                                      strokeLinecap="round"
+                                      style={{transition:"stroke-dashoffset 1s linear"}}/>
+                                  </svg>
+                                  <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",
+                                    alignItems:"center",justifyContent:"center"}}>
+                                    <div style={{fontFamily:"var(--font-display)",fontSize:40,lineHeight:1,color:"var(--white)"}}>
+                                      {bufferTimer}
+                                    </div>
+                                    <div style={{fontFamily:"var(--font-cond)",fontSize:10,color:"var(--gray)",letterSpacing:2}}>
+                                      {lang==='es'?'SEG':'SEC'}
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div style={{margin:"16px 0"}}>
+                                  <div style={{fontFamily:"var(--font-display)",fontSize:56,color:day?.color||"var(--lime)"}}>
+                                    {bEx.sets} × {bEx.reps}
+                                  </div>
+                                  <div style={{fontFamily:"var(--font-cond)",fontSize:12,color:"var(--gray)",letterSpacing:2}}>
+                                    {lang==='es'?'SERIES × REPS':'SETS × REPS'}
+                                  </div>
+                                </div>
+                              )}
+                              <div style={{display:"flex",gap:10,marginTop:16}}>
+                                {isTimedEx && bufferRunning && (
+                                  <button onClick={()=>{ clearInterval(bufferTimerRef.current); setBufferRunning(false); }}
+                                    style={{flex:1,background:"var(--dark)",border:"1px solid var(--line)",borderRadius:12,
+                                      padding:"12px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,
+                                      letterSpacing:2,color:"var(--gray)",cursor:"pointer"}}>
+                                    ⏸ {lang==='es'?'PAUSA':'PAUSE'}
+                                  </button>
+                                )}
+                                {isTimedEx && !bufferRunning && bufferTimer > 0 && (
+                                  <button onClick={()=>setBufferRunning(true)}
+                                    style={{flex:1,background:"var(--dark)",border:"1px solid var(--line)",borderRadius:12,
+                                      padding:"12px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,
+                                      letterSpacing:2,color:"var(--lime)",cursor:"pointer"}}>
+                                    ▶ {lang==='es'?'REANUDAR':'RESUME'}
+                                  </button>
+                                )}
+                                <button onClick={()=>{ clearInterval(bufferTimerRef.current); setBufferRunning(false); setBufferExIdx(i=>i+1); }}
+                                  style={{flex:1,background:day?.color||"var(--lime)",border:"none",borderRadius:12,
+                                    padding:"12px 0",fontFamily:"var(--font-cond)",fontWeight:900,fontSize:13,
+                                    letterSpacing:2,color:"var(--black)",cursor:"pointer"}}>
+                                  {bufferExIdx < bufferActivity.exercises.length - 1
+                                    ? (lang==='es'?'SIGUIENTE →':'NEXT →')
+                                    : (lang==='es'?'TERMINAR':'FINISH')}
+                                </button>
+                              </div>
                             </div>
                           );
-                        })() : (
+                        })()}
+                        {bufferExIdx >= bufferActivity.exercises.length && (
                           <div style={{background:"var(--card)",borderRadius:16,padding:24,textAlign:"center"}}>
                             <div style={{fontSize:40,marginBottom:8}}>🙌</div>
                             <div style={{fontFamily:"var(--font-display)",fontSize:28,marginBottom:8}}>GREAT WORK!</div>
@@ -3990,7 +4191,7 @@ function AppInner() {
                       />
                     </div>
                     <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                      <Btn full onClick={()=>{clearActiveSession();setSheet(null);setScreen("home");setExIdx(0);setSetNum(1);setCompletedSets({});setBufferActivity(null);setBufferExIdx(0);}}>{t('done')}</Btn>
+                      <Btn full onClick={()=>{clearActiveSession();clearInterval(bufferTimerRef.current);setSheet(null);setScreen("home");setExIdx(0);setSetNum(1);setCompletedSets({});setBufferActivity(null);setBufferExIdx(0);}}>{t('done')}</Btn>
                     </div>
                   </div>
                 )}
@@ -4037,7 +4238,7 @@ function AppInner() {
                     ...d, exercises: d.exercises.map((e,ei) => ei !== exIdx ? e : { ...e, wA: newWStr })
                   }));
                   setPrs(prev => ({...prev, [ex.name]: { weight: newW, date: new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"}) }}));
-                  setFirstSetConfirmed(prev=>({...prev,[`${dayIdx}-${exIdx}`]:true}));
+                  setWeightCheckState(prev=>({...prev,[`${dayIdx}-${exIdx}`]:'done'}));
                 }
                 setEditingWeight(false);
               }} style={{width:"100%",background:day.color,border:"none",borderRadius:14,padding:"17px 0",
