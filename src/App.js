@@ -1944,6 +1944,7 @@ function AppInner() {
   const [showLogout, setShowLogout]       = useState(false);
   const workoutStartRef = useRef(null);
   const timerRef = useRef(null);
+  const restingRef = useRef(false);
   const supaSubRef = useRef(null); // legacy — kept for cleanup only
   const roomChannelRef = useRef(null); // shared Broadcast channel for the room
   const profileRef = useRef(null); // always-fresh profile for async callbacks
@@ -2250,23 +2251,27 @@ function AppInner() {
   }, [dayIdx, exIdx, setNum, completedSets]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
+  /* ─── Keep restingRef in sync with resting state ─── */
+  useEffect(() => { restingRef.current = resting; }, [resting]);
+
   /* ─── Rest timer with beep ─── */
   useEffect(() => {
-    if (resting) {
-      timerRef.current = setInterval(() => {
-        setRestSec(s => {
-          if (s <= 1) {
-            clearInterval(timerRef.current);
-            setResting(false);
-            playBeep();
-            return 0;
-          }
-          return s - 1;
-        });
-      }, 1000);
-    }
+    clearInterval(timerRef.current);
+    if (!resting) return;
+    timerRef.current = setInterval(() => {
+      setRestSec(s => {
+        if (s <= 1) {
+          clearInterval(timerRef.current);
+          restingRef.current = false;
+          setResting(false);
+          playBeep();
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
     return () => clearInterval(timerRef.current);
-  }, [resting]);
+  }, [resting]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ─── Buffer exercise timer — start/reset on exercise change ─── */
   useEffect(() => {
@@ -2374,6 +2379,13 @@ function AppInner() {
       restPreferences: { ...(prev?.restPreferences || {}), [prev?.goal || 'default']: secs }
     }));
   };
+  const changeRest = (secs, savePreference = false) => {
+    clearInterval(timerRef.current);
+    setRestMax(secs);
+    setRestSec(secs);
+    setResting(true);
+    if (savePreference) saveRestPreference(secs);
+  };
   const startRest = (s, savePreference = false) => {
     setRestMax(s); setRestSec(s); setResting(true);
     if (savePreference) saveRestPreference(s);
@@ -2422,13 +2434,18 @@ function AppInner() {
       setTimeout(() => setPrNotification(null), 3000);
     }
 
+    const getRestDuration = () => {
+      const saved = profile?.restPreferences?.[profile?.goal || 'default'];
+      return saved || ex.rest || 90;
+    };
+
     if (setNum < ex.sets) {
       setSetNum(s => s + 1);
-      startRest(ex.rest);
+      startRest(getRestDuration());
     } else if (exIdx < day.exercises.length - 1) {
       setExIdx(i => i + 1);
       setSetNum(1);
-      startRest(ex.rest);
+      startRest(getRestDuration());
       // Ask post-exercise weight check
       const currentKey = `${dayIdx}-${exIdx}`;
       if (weightCheckState[currentKey] === 'confirmed') {
@@ -3939,7 +3956,7 @@ function AppInner() {
                 </div>
                 <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:16}}>
                   {[30,60,90,120,180].map(secs => (
-                    <button key={secs} onClick={()=>{ skipRest(); startRest(secs, true); }}
+                    <button key={secs} onClick={()=>changeRest(secs, true)}
                       style={{background:restMax===secs?"var(--card)":"transparent",
                         border:`1px solid ${restMax===secs?"var(--line2)":"var(--line)"}`,
                         borderRadius:8,padding:"5px 10px",fontFamily:"var(--font-cond)",
