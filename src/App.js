@@ -1902,6 +1902,30 @@ function AppInner() {
   const [lang, setLang] = useState(localStorage.getItem('str_lang') || 'en');
   const t = (key) => STRINGS[lang]?.[key] || STRINGS.en[key] || key;
 
+  const weightUnit = profile?.weightUnit || 'lbs';
+  const KG_TO_LBS = 2.20462;
+  const LBS_TO_KG = 0.453592;
+
+  const toDisplay = (kg) => {
+    if (!kg || kg === 0) return 0;
+    return weightUnit === 'lbs' ? Math.round(kg * KG_TO_LBS * 10) / 10 : kg;
+  };
+
+  const fromDisplay = (val) => {
+    if (!val || val === 0) return 0;
+    return weightUnit === 'lbs' ? Math.round(val * LBS_TO_KG * 100) / 100 : val;
+  };
+
+  const unitLabel = weightUnit === 'lbs' ? 'LBS' : 'KG';
+
+  const displayWeight = (wStr) => {
+    if (!wStr || wStr === 'BW' || wStr === '— kg') return wStr === '— kg' ? `— ${unitLabel}` : wStr;
+    const num = parseFloat(wStr);
+    if (isNaN(num)) return wStr;
+    const displayed = weightUnit === 'lbs' ? Math.round(num * KG_TO_LBS * 2) / 2 : num;
+    return `${displayed}${unitLabel}`;
+  };
+
   // PIN auth (session-only state)
   const [pinEntry, setPinEntry]       = useState("");
   const [pinAttempts, setPinAttempts] = useState(0);
@@ -2521,7 +2545,8 @@ function AppInner() {
     setAiLoading(false);
   };
 
-  const generateRoutine = async (resolvedPartner = null) => {
+  const generateRoutine = async (resolvedPartner = null, profileOverride = null) => {
+    const _profile = profileOverride || profile;
     setScreen("generating");
     let summary = t('ai_coach_default');
     try {
@@ -2534,7 +2559,7 @@ function AppInner() {
           system: "You are an elite strength coach. Write a 2-sentence routine summary. Be encouraging, specific, reference goals and level. No markdown." + (lang === 'es' ? ' Respond in Spanish.' : ''),
           messages: [{
             role: "user",
-            content: `Athlete: ${profile.name||"You"}, ${profile.age}y, ${profile.weight}kg, goal: ${profile.goal||"build muscle"}, level: ${profile.level||"intermediate"}, ${profile.daysPerWeek} days/week${resolvedPartner?`\nPartner: ${resolvedPartner.name||"Partner"}, ${resolvedPartner.weight}kg, goal: ${resolvedPartner.goal||"—"}, level: ${resolvedPartner.level||"—"}`:""}${profile.priorityMuscles?.length?`\nUser wants to prioritize: ${profile.priorityMuscles.join(', ')}. Split preference: ${profile.splitPreference||"Balanced"}.`:""}`,
+            content: `Athlete: ${_profile.name||"You"}, ${_profile.age}y, ${_profile.weight}kg, goal: ${_profile.goal||"build muscle"}, level: ${_profile.level||"intermediate"}, ${_profile.daysPerWeek} days/week${resolvedPartner?`\nPartner: ${resolvedPartner.name||"Partner"}, ${resolvedPartner.weight}kg, goal: ${resolvedPartner.goal||"—"}, level: ${resolvedPartner.level||"—"}`:""}${_profile.priorityMuscles?.length?`\nUser wants to prioritize: ${_profile.priorityMuscles.join(', ')}. Split preference: ${_profile.splitPreference||"Balanced"}.`:""}`,
           }],
         }),
       });
@@ -2542,10 +2567,10 @@ function AppInner() {
       const data = await response.json();
       summary = data.content?.find(b => b.type === "text")?.text || summary;
     } catch (e) { console.warn("generateRoutine AI error:", e); }
-    const builtRoutine = buildRoutine(profile, resolvedPartner);
+    const builtRoutine = buildRoutine(_profile, resolvedPartner);
     setRoutine(builtRoutine);
     // FIX 2 — Save week schedule
-    const ws = buildWeekSchedule(profile.trainingDays || [], builtRoutine.length);
+    const ws = buildWeekSchedule(_profile.trainingDays || [], builtRoutine.length);
     p("weekSchedule", ws);
     setAiSummary(summary);
     setTimeout(() => setScreen("home"), 600);
@@ -3086,7 +3111,16 @@ function AppInner() {
       setPinHash(h); // auto-saved to str_pin via useEffect
     }
     setConfirmPin("");
-    generateRoutine();
+    // Convert weight from display unit (lbs) to kg for storage
+    const rawWeight = parseFloat(profile.weight || '0');
+    const weightInKg = weightUnit === 'lbs' && rawWeight > 0
+      ? Math.round(rawWeight * LBS_TO_KG * 10) / 10
+      : rawWeight;
+    const profileForGenerate = rawWeight > 0 ? {...profile, weight: String(weightInKg)} : {...profile};
+    if (rawWeight > 0 && weightInKg !== rawWeight) {
+      p("weight", String(weightInKg));
+    }
+    generateRoutine(null, profileForGenerate);
   };
 
   const pct = day && ex ? ((exIdx + setNum / ex.sets) / day.exercises.length) * 100 : 0;
@@ -3483,7 +3517,7 @@ function AppInner() {
         <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:32}}>{t('calibrate_desc')}</p>
         <div style={{display:"flex",gap:12}}>
           <div style={{flex:1}}><Input label={t('age_label')} placeholder="28" value={profile.age} onChange={v=>p("age",v)} type="number"/></div>
-          <div style={{flex:1}}><Input label={t('weight_label')} placeholder="80" value={profile.weight} onChange={v=>p("weight",v)} type="number" unit="kg"/></div>
+          <div style={{flex:1}}><Input label={t('weight_label')} placeholder={weightUnit === 'lbs' ? '176' : '80'} value={profile.weight} onChange={v=>p("weight",v)} type="number" unit={weightUnit === 'lbs' ? 'lbs' : 'kg'}/></div>
           <div style={{flex:1}}><Input label={t('height_label')} placeholder="175" value={profile.height} onChange={v=>p("height",v)} type="number" unit="cm"/></div>
         </div>
         <Label text={t('biological_sex_label')}/>
@@ -3725,7 +3759,7 @@ function AppInner() {
         {/* Feature 4A — PR notification banner */}
         {prNotification && (
           <div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",background:"var(--lime)",color:"var(--black)",borderRadius:12,padding:"10px 18px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,zIndex:100,animation:"slideIn 0.3s ease",display:"flex",alignItems:"center",gap:8,maxWidth:380,whiteSpace:"nowrap"}}>
-            🏆 {t('personal_record')} — {prNotification.exerciseName.toUpperCase()} {prNotification.weight}
+            🏆 {t('personal_record')} — {prNotification.exerciseName.toUpperCase()} {displayWeight(prNotification.weight)}
           </div>
         )}
         {/* Post-exercise weight check banner */}
@@ -3737,7 +3771,7 @@ function AppInner() {
             boxShadow:"0 4px 24px rgba(0,0,0,0.6)"}}>
             <div>
               <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"var(--gray)",marginBottom:2}}>
-                {postExerciseCheck.exerciseName.toUpperCase()} · {postExerciseCheck.weight}
+                {postExerciseCheck.exerciseName.toUpperCase()} · {displayWeight(postExerciseCheck.weight)}
               </div>
               <div style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,color:"var(--white)"}}>
                 {lang==='es'?'¿Lograste completar todas las series?':'Did you complete all sets at this weight?'}
@@ -3751,7 +3785,8 @@ function AppInner() {
                 ✓ {lang==='es'?'SÍ':'YES'}
               </button>
               <button onClick={()=>{
-                setTempWeight((postExerciseCheck.weight||'').replace('kg','').trim());
+                const _rawKgPEC = parseFloat((postExerciseCheck.weight||'').replace(/kg|lbs/gi,'').trim());
+                setTempWeight(String(isNaN(_rawKgPEC) ? '' : (weightUnit === 'lbs' ? Math.round(_rawKgPEC * KG_TO_LBS * 2) / 2 : _rawKgPEC)));
                 setEditingWeight(true);
                 setPostExerciseCheck(null);
               }} style={{background:"rgba(255,59,48,0.1)",border:"1px solid rgba(255,59,48,0.3)",
@@ -3790,14 +3825,18 @@ function AppInner() {
                     <div style={{fontFamily:"var(--font-cond)",fontWeight:800,fontSize:22,color:"var(--white)"}}>{v}</div>
                   </div>
                 ))}
-                <div onClick={()=>{ setTempWeight((ex.wA||'').replace('kg','').replace('KG','')); setEditingWeight(true); }}
+                <div onClick={()=>{
+                    const _rawKg = parseFloat((ex.wA||'').replace(/kg|lbs/gi,'').trim());
+                    setTempWeight(String(isNaN(_rawKg) ? '' : (weightUnit === 'lbs' ? Math.round(_rawKg * KG_TO_LBS * 2) / 2 : _rawKg)));
+                    setEditingWeight(true);
+                  }}
                   style={{flex:1,background:"var(--card)",borderRadius:12,padding:"12px 0",textAlign:"center",
                     border:`1px solid ${day.color}33`,cursor:"pointer",userSelect:"none"}}>
                   <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--gray)",marginBottom:4}}>
                     {t('weight')}
                   </div>
                   <div style={{fontFamily:"var(--font-display)",fontSize:24,color:day.color||"var(--lime)"}}>
-                    {ex.wA === "BW" || !ex.wA ? (ex.wA || "—") : ex.wA}
+                    {ex.wA === "BW" || !ex.wA ? (ex.wA || "—") : displayWeight(ex.wA)}
                   </div>
                   <div style={{fontFamily:"var(--font-cond)",fontSize:8,color:"var(--gray2)",letterSpacing:1,marginTop:2}}>
                     {lang==='es'?'TOCAR PARA EDITAR':'TAP TO EDIT'}
@@ -3811,7 +3850,7 @@ function AppInner() {
             {/* Feature 4C — Weight progression suggestion */}
             <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1,marginBottom:8}}>
               {prs[ex.name]
-                ? `${t('last_time')}: ${prs[ex.name].weight}kg · ${t('try_today')} ${Math.round(prs[ex.name].weight * 1.025 / 2.5) * 2.5}kg`
+                ? `${t('last_time')}: ${displayWeight(prs[ex.name].weight+'kg')} · ${t('try_today')} ${displayWeight((Math.round(prs[ex.name].weight * 1.025 / 2.5) * 2.5)+'kg')}`
                 : t('first_time')}
             </div>
             {weightCheckState[`${dayIdx}-${exIdx}`] === 'pending' && ex?.wA && ex.wA !== 'BW' && (
@@ -3823,12 +3862,12 @@ function AppInner() {
                 </div>
                 <div style={{fontFamily:"var(--font-display)",fontSize:48,color:day.color,
                   textAlign:"center",lineHeight:1,marginBottom:12}}>
-                  {ex.wA}
+                  {displayWeight(ex.wA)}
                 </div>
                 <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",
                   textAlign:"center",letterSpacing:1,marginBottom:14}}>
                   {prs[ex.name]
-                    ? (lang==='es'?`Última vez: ${prs[ex.name].weight}kg`:`Last time: ${prs[ex.name].weight}kg`)
+                    ? (lang==='es'?`Última vez: ${displayWeight(prs[ex.name].weight+'kg')}`:`Last time: ${displayWeight(prs[ex.name].weight+'kg')}`)
                     : (lang==='es'?'Primera vez — empieza conservador':'First time — start conservative')}
                 </div>
                 <div style={{display:"flex",gap:10}}>
@@ -3840,7 +3879,8 @@ function AppInner() {
                     ✓ {lang==='es'?'SÍ, PUEDO':'YES, I CAN'}
                   </button>
                   <button onClick={()=>{
-                    setTempWeight((ex.wA||'').replace('kg','').replace('KG','').trim());
+                    const _rawKgWC = parseFloat((ex.wA||'').replace(/kg|lbs/gi,'').trim());
+                    setTempWeight(String(isNaN(_rawKgWC) ? '' : (weightUnit === 'lbs' ? Math.round(_rawKgWC * KG_TO_LBS * 2) / 2 : _rawKgWC)));
                     setWeightCheckState(prev=>({...prev,[`${dayIdx}-${exIdx}`]:'adjusting'}));
                     setEditingWeight(true);
                   }} style={{flex:1,background:"rgba(255,59,48,0.08)",border:"1px solid rgba(255,59,48,0.3)",
@@ -4235,10 +4275,10 @@ function AppInner() {
                   style={{flex:1,background:"var(--card)",border:`1px solid ${day.color}`,borderRadius:12,
                     padding:"16px 0",fontSize:32,color:"var(--white)",textAlign:"center",
                     fontFamily:"var(--font-display)",outline:"none",boxSizing:"border-box"}}/>
-                <span style={{fontFamily:"var(--font-cond)",fontSize:16,color:"var(--gray)"}}>KG</span>
+                <span style={{fontFamily:"var(--font-cond)",fontSize:16,color:"var(--gray)"}}>{unitLabel}</span>
               </div>
               <div style={{display:"flex",gap:8,marginBottom:16}}>
-                {[-5,-2.5,2.5,5].map(delta=>(
+                {(weightUnit === 'lbs' ? [-10, -5, 5, 10] : [-5, -2.5, 2.5, 5]).map(delta=>(
                   <button key={delta} onClick={()=>setTempWeight(w=>String(Math.max(0,Math.round((parseFloat(w||0)+delta)*10)/10)))}
                     style={{flex:1,background:"var(--card)",border:"1px solid var(--line)",borderRadius:10,
                       padding:12,color:"var(--white)",fontFamily:"var(--font-cond)",fontWeight:700,
@@ -4248,13 +4288,14 @@ function AppInner() {
                 ))}
               </div>
               <button onClick={()=>{
-                const newW = parseFloat(tempWeight);
-                if (newW > 0) {
-                  const newWStr = `${newW}kg`;
+                const displayVal = parseFloat(tempWeight);
+                const kgVal = weightUnit === 'lbs' ? Math.round(displayVal * LBS_TO_KG * 100) / 100 : displayVal;
+                if (kgVal > 0) {
+                  const newWStr = `${kgVal}kg`;
                   setRoutine(prev => prev.map((d,di) => di !== dayIdx ? d : {
                     ...d, exercises: d.exercises.map((e,ei) => ei !== exIdx ? e : { ...e, wA: newWStr })
                   }));
-                  setPrs(prev => ({...prev, [ex.name]: { weight: newW, date: new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"}) }}));
+                  setPrs(prev => ({...prev, [ex.name]: { weight: kgVal, date: new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"}) }}));
                   setWeightCheckState(prev=>({...prev,[`${dayIdx}-${exIdx}`]:'done'}));
                 }
                 setEditingWeight(false);
@@ -4368,13 +4409,33 @@ function AppInner() {
                 ES
               </button>
             </div>
+            <div style={{display:"flex",gap:8,marginBottom:20,alignItems:"center"}}>
+              <span style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginRight:4}}>
+                {lang==='es'?'UNIDADES':'UNITS'}
+              </span>
+              {['kg','lbs'].map(unit => (
+                <button key={unit} onClick={()=>p("weightUnit", unit)}
+                  style={{
+                    background: weightUnit === unit ? '#C8F135' : 'transparent',
+                    color: weightUnit === unit ? '#080808' : '#888',
+                    border: '1px solid',
+                    borderColor: weightUnit === unit ? '#C8F135' : '#333',
+                    borderRadius: 20, padding:'6px 14px',
+                    fontFamily:"'Barlow Condensed',sans-serif",
+                    fontWeight:700, fontSize:13, letterSpacing:1, cursor:'pointer',
+                    textTransform:'uppercase'
+                  }}>
+                  {t(unit)}
+                </button>
+              ))}
+            </div>
 
             {/* Profile */}
             <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
               <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:14}}>{t('edit_profile')}</div>
               <Input label="NAME" placeholder="Your name" value={settingsName} onChange={v=>setSettingsName(v)} maxLength={50}/>
               <div style={{display:"flex",gap:10}}>
-                <div style={{flex:1}}><Input label="WEIGHT" placeholder="80" value={settingsWeight} onChange={v=>setSettingsWeight(v)} type="number" unit="kg"/></div>
+                <div style={{flex:1}}><Input label="WEIGHT" placeholder={weightUnit === 'lbs' ? '176' : '80'} value={settingsWeight} onChange={v=>setSettingsWeight(v)} type="number" unit={weightUnit === 'lbs' ? 'lbs' : 'kg'}/></div>
                 <div style={{flex:1}}><Input label="AGE" placeholder="28" value={settingsAge} onChange={v=>setSettingsAge(v)} type="number"/></div>
                 <div style={{flex:1}}><Input label="HEIGHT" placeholder="175" value={settingsHeight} onChange={v=>setSettingsHeight(v)} type="number" unit="cm"/></div>
               </div>
@@ -4384,7 +4445,7 @@ function AppInner() {
               </div>
               <Btn full onClick={()=>{
                 if (settingsName.trim()) p("name", settingsName.trim());
-                if (settingsWeight && parseFloat(settingsWeight) > 0) p("weight", settingsWeight);
+                if (settingsWeight && parseFloat(settingsWeight) > 0) { const _rawSW=parseFloat(settingsWeight); const _kgSW=weightUnit==='lbs'?Math.round(_rawSW*LBS_TO_KG*10)/10:_rawSW; p("weight",String(_kgSW)); }
                 if (settingsAge && parseInt(settingsAge) > 0) p("age", settingsAge);
                 if (settingsHeight && parseInt(settingsHeight) > 0) p("height", settingsHeight);
                 p("injuries", settingsInjuries||"");
@@ -4526,7 +4587,7 @@ function AppInner() {
                 <span style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"#30d158"}}>{(partnerProfile.name||"PARTNER").toUpperCase()}</span>
               </button>
             )}
-            <button onClick={()=>{ setSettingsName(profile?.name||""); setSettingsWeight(profile?.weight||""); setSettingsAge(profile?.age||""); setSettingsHeight(profile?.height||""); setSettingsInjuries(profile?.injuries||""); setShowChangePinFlow(false); setScreen("settings"); }} style={{background:"none",border:"none",fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",cursor:"pointer",padding:"4px 8px"}}>{t('settings')}</button>
+            <button onClick={()=>{ setSettingsName(profile?.name||""); const _rawW=parseFloat(profile?.weight||'0'); setSettingsWeight(_rawW>0?String(toDisplay(_rawW)):""); setSettingsAge(profile?.age||""); setSettingsHeight(profile?.height||""); setSettingsInjuries(profile?.injuries||""); setShowChangePinFlow(false); setScreen("settings"); }} style={{background:"none",border:"none",fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",cursor:"pointer",padding:"4px 8px"}}>{t('settings')}</button>
             <button onClick={()=>setShowLogout(true)} style={{background:"var(--card)",border:"none",borderRadius:10,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             </button>
@@ -4754,8 +4815,8 @@ function AppInner() {
                         <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1,marginTop:2}}>{e.sets} × {e.reps} · {e.muscles}</div>
                       </div>
                       <div style={{textAlign:"right"}}>
-                        <div style={{fontFamily:"var(--font-display)",fontSize:18,color:d.color}}>{e.wA}</div>
-                        <div style={{fontFamily:"var(--font-display)",fontSize:14,color:"var(--gray2)"}}>{e.wB}</div>
+                        <div style={{fontFamily:"var(--font-display)",fontSize:18,color:d.color}}>{displayWeight(e.wA)}</div>
+                        <div style={{fontFamily:"var(--font-display)",fontSize:14,color:"var(--gray2)"}}>{displayWeight(e.wB)}</div>
                       </div>
                     </div>
                   ))}
@@ -4921,7 +4982,7 @@ function AppInner() {
                           <div style={{display:"flex",gap:10,marginBottom:16}}>
                             <div style={{flex:1,background:"var(--dark)",borderRadius:12,padding:"10px 14px",textAlign:"center"}}>
                               <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--gray)",marginBottom:3}}>{t('weight_label')}</div>
-                              <div style={{fontFamily:"var(--font-display)",fontSize:22,color:"var(--white)"}}>{pSession.currentWeight||"—"}</div>
+                              <div style={{fontFamily:"var(--font-display)",fontSize:22,color:"var(--white)"}}>{pSession.currentWeight ? displayWeight(pSession.currentWeight) : "—"}</div>
                             </div>
                             <div style={{flex:1,background:"var(--dark)",borderRadius:12,padding:"10px 14px",textAlign:"center"}}>
                               <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--gray)",marginBottom:3}}>{t('elapsed_label')}</div>
@@ -5048,7 +5109,7 @@ function AppInner() {
                 <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:2}}>
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:weightLog.length>0?16:0}}>
                     <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--gray)"}}>{t('body_weight_label')}</div>
-                    <button onClick={()=>{setWeightInput(profile?.weight||"");setShowWeightModal(true);}} style={{background:"rgba(200,241,53,0.1)",border:"1px solid rgba(200,241,53,0.3)",borderRadius:8,padding:"6px 12px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:2,color:"var(--lime)",cursor:"pointer"}}>{t('log_weight')}</button>
+                    <button onClick={()=>{const _rawWL=parseFloat(profile?.weight||'0');setWeightInput(_rawWL>0?String(toDisplay(_rawWL)):"");setShowWeightModal(true);}} style={{background:"rgba(200,241,53,0.1)",border:"1px solid rgba(200,241,53,0.3)",borderRadius:8,padding:"6px 12px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:2,color:"var(--lime)",cursor:"pointer"}}>{t('log_weight')}</button>
                   </div>
                   {weightLog.length >= 2 && (
                     (() => {
@@ -5075,7 +5136,7 @@ function AppInner() {
                     })()
                   )}
                   {weightLog.length === 0 && <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray2)",marginTop:8}}>Log your weight to track progress over time.</div>}
-                  {weightLog.length > 0 && <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:1,color:"var(--gray)",marginTop:8}}>Latest: {weightLog[weightLog.length-1].weight}kg · {weightLog.length} entries</div>}
+                  {weightLog.length > 0 && <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:1,color:"var(--gray)",marginTop:8}}>Latest: {toDisplay(weightLog[weightLog.length-1].weight)}{unitLabel} · {weightLog.length} entries</div>}
                 </div>
 
                 {/* Workout feed */}
@@ -5104,7 +5165,7 @@ function AppInner() {
                         {[
                           [t('sets_stat'), h.totalSets],
                           [t('exercises_count_label'), h.exercises],
-                          [t('max_wt_stat'), h.maxWeight ? `${h.maxWeight}kg` : "—"],
+                          [t('max_wt_stat'), h.maxWeight ? displayWeight(`${h.maxWeight}kg`) : "—"],
                           [t('volume_stat'), h.totalVolume ? `${h.totalVolume>=1000?(h.totalVolume/1000).toFixed(1)+"k":h.totalVolume}kg` : "—"],
                         ].map(([l,v],si)=>(
                           <div key={l} style={{flex:1,padding:"10px 8px",textAlign:"center",borderRight:si<3?"1px solid var(--line)":"none"}}>
@@ -5279,12 +5340,14 @@ function AppInner() {
           <div onClick={()=>setShowWeightModal(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:60,backdropFilter:"blur(4px)"}}>
             <div onClick={e=>e.stopPropagation()} style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"#181818",borderRadius:"24px 24px 0 0",padding:28}}>
               <div style={{fontFamily:"var(--font-display)",fontSize:36,marginBottom:16}}>{t('log_weight_title')}</div>
-              <input type="number" value={weightInput} onChange={e=>setWeightInput(e.target.value)} placeholder="kg" step="0.1"
+              <input type="number" value={weightInput} onChange={e=>setWeightInput(e.target.value)} placeholder={weightUnit === 'lbs' ? 'lbs' : 'kg'} step="0.1"
                 style={{width:"100%",background:"var(--dark)",border:"1.5px solid var(--line2)",borderRadius:10,padding:"14px 16px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:24,color:"var(--white)",outline:"none",boxSizing:"border-box",marginBottom:16}}/>
               <Btn full onClick={()=>{
                 const w = parseFloat(weightInput);
-                if (!w || w<20||w>300) return;
-                setWeightLog(prev=>[...prev,{date:new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"}),weight:w}]);
+                const minW = weightUnit === 'lbs' ? 44 : 20;
+                const maxW = weightUnit === 'lbs' ? 660 : 300;
+                if (!w || w < minW || w > maxW) return;
+                setWeightLog(prev=>[...prev,{date:new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"}),weight:fromDisplay(w)}]);
                 setShowWeightModal(false);
               }}>{t('save_btn')}</Btn>
             </div>
