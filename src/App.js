@@ -276,67 +276,67 @@ const RECOVERY_TIPS = [
 const GOAL_CONFIGS = [
   {
     id: 'muscle_mass', label: 'Gain Muscle Mass',
-    description: 'Hypertrophy focus — moderate weight, higher volume',
+    description: 'Hypertrophy — moderate weight, high volume',
     reps: { beginner:'10-12', intermediate:'8-12', advanced:'6-12' },
-    sets: { beginner:3, intermediate:4, advanced:5 },
+    sets: { beginner:4, intermediate:4, advanced:5 },
     rest: { beginner:75, intermediate:90, advanced:90 },
-    exercises: { beginner:5, intermediate:7, advanced:9 },
+    exercises: { beginner:6, intermediate:8, advanced:10 },
   },
   {
     id: 'strength', label: 'Increase Strength',
-    description: 'Heavy compound lifts — low reps, high intensity',
-    reps: { beginner:'6-8', intermediate:'4-6', advanced:'3-5' },
-    sets: { beginner:3, intermediate:4, advanced:6 },
-    rest: { beginner:120, intermediate:150, advanced:180 },
+    description: 'Heavy compounds — low reps, max intensity',
+    reps: { beginner:'5-6', intermediate:'3-5', advanced:'1-5' },
+    sets: { beginner:4, intermediate:5, advanced:6 },
+    rest: { beginner:150, intermediate:180, advanced:240 },
     exercises: { beginner:5, intermediate:6, advanced:7 },
   },
   {
     id: 'fitness', label: 'Improve Physical Fitness',
     description: 'Balanced training — strength and conditioning',
     reps: { beginner:'10-15', intermediate:'10-12', advanced:'8-12' },
-    sets: { beginner:3, intermediate:3, advanced:4 },
+    sets: { beginner:3, intermediate:4, advanced:4 },
     rest: { beginner:60, intermediate:60, advanced:75 },
-    exercises: { beginner:6, intermediate:7, advanced:8 },
+    exercises: { beginner:7, intermediate:8, advanced:9 },
   },
   {
     id: 'definition', label: 'Definition',
     description: 'Sculpt and define — moderate weight, high reps',
-    reps: { beginner:'12-15', intermediate:'12-15', advanced:'12-20' },
-    sets: { beginner:3, intermediate:4, advanced:4 },
+    reps: { beginner:'12-15', intermediate:'12-15', advanced:'15-20' },
+    sets: { beginner:3, intermediate:4, advanced:5 },
     rest: { beginner:45, intermediate:45, advanced:30 },
-    exercises: { beginner:6, intermediate:8, advanced:9 },
+    exercises: { beginner:7, intermediate:9, advanced:10 },
   },
   {
     id: 'toning', label: 'Body Toning',
     description: 'Light resistance, high reps — firm and tone',
     reps: { beginner:'15-20', intermediate:'15-20', advanced:'15-20' },
-    sets: { beginner:2, intermediate:3, advanced:4 },
+    sets: { beginner:3, intermediate:3, advanced:4 },
     rest: { beginner:30, intermediate:30, advanced:30 },
-    exercises: { beginner:6, intermediate:7, advanced:8 },
+    exercises: { beginner:7, intermediate:8, advanced:9 },
   },
   {
     id: 'cardio', label: 'Cardiovascular',
     description: 'Circuit style — keep heart rate elevated',
     reps: { beginner:'15-20', intermediate:'20', advanced:'20+' },
-    sets: { beginner:2, intermediate:3, advanced:4 },
-    rest: { beginner:30, intermediate:20, advanced:15 },
-    exercises: { beginner:6, intermediate:8, advanced:10 },
+    sets: { beginner:3, intermediate:4, advanced:5 },
+    rest: { beginner:20, intermediate:15, advanced:10 },
+    exercises: { beginner:8, intermediate:10, advanced:12 },
   },
   {
     id: 'fat_loss', label: 'Weight / Fat Loss',
     description: 'High volume circuits — maximize calorie burn',
     reps: { beginner:'12-15', intermediate:'15', advanced:'15-20' },
-    sets: { beginner:3, intermediate:4, advanced:4 },
+    sets: { beginner:3, intermediate:4, advanced:5 },
     rest: { beginner:45, intermediate:30, advanced:20 },
-    exercises: { beginner:6, intermediate:8, advanced:9 },
+    exercises: { beginner:7, intermediate:9, advanced:10 },
   },
   {
     id: 'active', label: 'Stay Active',
     description: 'Enjoyable movement — health and wellbeing',
     reps: { beginner:'10-15', intermediate:'10-15', advanced:'12-15' },
-    sets: { beginner:2, intermediate:3, advanced:3 },
+    sets: { beginner:3, intermediate:3, advanced:4 },
     rest: { beginner:60, intermediate:60, advanced:60 },
-    exercises: { beginner:5, intermediate:6, advanced:7 },
+    exercises: { beginner:6, intermediate:7, advanced:8 },
   },
 ];
 // Helper: look up goal config by id or label (supports both legacy label and new id)
@@ -345,8 +345,35 @@ const getGoalConfig = (goalIdOrLabel) => {
   return GOAL_CONFIGS.find(g => g.id === goalIdOrLabel || g.label === goalIdOrLabel) || GOAL_CONFIGS[0];
 };
 
+/* ─── Progressive overload — exercise history helpers ─── */
+const getExHistory = () => {
+  try { return JSON.parse(localStorage.getItem('str_exercise_history') || '{}'); } catch { return {}; }
+};
+
+const updateExerciseHistory = (dayExercises, completedSetsMap) => {
+  try {
+    const history = getExHistory();
+    dayExercises.forEach((ex, eIdx) => {
+      const setsCompleted = Array.from({length: ex.sets}, (_, s) =>
+        completedSetsMap[`${eIdx}-${s+1}`]
+      ).filter(Boolean).length;
+      if (setsCompleted === 0) return;
+      const prev = history[ex.name] || { sessions: 0, lastWeight: 0 };
+      const currentWeightKg = parseFloat((ex.wA || '0').replace('kg','')) || 0;
+      history[ex.name] = {
+        sessions: prev.sessions + 1,
+        lastWeight: currentWeightKg > 0 ? currentWeightKg : prev.lastWeight,
+        lastReps: ex.reps,
+        lastSets: setsCompleted,
+        lastDate: new Date().toISOString(),
+      };
+    });
+    localStorage.setItem('str_exercise_history', JSON.stringify(history));
+  } catch (e) { console.warn('Could not save exercise history:', e); }
+};
+
 /* ─── Routine builder (2–6 days) ─── */
-const buildRoutine = (profile, partnerProfile = null) => {
+const buildRoutine = (profile, partnerProfile = null, exerciseHistory = {}) => {
   const level   = (profile.level || "intermediate").toLowerCase();
   const levelKey = level === "advanced" ? "advanced" : level === "beginner" ? "beginner" : "intermediate";
   const goalCfg  = getGoalConfig(profile.goal);
@@ -356,9 +383,23 @@ const buildRoutine = (profile, partnerProfile = null) => {
   const days  = parseInt(profile.daysPerWeek) || 3;
   const yw    = parseInt(profile.weight) || 80;
   const pw    = partnerProfile?.weight ? parseInt(partnerProfile.weight) : null;
-  const wA    = (m) => `${Math.round(yw * m)}kg`;
   const wB    = (m) => pw ? `${Math.round(pw * m)}kg` : "— kg";
   const beg   = levelKey === "beginner";
+  // Progressive weight: use history if available, otherwise base × multiplier
+  const wProgress = (exerciseName, multiplier) => {
+    const baseKg = Math.round(yw * multiplier);
+    const entry = exerciseHistory[exerciseName];
+    if (entry?.lastWeight && entry.lastWeight > 0) {
+      const sessions = entry.sessions || 0;
+      if (sessions > 0 && sessions % 4 === 0) {
+        // Deload week: 90% of last weight, rounded to nearest 1.25kg
+        return `${Math.round(entry.lastWeight * 0.9 / 1.25) * 1.25}kg`;
+      }
+      const increment = levelKey === 'advanced' ? 1.25 : 2.5;
+      return `${Math.round((entry.lastWeight + increment) / 1.25) * 1.25}kg`;
+    }
+    return `${baseKg}kg`;
+  };
   // Apply goal-aware set/rep overrides to an exercise definition
   const applyGoal = (ex) => ({ ...ex, sets: goalSets, reps: goalReps, rest: goalRest });
   const equip = profile.equipment || [];
@@ -395,26 +436,34 @@ const buildRoutine = (profile, partnerProfile = null) => {
   const prioritizeChestShoulders = prioMuscles.includes("Chest") || prioMuscles.includes("Shoulders");
 
   const PUSH_EXERCISES_BASE = [
-    { name: "Barbell Bench Press", muscles: "CHEST",        sets: beg?3:4, reps: beg?"8–10":"6–8",  rest:90,  wA:wA(0.70), wB:wB(0.70), rpe:7 },
-    { name: "Incline DB Press",    muscles: "UPPER CHEST",  sets: 3,       reps: "10–12",            rest:75,  wA:wA(0.35), wB:wB(0.35), rpe:7 },
-    { name: "Overhead Press",      muscles: "SHOULDERS",    sets: 3,       reps: "8–10",             rest:75,  wA:wA(0.63), wB:wB(0.63), rpe:7 },
-    { name: "Lateral Raise",       muscles: "SIDE DELT",    sets: 3,       reps: "15–20",            rest:45,  wA:wA(0.15), wB:wB(0.15), rpe:6 },
-    { name: "Tricep Pushdown",     muscles: "TRICEPS",      sets: 3,       reps: "12–15",            rest:60,  wA:wA(0.44), wB:wB(0.44), rpe:6 },
-    ...(prioritizeChestShoulders ? [{ name: "Cable Fly", muscles: "CHEST", sets: 3, reps: "12–15", rest:60, wA:wA(0.30), wB:wB(0.30), rpe:6 }] : []),
+    { name: "Barbell Bench Press",          muscles: "CHEST",        sets: beg?3:4, reps: beg?"8–10":"6–8",  rest:90,  wA:wProgress("Barbell Bench Press",0.75),          wB:wB(0.75), rpe:7 },
+    { name: "Incline DB Press",             muscles: "UPPER CHEST",  sets: 3,       reps: "10–12",            rest:75,  wA:wProgress("Incline DB Press",0.28),             wB:wB(0.28), rpe:7 },
+    { name: "Overhead Press",               muscles: "SHOULDERS",    sets: 3,       reps: "8–10",             rest:75,  wA:wProgress("Overhead Press",0.45),               wB:wB(0.45), rpe:7 },
+    { name: "Lateral Raise",                muscles: "SIDE DELT",    sets: 3,       reps: "15–20",            rest:45,  wA:wProgress("Lateral Raise",0.10),                wB:wB(0.10), rpe:6 },
+    { name: "Tricep Pushdown",              muscles: "TRICEPS",      sets: 3,       reps: "12–15",            rest:60,  wA:wProgress("Tricep Pushdown",0.35),              wB:wB(0.35), rpe:6 },
+    { name: "Cable Fly",                    muscles: "LOWER CHEST",  sets: 3,       reps: "12–15",            rest:60,  wA:wProgress("Cable Fly",0.20),                    wB:wB(0.20), rpe:6 },
+    { name: "Chest Dip",                    muscles: "CHEST/TRIS",   sets: 3,       reps: "8–12",             rest:75,  wA:"BW",                                           wB:"BW",     rpe:7 },
+    { name: "DB Shoulder Press",            muscles: "SHOULDERS",    sets: 3,       reps: "10–12",            rest:60,  wA:wProgress("DB Shoulder Press",0.22),            wB:wB(0.22), rpe:7 },
+    { name: "Overhead Tricep Extension",    muscles: "TRICEPS",      sets: 3,       reps: "12–15",            rest:60,  wA:wProgress("Overhead Tricep Extension",0.12),    wB:wB(0.12), rpe:6 },
+    ...(prioritizeChestShoulders ? [{ name: "Pec Deck", muscles: "CHEST", sets: 3, reps: "12–15", rest:60, wA:wProgress("Pec Deck",0.25), wB:wB(0.25), rpe:6 }] : []),
   ];
 
   const LEGS_EXERCISES_BASE = (() => {
     const priorityEx = prioritizeGlutesHams ? [
-      { name: "Hip Thrust",           muscles: "GLUTES",     sets: 4, reps: "10–12",  rest:75,  wA:wA(1.10), wB:wB(1.10), rpe:7 },
-      { name: "Romanian Deadlift",    muscles: "HAMSTRINGS", sets: 3, reps: "10–12",  rest:90,  wA:wA(0.94), wB:wB(0.94), rpe:7 },
-      { name: "Bulgarian Split Squat",muscles: "GLUTES/QUADS",sets:3, reps: "10–12",  rest:75,  wA:wA(0.25), wB:wB(0.25), rpe:7 },
+      { name: "Hip Thrust",           muscles: "GLUTES",      sets: 4, reps: "10–12",   rest:75,  wA:wProgress("Hip Thrust",0.90),           wB:wB(0.90), rpe:7 },
+      { name: "Romanian Deadlift",    muscles: "HAMSTRINGS",  sets: 3, reps: "10–12",   rest:90,  wA:wProgress("Romanian Deadlift",0.75),    wB:wB(0.75), rpe:7 },
+      { name: "Bulgarian Split Squat",muscles: "GLUTES/QUADS",sets: 3, reps: "10–12",   rest:75,  wA:wProgress("Bulgarian Split Squat",0.22),wB:wB(0.22), rpe:7 },
     ] : [];
     const standardEx = [
-      { name: "Back Squat",        muscles: "QUADS",      sets: beg?3:4, reps: beg?"8–10":"6–8", rest:120, wA:wA(0.90), wB:wB(0.90), rpe:8 },
-      { name: "Romanian Deadlift", muscles: "HAMSTRINGS", sets: 3,       reps: "10–12",          rest:90,  wA:wA(0.94), wB:wB(0.94), rpe:7 },
-      { name: "Leg Press",         muscles: "QUADS",      sets: 3,       reps: "12–15",          rest:75,  wA:wA(1.75), wB:wB(1.75), rpe:7 },
-      { name: "Leg Curl",          muscles: "HAMSTRINGS", sets: 3,       reps: "12–15",          rest:60,  wA:wA(0.50), wB:wB(0.50), rpe:6 },
-      { name: "Calf Raise",        muscles: "CALVES",     sets: 3,       reps: "15–20",          rest:45,  wA:wA(1.00), wB:wB(1.00), rpe:6 },
+      { name: "Back Squat",        muscles: "QUADS",      sets: beg?3:4, reps: beg?"8–10":"6–8", rest:120, wA:wProgress("Back Squat",1.00),        wB:wB(1.00), rpe:8 },
+      { name: "Romanian Deadlift", muscles: "HAMSTRINGS", sets: 3,       reps: "10–12",          rest:90,  wA:wProgress("Romanian Deadlift",0.75), wB:wB(0.75), rpe:7 },
+      { name: "Leg Press",         muscles: "QUADS",      sets: 3,       reps: "12–15",          rest:75,  wA:wProgress("Leg Press",1.50),         wB:wB(1.50), rpe:7 },
+      { name: "Leg Curl",          muscles: "HAMSTRINGS", sets: 3,       reps: "12–15",          rest:60,  wA:wProgress("Leg Curl",0.40),          wB:wB(0.40), rpe:6 },
+      { name: "Calf Raise",        muscles: "CALVES",     sets: 3,       reps: "15–20",          rest:45,  wA:wProgress("Calf Raise",0.80),        wB:wB(0.80), rpe:6 },
+      { name: "Walking Lunges",    muscles: "QUADS/GLUTES",sets:3,        reps: "12 each",        rest:75,  wA:wProgress("Walking Lunges",0.22),    wB:wB(0.22), rpe:7 },
+      { name: "Leg Extension",     muscles: "QUADS",      sets: 3,       reps: "12–15",          rest:60,  wA:wProgress("Leg Extension",0.45),     wB:wB(0.45), rpe:6 },
+      { name: "Seated Calf Raise", muscles: "CALVES",     sets: 4,       reps: "15–20",          rest:45,  wA:wProgress("Seated Calf Raise",0.60), wB:wB(0.60), rpe:6 },
+      { name: "Ab Wheel Rollout",  muscles: "CORE",       sets: 3,       reps: "8–12",           rest:60,  wA:"BW",                                wB:"BW",     rpe:7 },
     ];
     return prioritizeGlutesHams ? [...priorityEx, ...standardEx.filter(e => e.name !== "Romanian Deadlift")] : standardEx;
   })();
@@ -426,11 +475,15 @@ const buildRoutine = (profile, partnerProfile = null) => {
   const PULL = {
     label: dayLabel(1), name: "Pull Day", tag: "BACK · BICEPS · REAR DELT", color: "#0A84FF",
     exercises: filterEx([
-      { name: "Deadlift",         muscles: "POSTERIOR CHAIN", sets: beg?3:4, reps: beg?"6–8":"5–6", rest:120, wA:wA(1.10), wB:wB(1.10), rpe:8 },
-      { name: "Pull-Ups",         muscles: "LATS",            sets: 3,       reps: "6–10",           rest:90,  wA:"BW",     wB:"BW",     rpe:7 },
-      { name: "Seated Cable Row", muscles: "MID BACK",        sets: 3,       reps: "10–12",          rest:75,  wA:wA(0.69), wB:wB(0.69), rpe:7 },
-      { name: "Barbell Curl",     muscles: "BICEPS",          sets: 3,       reps: "10–12",          rest:60,  wA:wA(0.38), wB:wB(0.38), rpe:6 },
-      { name: "Face Pull",        muscles: "REAR DELT",       sets: 3,       reps: "15–20",          rest:45,  wA:wA(0.30), wB:wB(0.30), rpe:6 },
+      { name: "Deadlift",         muscles: "POSTERIOR CHAIN", sets: beg?3:4, reps: beg?"6–8":"5–6", rest:120, wA:wProgress("Deadlift",1.25),         wB:wB(1.25), rpe:8 },
+      { name: "Pull-Ups",         muscles: "LATS",            sets: 3,       reps: "6–10",           rest:90,  wA:"BW",                               wB:"BW",     rpe:7 },
+      { name: "Seated Cable Row", muscles: "MID BACK",        sets: 3,       reps: "10–12",          rest:75,  wA:wProgress("Seated Cable Row",0.55),  wB:wB(0.55), rpe:7 },
+      { name: "Barbell Curl",     muscles: "BICEPS",          sets: 3,       reps: "10–12",          rest:60,  wA:wProgress("Barbell Curl",0.25),      wB:wB(0.25), rpe:6 },
+      { name: "Face Pull",        muscles: "REAR DELT",       sets: 3,       reps: "15–20",          rest:45,  wA:wProgress("Face Pull",0.20),         wB:wB(0.20), rpe:6 },
+      { name: "Hammer Curl",      muscles: "BRACHIALIS",      sets: 3,       reps: "10–12",          rest:60,  wA:wProgress("Hammer Curl",0.16),       wB:wB(0.16), rpe:6 },
+      { name: "Single Arm Row",   muscles: "LATS",            sets: 3,       reps: "10–12",          rest:60,  wA:wProgress("Single Arm Row",0.32),    wB:wB(0.32), rpe:7 },
+      { name: "Cable Rear Delt",  muscles: "REAR DELT",       sets: 3,       reps: "15–20",          rest:45,  wA:wProgress("Cable Rear Delt",0.14),   wB:wB(0.14), rpe:6 },
+      { name: "EZ Bar Curl",      muscles: "BICEPS",          sets: 3,       reps: "10–12",          rest:60,  wA:wProgress("EZ Bar Curl",0.28),       wB:wB(0.28), rpe:7 },
     ]),
   };
   const LEGS = {
@@ -440,28 +493,35 @@ const buildRoutine = (profile, partnerProfile = null) => {
   const ARMS = {
     label: dayLabel(3), name: "Arms & Core", tag: "BICEPS · TRICEPS · ABS", color: "#BF5AF2",
     exercises: filterEx([
-      { name: "EZ Bar Curl",    muscles: "BICEPS",     sets: 4, reps: "10–12", rest:60, wA:wA(0.35), wB:wB(0.35), rpe:7 },
-      { name: "Skull Crushers", muscles: "TRICEPS",    sets: 4, reps: "10–12", rest:60, wA:wA(0.30), wB:wB(0.30), rpe:7 },
-      { name: "Hammer Curl",    muscles: "BRACHIALIS", sets: 3, reps: "12–15", rest:45, wA:wA(0.20), wB:wB(0.20), rpe:6 },
-      { name: "Cable Crunch",   muscles: "ABS",        sets: 3, reps: "15–20", rest:45, wA:wA(0.44), wB:wB(0.44), rpe:6 },
+      { name: "EZ Bar Curl",               muscles: "BICEPS",     sets: 4, reps: "10–12", rest:60, wA:wProgress("EZ Bar Curl",0.28),              wB:wB(0.28), rpe:7 },
+      { name: "Skull Crushers",            muscles: "TRICEPS",    sets: 4, reps: "10–12", rest:60, wA:wProgress("Skull Crushers",0.22),            wB:wB(0.22), rpe:7 },
+      { name: "Hammer Curl",               muscles: "BRACHIALIS", sets: 3, reps: "12–15", rest:45, wA:wProgress("Hammer Curl",0.16),               wB:wB(0.16), rpe:6 },
+      { name: "Overhead Tricep Extension", muscles: "TRICEPS",    sets: 3, reps: "12–15", rest:45, wA:wProgress("Overhead Tricep Extension",0.12), wB:wB(0.12), rpe:6 },
+      { name: "Barbell Curl",              muscles: "BICEPS",     sets: 3, reps: "10–12", rest:60, wA:wProgress("Barbell Curl",0.25),              wB:wB(0.25), rpe:7 },
+      { name: "Cable Crunch",              muscles: "ABS",        sets: 3, reps: "15–20", rest:45, wA:wProgress("Cable Crunch",0.35),              wB:wB(0.35), rpe:6 },
+      { name: "Hanging Leg Raise",         muscles: "ABS",        sets: 3, reps: "10–15", rest:45, wA:"BW",                                        wB:"BW",     rpe:6 },
     ]),
   };
   const UPPER = {
     label: dayLabel(3), name: "Upper Body", tag: "CHEST · BACK · SHOULDERS", color: "#FF375F",
     exercises: filterEx([
-      { name: "DB Bench Press",      muscles: "CHEST",     sets: 3, reps: "10–12", rest:75, wA:wA(0.40), wB:wB(0.40), rpe:7 },
-      { name: "Bent-Over Row",       muscles: "BACK",      sets: 3, reps: "10–12", rest:75, wA:wA(0.75), wB:wB(0.75), rpe:7 },
-      { name: "DB Shoulder Press",   muscles: "SHOULDERS", sets: 3, reps: "10–12", rest:60, wA:wA(0.28), wB:wB(0.28), rpe:7 },
-      { name: "Tricep Pushdown",     muscles: "TRICEPS",   sets: 3, reps: "12–15", rest:45, wA:wA(0.40), wB:wB(0.40), rpe:6 },
+      { name: "DB Bench Press",    muscles: "CHEST",     sets: 3, reps: "10–12", rest:75, wA:wProgress("DB Bench Press",0.36),    wB:wB(0.36), rpe:7 },
+      { name: "Bent-Over Row",     muscles: "BACK",      sets: 3, reps: "10–12", rest:75, wA:wProgress("Bent-Over Row",0.60),     wB:wB(0.60), rpe:7 },
+      { name: "DB Shoulder Press", muscles: "SHOULDERS", sets: 3, reps: "10–12", rest:60, wA:wProgress("DB Shoulder Press",0.22), wB:wB(0.22), rpe:7 },
+      { name: "Tricep Pushdown",   muscles: "TRICEPS",   sets: 3, reps: "12–15", rest:45, wA:wProgress("Tricep Pushdown",0.35),   wB:wB(0.35), rpe:6 },
+      { name: "Lat Pulldown",      muscles: "LATS",      sets: 3, reps: "10–12", rest:60, wA:wProgress("Lat Pulldown",0.55),      wB:wB(0.55), rpe:7 },
+      { name: "Incline DB Press",  muscles: "UPPER CHEST",sets:3, reps: "10–12", rest:75, wA:wProgress("Incline DB Press",0.28),  wB:wB(0.28), rpe:7 },
     ]),
   };
   const LOWER2 = {
     label: dayLabel(4), name: "Lower Focus", tag: "QUADS · GLUTES · CORE", color: "#FF9F0A",
     exercises: filterEx([
-      { name: "Front Squat",     muscles: "QUADS",  sets: 3, reps: "8–10",  rest:90, wA:wA(0.75), wB:wB(0.75), rpe:7 },
-      { name: "Hip Thrust",      muscles: "GLUTES", sets: 4, reps: "10–12", rest:75, wA:wA(1.10), wB:wB(1.10), rpe:7 },
-      { name: "Walking Lunges",  muscles: "QUADS",  sets: 3, reps: "12–14", rest:60, wA:wA(0.25), wB:wB(0.25), rpe:6 },
-      { name: "Plank",           muscles: "CORE",   sets: 3, reps: "45–60s",rest:45, wA:"BW",     wB:"BW",     rpe:5 },
+      { name: "Front Squat",       muscles: "QUADS",   sets: 3, reps: "8–10",   rest:90, wA:wProgress("Front Squat",0.75),      wB:wB(0.75), rpe:7 },
+      { name: "Hip Thrust",        muscles: "GLUTES",  sets: 4, reps: "10–12",  rest:75, wA:wProgress("Hip Thrust",0.90),       wB:wB(0.90), rpe:7 },
+      { name: "Walking Lunges",    muscles: "QUADS",   sets: 3, reps: "12–14",  rest:60, wA:wProgress("Walking Lunges",0.22),   wB:wB(0.22), rpe:6 },
+      { name: "Leg Curl",          muscles: "HAMSTRINGS",sets:3, reps: "12–15", rest:60, wA:wProgress("Leg Curl",0.40),         wB:wB(0.40), rpe:6 },
+      { name: "Plank",             muscles: "CORE",    sets: 3, reps: "45–60s", rest:45, wA:"BW",                               wB:"BW",     rpe:5 },
+      { name: "Ab Wheel Rollout",  muscles: "CORE",    sets: 3, reps: "8–12",   rest:60, wA:"BW",                               wB:"BW",     rpe:7 },
     ]),
   };
   const ACTIVE = {
@@ -478,21 +538,23 @@ const buildRoutine = (profile, partnerProfile = null) => {
   const FULL_A = {
     label: dayLabel(0), name: "Full Body A", tag: "SQUAT · PRESS · ROW", color: "#C8F135",
     exercises: filterEx([
-      { name: "Back Squat",          muscles: "QUADS",     sets: beg?3:4, reps:"8–10", rest:90,  wA:wA(0.80), wB:wB(0.80), rpe:7 },
-      { name: "Barbell Bench Press", muscles: "CHEST",     sets: 3,       reps:"8–10", rest:75,  wA:wA(0.65), wB:wB(0.65), rpe:7 },
-      { name: "Bent-Over Row",       muscles: "BACK",      sets: 3,       reps:"8–10", rest:75,  wA:wA(0.65), wB:wB(0.65), rpe:7 },
-      { name: "Overhead Press",      muscles: "SHOULDERS", sets: 3,       reps:"8–10", rest:60,  wA:wA(0.55), wB:wB(0.55), rpe:7 },
-      { name: "Plank",               muscles: "CORE",      sets: 2,       reps:"45s",  rest:45,  wA:"BW",     wB:"BW",     rpe:5 },
+      { name: "Back Squat",          muscles: "QUADS",     sets: beg?3:4, reps:"8–10", rest:90,  wA:wProgress("Back Squat",1.00),          wB:wB(1.00), rpe:7 },
+      { name: "Barbell Bench Press", muscles: "CHEST",     sets: 3,       reps:"8–10", rest:75,  wA:wProgress("Barbell Bench Press",0.75), wB:wB(0.75), rpe:7 },
+      { name: "Bent-Over Row",       muscles: "BACK",      sets: 3,       reps:"8–10", rest:75,  wA:wProgress("Bent-Over Row",0.60),       wB:wB(0.60), rpe:7 },
+      { name: "Overhead Press",      muscles: "SHOULDERS", sets: 3,       reps:"8–10", rest:60,  wA:wProgress("Overhead Press",0.45),      wB:wB(0.45), rpe:7 },
+      { name: "Hammer Curl",         muscles: "BICEPS",    sets: 3,       reps:"10–12",rest:45,  wA:wProgress("Hammer Curl",0.16),         wB:wB(0.16), rpe:6 },
+      { name: "Plank",               muscles: "CORE",      sets: 2,       reps:"45s",  rest:45,  wA:"BW",                                  wB:"BW",     rpe:5 },
     ]),
   };
   const FULL_B = {
     label: dayLabel(1), name: "Full Body B", tag: "HINGE · PRESS · PULL", color: "#0A84FF",
     exercises: filterEx([
-      { name: "Deadlift",        muscles: "POSTERIOR CHAIN", sets: beg?3:4, reps:"6–8",  rest:120, wA:wA(1.00), wB:wB(1.00), rpe:8 },
-      { name: "Incline DB Press",muscles: "UPPER CHEST",     sets: 3,       reps:"10–12",rest:75,  wA:wA(0.32), wB:wB(0.32), rpe:7 },
-      { name: "Pull-Ups",        muscles: "LATS",             sets: 3,       reps:"6–8",  rest:75,  wA:"BW",     wB:"BW",     rpe:7 },
-      { name: "Goblet Squat",    muscles: "QUADS",            sets: 3,       reps:"12–15",rest:60,  wA:wA(0.30), wB:wB(0.30), rpe:6 },
-      { name: "Tricep Pushdown", muscles: "TRICEPS",          sets: 3,       reps:"12–15",rest:45,  wA:wA(0.40), wB:wB(0.40), rpe:6 },
+      { name: "Deadlift",        muscles: "POSTERIOR CHAIN", sets: beg?3:4, reps:"6–8",  rest:120, wA:wProgress("Deadlift",1.25),        wB:wB(1.25), rpe:8 },
+      { name: "Incline DB Press",muscles: "UPPER CHEST",     sets: 3,       reps:"10–12",rest:75,  wA:wProgress("Incline DB Press",0.28), wB:wB(0.28), rpe:7 },
+      { name: "Pull-Ups",        muscles: "LATS",             sets: 3,       reps:"6–8",  rest:75,  wA:"BW",                              wB:"BW",     rpe:7 },
+      { name: "Goblet Squat",    muscles: "QUADS",            sets: 3,       reps:"12–15",rest:60,  wA:wProgress("Goblet Squat",0.30),    wB:wB(0.30), rpe:6 },
+      { name: "Tricep Pushdown", muscles: "TRICEPS",          sets: 3,       reps:"12–15",rest:45,  wA:wProgress("Tricep Pushdown",0.35), wB:wB(0.35), rpe:6 },
+      { name: "Romanian Deadlift",muscles:"HAMSTRINGS",       sets: 3,       reps:"10–12",rest:90,  wA:wProgress("Romanian Deadlift",0.75),wB:wB(0.75),rpe:7 },
     ]),
   };
 
@@ -2148,7 +2210,7 @@ function AppInner() {
           const partner = savedSlot === "a" ? data.user_b : data.user_a;
           if (partner) {
             setPartnerProfile(partner);
-            if (!routine) setRoutine(buildRoutine(profile, partner));
+            if (!routine) setRoutine(buildRoutine(profile, partner, getExHistory()));
             // Restore messages
             if (data.messages?.length) setMessages(data.messages);
           } else if (savedSlot === "a") {
@@ -2159,7 +2221,7 @@ function AppInner() {
     }
 
     // 3. Ensure routine exists for returning users
-    if (profile && !routine) setRoutine(buildRoutine(profile));
+    if (profile && !routine) setRoutine(buildRoutine(profile, null, getExHistory()));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ─── Decrypt sensitive localStorage data on mount (migration: raw → encrypted) ─── */
@@ -2484,7 +2546,9 @@ function AppInner() {
         setPostExerciseCheck({ dayIdx, exIdx, exerciseName: ex.name, weight: ex.wA });
       }
     } else {
-      // Workout complete — show completion sheet IMMEDIATELY, then persist async
+      // Workout complete — save exercise history for progressive overload
+      updateExerciseHistory(day.exercises, newCompletedSets);
+      // Show completion sheet IMMEDIATELY, then persist async
       setSheet("complete");
 
       const durationMin = workoutStartRef.current
@@ -2575,7 +2639,7 @@ function AppInner() {
       const data = await response.json();
       summary = data.content?.find(b => b.type === "text")?.text || summary;
     } catch (e) { console.warn("generateRoutine AI error:", e); }
-    const builtRoutine = buildRoutine(_profile, resolvedPartner);
+    const builtRoutine = buildRoutine(_profile, resolvedPartner, getExHistory());
     setRoutine(builtRoutine);
     // FIX 2 — Save week schedule
     const ws = buildWeekSchedule(_profile.trainingDays || [], builtRoutine.length);
@@ -2602,7 +2666,7 @@ function AppInner() {
       const data = await response.json();
       summary = data.content?.find(b => b.type === "text")?.text || summary;
     } catch (e) { console.warn("regenerateRoutine AI error:", e); }
-    setRoutine(buildRoutine(profile, partnerProfile));
+    setRoutine(buildRoutine(profile, partnerProfile, getExHistory()));
     setAiSummary(summary);
     setRegenerating(false);
   };
@@ -2617,7 +2681,7 @@ function AppInner() {
   };
 
   const computePreview = (draftProfile) => {
-    const newR = buildRoutine(draftProfile, partnerProfile);
+    const newR = buildRoutine(draftProfile, partnerProfile, getExHistory());
     const currentNames = new Set((routine || []).flatMap(d => d.exercises.map(e => e.name)));
     const newNames = new Set(newR.flatMap(d => d.exercises.map(e => e.name)));
     return {
@@ -2635,7 +2699,7 @@ function AppInner() {
       clearActiveSession();
     }
     setProfile(prev => ({ ...prev, ...rebuildDraft }));
-    const newRoutine = buildRoutine(rebuildDraft, partnerProfile);
+    const newRoutine = buildRoutine(rebuildDraft, partnerProfile, getExHistory());
     setRoutine(newRoutine);
     // FIX 2 — Save week schedule
     const wsr = buildWeekSchedule(rebuildDraft.trainingDays || [], newRoutine.length);
@@ -2785,7 +2849,7 @@ function AppInner() {
             setPartnerProfile(partner);
             setWaitingForPartner(false);
             if (!workoutStartRef.current) {
-              setRoutine(prev => prev || buildRoutine(profileRef.current || {}, partner));
+              setRoutine(prev => prev || buildRoutine(profileRef.current || {}, partner, getExHistory()));
             }
           }
           setRoomData(data);
@@ -3345,7 +3409,7 @@ function AppInner() {
               // profile and pinHash are already in state (lazy-loaded from str_* keys on startup)
               if (profile && pinHash) {
                 // Ensure routine exists (may have been cleared in state but not localStorage)
-                if (!routine) setRoutine(buildRoutine(profile));
+                if (!routine) setRoutine(buildRoutine(profile, null, getExHistory()));
                 setSplashLoginError("");
                 setScreen("pin");
               } else {
@@ -3873,10 +3937,28 @@ function AppInner() {
               </div>
             </div>
             {/* Feature 4C — Weight progression suggestion */}
-            <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1,marginBottom:8}}>
-              {prs[ex.name]
-                ? `${t('last_time')}: ${displayWeight(prs[ex.name].weight+'kg')} · ${t('try_today')} ${displayWeight((Math.round(prs[ex.name].weight * 1.025 / 2.5) * 2.5)+'kg')}`
-                : t('first_time')}
+            <div style={{background:"rgba(200,241,53,0.06)",borderRadius:10,
+              border:"1px solid rgba(200,241,53,0.15)",padding:"10px 14px",
+              marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div>
+                <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,
+                  color:"var(--gray)",marginBottom:2}}>
+                  {lang==='es'?'PROGRESIÓN':'PROGRESSION'}
+                </div>
+                <div style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,color:"var(--white)"}}>
+                  {prs[ex.name]
+                    ? (lang==='es'
+                      ? `Última: ${displayWeight(prs[ex.name].weight+'kg')} · Objetivo hoy: ${displayWeight(Math.round(prs[ex.name].weight*1.025/1.25)*1.25+'kg')}`
+                      : `Last: ${displayWeight(prs[ex.name].weight+'kg')} · Target today: ${displayWeight(Math.round(prs[ex.name].weight*1.025/1.25)*1.25+'kg')}`)
+                    : (lang==='es'?'Primera sesión — empieza conservador':'First session — start conservative')}
+                </div>
+              </div>
+              {prs[ex.name] && (
+                <div style={{fontFamily:"var(--font-display)",fontSize:22,
+                  color:"var(--lime)",flexShrink:0,marginLeft:12}}>
+                  +2.5%
+                </div>
+              )}
             </div>
             {weightCheckState[`${dayIdx}-${exIdx}`] === 'pending' && ex?.wA && ex.wA !== 'BW' && (
               <div style={{background:"rgba(200,241,53,0.06)",borderRadius:14,
@@ -5388,6 +5470,65 @@ function AppInner() {
                   {weightLog.length === 0 && <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray2)",marginTop:8}}>Log your weight to track progress over time.</div>}
                   {weightLog.length > 0 && <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:1,color:"var(--gray)",marginTop:8}}>Latest: {toDisplay(weightLog[weightLog.length-1].weight)}{unitLabel} · {weightLog.length} entries</div>}
                 </div>
+
+                {/* Weekly volume trend */}
+                {workoutHistory.length >= 3 && (() => {
+                  const now = new Date();
+                  const weeklyData = [];
+                  for (let w = 3; w >= 0; w--) {
+                    const weekStart = new Date(now);
+                    weekStart.setDate(now.getDate() - (now.getDay() || 7) + 1 - w * 7);
+                    weekStart.setHours(0,0,0,0);
+                    const weekEnd = new Date(weekStart);
+                    weekEnd.setDate(weekStart.getDate() + 7);
+                    const weekVolume = workoutHistory
+                      .filter(h => h.timestamp && h.timestamp >= weekStart.getTime() && h.timestamp < weekEnd.getTime())
+                      .reduce((sum, h) => sum + (h.totalVolume || 0), 0);
+                    const weekLabel = w === 0
+                      ? (lang==='es'?'Esta semana':'This week')
+                      : w === 1
+                        ? (lang==='es'?'Sem. pasada':'Last week')
+                        : `${w}w ${lang==='es'?'atrás':'ago'}`;
+                    weeklyData.push({ label: weekLabel, volume: weekVolume });
+                  }
+                  const maxVol = Math.max(...weeklyData.map(d => d.volume), 1);
+                  const trend = weeklyData[3].volume >= weeklyData[0].volume;
+                  return (
+                    <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
+                        <div>
+                          <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,
+                            color:"var(--gray)",marginBottom:4}}>
+                            {lang==='es'?'VOLUMEN SEMANAL':'WEEKLY VOLUME'}
+                          </div>
+                          <div style={{fontFamily:"var(--font-display)",fontSize:24,color:"var(--white)"}}>
+                            {trend ? '↑' : '↓'} {lang==='es'?'TENDENCIA':'TREND'}
+                          </div>
+                        </div>
+                        <div style={{fontFamily:"var(--font-display)",fontSize:18,
+                          color:trend?"var(--lime)":"var(--red)"}}>
+                          {trend ? (lang==='es'?'SUBIENDO':'IMPROVING') : (lang==='es'?'BAJANDO':'DECLINING')}
+                        </div>
+                      </div>
+                      <div style={{display:"flex",gap:8,alignItems:"flex-end",height:60}}>
+                        {weeklyData.map((d, i) => (
+                          <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                            <div style={{
+                              width:"100%",borderRadius:"4px 4px 0 0",
+                              background: i === 3 ? "var(--lime)" : "var(--line2)",
+                              height: `${Math.max(4, (d.volume/maxVol)*52)}px`,
+                              transition:"height 0.4s",
+                            }}/>
+                            <div style={{fontFamily:"var(--font-cond)",fontSize:8,letterSpacing:1,
+                              color:i===3?"var(--lime)":"var(--gray)",textAlign:"center",lineHeight:1.2}}>
+                              {d.label}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Workout feed */}
                 {workoutHistory.length === 0 ? (
