@@ -381,7 +381,8 @@ const buildRoutine = (profile, partnerProfile = null, exerciseHistory = {}) => {
   const goalReps = goalCfg.reps[levelKey] || "8-12";
   const goalRest = goalCfg.rest[levelKey] || 75;
   const days  = parseInt(profile.daysPerWeek) || 3;
-  const yw    = parseInt(profile.weight) || 80;
+  const rawWeight = parseFloat(profile.weight) || (profile.weightUnit==='lbs' ? 176 : 80);
+  const yw    = profile.weightUnit === 'lbs' ? Math.round(rawWeight * 0.453592) : rawWeight;
   const pw    = partnerProfile?.weight ? parseInt(partnerProfile.weight) : null;
   const wB    = (m) => pw ? `${Math.round(pw * m)}kg` : "— kg";
   const beg   = levelKey === "beginner";
@@ -828,7 +829,7 @@ class ErrorBoundary extends React.Component {
 
 const STRINGS = {
   en: {
-    welcome: "Welcome to Stronger",
+    welcome: "Welcome to Stronnger",
     create_account: "Create Account",
     log_in: "Log In",
     good_morning: "Good Morning",
@@ -1332,7 +1333,7 @@ const STRINGS = {
     day_sun: "SUN",
   },
   es: {
-    welcome: "Bienvenido a Stronger",
+    welcome: "Bienvenido a Stronnger",
     create_account: "Crear Cuenta",
     log_in: "Iniciar Sesión",
     good_morning: "Buenos Días",
@@ -1988,6 +1989,20 @@ function AppInner() {
     return `${displayed}${unitLabel}`;
   };
 
+  const getWeightContext = (exerciseName) => {
+    const entry = EXERCISE_DB[exerciseName];
+    if (!entry) return null;
+    const equip = entry.equipment || [];
+    if (equip.includes('bodyweight')) return lang==='es'?'peso corporal':'bodyweight';
+    if (equip.includes('barbell')) return lang==='es'?'total en barra':'total on bar';
+    if (equip.includes('dumbbells')) return lang==='es'?'por mancuerna':'per dumbbell';
+    if (equip.includes('cables')) return lang==='es'?'pila de cables':'cable stack';
+    if (equip.includes('machine')) return lang==='es'?'pila de máquina':'machine stack';
+    if (equip.includes('kettlebell')) return lang==='es'?'por kettlebell':'per kettlebell';
+    if (equip.includes('bands')) return lang==='es'?'banda de resistencia':'resistance band';
+    return null;
+  };
+
   // PIN auth (session-only state)
   const [pinEntry, setPinEntry]       = useState("");
   const [pinAttempts, setPinAttempts] = useState(0);
@@ -2126,6 +2141,11 @@ function AppInner() {
   const [bufferScreen, setBufferScreen] = useState(false);
   const [bufferSide, setBufferSide] = useState('left');
   const bufferTimerRef = useRef(null);
+
+  // Custom exercise picker
+  const [selectedDayIdx, setSelectedDayIdx] = useState(null);
+  const [customSelectedExercises, setCustomSelectedExercises] = useState([]);
+  const [customPickerFilter, setCustomPickerFilter] = useState('all');
 
   // Keep profileRef current for use inside async channel callbacks
   useEffect(() => { profileRef.current = profile; }, [profile]);
@@ -2533,13 +2553,16 @@ function AppInner() {
       return saved || ex.rest || 90;
     };
 
+    const trainingStyle = profile?.trainingStyle || 'standard';
+    const skipRestBetweenExercises = trainingStyle === 'superset' || trainingStyle === 'circuit';
+
     if (setNum < ex.sets) {
       setSetNum(s => s + 1);
       startRest(getRestDuration());
     } else if (exIdx < day.exercises.length - 1) {
       setExIdx(i => i + 1);
       setSetNum(1);
-      startRest(getRestDuration());
+      if (!skipRestBetweenExercises) startRest(getRestDuration());
       // Ask post-exercise weight check
       const currentKey = `${dayIdx}-${exIdx}`;
       if (weightCheckState[currentKey] === 'confirmed') {
@@ -2600,7 +2623,7 @@ function AppInner() {
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
           max_tokens: 1000,
-          system: "You are an elite strength coach inside a couples gym app called Stronger. Give concise, direct, warm advice. 2–3 short paragraphs maximum. No markdown, no bullet points. Real coach voice, not clinical." + (lang === 'es' ? ' Respond in Spanish.' : ''),
+          system: "You are an elite strength coach inside a couples gym app called Stronnger. Give concise, direct, warm advice. 2–3 short paragraphs maximum. No markdown, no bullet points. Real coach voice, not clinical." + (lang === 'es' ? ' Respond in Spanish.' : ''),
           messages: [{ role: "user", content: prompt }],
         }),
       });
@@ -3243,7 +3266,7 @@ function AppInner() {
     <>
       <GlobalStyles />
       <div style={{background:"#000",minHeight:"100vh",maxWidth:430,margin:"0 auto",display:"flex",flexDirection:"column",padding:"0 28px",paddingTop:"max(env(safe-area-inset-top),48px)",paddingBottom:"max(env(safe-area-inset-bottom),32px)"}}>
-        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:4,color:"rgba(200,241,53,0.6)",marginBottom:32}}>STRONGER</div>
+        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:4,color:"rgba(200,241,53,0.6)",marginBottom:32}}>STRONNGER</div>
 
         <div style={{fontFamily:"var(--font-cond)",fontSize:12,letterSpacing:4,color:"var(--gray)",marginBottom:8}}>
           YOUR PARTNER INVITED YOU
@@ -3301,9 +3324,9 @@ function AppInner() {
     <>
       <GlobalStyles />
       <div style={{background:"#000",minHeight:"100vh",maxWidth:430,margin:"0 auto",display:"flex",flexDirection:"column",padding:"0 28px",position:"relative"}}>
-        {/* STRONGER logo — small, top center */}
+        {/* STRONNGER logo — small, top center */}
         <div style={{paddingTop:"max(env(safe-area-inset-top),32px)",textAlign:"center"}}>
-          <span style={{fontFamily:"var(--font-display)",fontSize:20,letterSpacing:6,color:"rgba(255,255,255,0.2)"}}>STRONGER</span>
+          <span style={{fontFamily:"var(--font-display)",fontSize:20,letterSpacing:6,color:"rgba(255,255,255,0.2)"}}>STRONNGER</span>
         </div>
 
         {/* Main centered content */}
@@ -3588,11 +3611,46 @@ function AppInner() {
       <div key={1} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
         <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>{t('step_2_of_7')}</div>
         <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>{t('your_stats')}</div>
-        <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:32}}>{t('calibrate_desc')}</p>
+        <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:20}}>{t('calibrate_desc')}</p>
+        {/* Unit selector */}
+        <div style={{display:"flex",gap:10,marginBottom:20}}>
+          <div style={{flex:1}}>
+            <Label text={lang==='es'?'UNIDAD DE PESO':'WEIGHT UNIT'}/>
+            <div style={{display:"flex",gap:6,marginTop:6}}>
+              {['lbs','kg'].map(u=>(
+                <button key={u} onClick={()=>p("weightUnit",u)}
+                  style={{flex:1,padding:"10px 0",borderRadius:10,
+                    fontFamily:"var(--font-cond)",fontWeight:700,fontSize:14,letterSpacing:2,
+                    cursor:"pointer",transition:"all .15s",
+                    background:(profile.weightUnit||'lbs')===u?"var(--lime)":"var(--card)",
+                    color:(profile.weightUnit||'lbs')===u?"var(--black)":"var(--gray)",
+                    border:`1.5px solid ${(profile.weightUnit||'lbs')===u?"var(--lime)":"var(--line2)"}`}}>
+                  {u.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div style={{flex:1}}>
+            <Label text={lang==='es'?'UNIDAD DE ALTURA':'HEIGHT UNIT'}/>
+            <div style={{display:"flex",gap:6,marginTop:6}}>
+              {['cm','ft'].map(u=>(
+                <button key={u} onClick={()=>p("heightUnit",u)}
+                  style={{flex:1,padding:"10px 0",borderRadius:10,
+                    fontFamily:"var(--font-cond)",fontWeight:700,fontSize:14,letterSpacing:2,
+                    cursor:"pointer",transition:"all .15s",
+                    background:(profile.heightUnit||'cm')===u?"var(--lime)":"var(--card)",
+                    color:(profile.heightUnit||'cm')===u?"var(--black)":"var(--gray)",
+                    border:`1.5px solid ${(profile.heightUnit||'cm')===u?"var(--lime)":"var(--line2)"}`}}>
+                  {u.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
         <div style={{display:"flex",gap:12}}>
           <div style={{flex:1}}><Input label={t('age_label')} placeholder="28" value={profile.age} onChange={v=>p("age",v)} type="number"/></div>
-          <div style={{flex:1}}><Input label={t('weight_label')} placeholder={weightUnit === 'lbs' ? '176' : '80'} value={profile.weight} onChange={v=>p("weight",v)} type="number" unit={weightUnit === 'lbs' ? 'lbs' : 'kg'}/></div>
-          <div style={{flex:1}}><Input label={t('height_label')} placeholder="175" value={profile.height} onChange={v=>p("height",v)} type="number" unit="cm"/></div>
+          <div style={{flex:1}}><Input label={lang==='es'?'PESO':'WEIGHT'} placeholder={(profile.weightUnit||'lbs')==='lbs'?'176':'80'} value={profile.weight} onChange={v=>p("weight",v)} type="number" unit={profile.weightUnit||'lbs'}/></div>
+          <div style={{flex:1}}><Input label={lang==='es'?'ALTURA':'HEIGHT'} placeholder={(profile.heightUnit||'cm')==='ft'?"5'10":"175"} value={profile.height} onChange={v=>p("height",v)} type="text" unit={profile.heightUnit||'cm'}/></div>
         </div>
         <Label text={t('biological_sex_label')}/>
         <div className="chip-select">
@@ -3677,7 +3735,10 @@ function AppInner() {
             p("trainingDays", getDayPreset(parseInt(v)));
           }}/>)}
         </div>
-        <Label text={t('training_days_label')}/>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+          <Label text={t('training_days_label')}/>
+          <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--lime)"}}>{(profile.trainingDays||getDayPreset(parseInt(profile.daysPerWeek)||3)).length} / {parseInt(profile.daysPerWeek)||3}</span>
+        </div>
         <div style={{display:"flex",gap:6,marginBottom:24}}>
           {ALL_DAYS_LABELS.map(d => {
             const td = profile.trainingDays || getDayPreset(parseInt(profile.daysPerWeek)||3);
@@ -3687,17 +3748,14 @@ function AppInner() {
               <button key={d} onClick={() => {
                 const current = profile.trainingDays || getDayPreset(parseInt(profile.daysPerWeek)||3);
                 if (isSelected) {
-                  if (current.length <= n) {
-                    setToast(`Select exactly ${n} training days`);
-                    setTimeout(()=>setToast(null),2000);
-                    return;
-                  }
-                  p("trainingDays", current.filter(x=>x!==d));
+                  if (current.length > 1) p("trainingDays", current.filter(x=>x!==d));
                 } else {
-                  const newDays = current.length >= n
-                    ? [...current.slice(0,-1), d].sort((a,b)=>ALL_DAYS_LABELS.indexOf(a)-ALL_DAYS_LABELS.indexOf(b))
-                    : [...current, d].sort((a,b)=>ALL_DAYS_LABELS.indexOf(a)-ALL_DAYS_LABELS.indexOf(b));
-                  p("trainingDays", newDays);
+                  if (current.length >= n) {
+                    setToast(lang==='es'?`Máximo ${n} días. Deselecciona un día primero.`:`Max ${n} days. Deselect a day first.`);
+                    setTimeout(()=>setToast(null),2500);
+                  } else {
+                    p("trainingDays", [...current, d].sort((a,b)=>ALL_DAYS_LABELS.indexOf(a)-ALL_DAYS_LABELS.indexOf(b)));
+                  }
                 }
               }} style={{
                 flex:1,padding:"8px 0",borderRadius:8,border:isSelected?"1.5px solid var(--lime)":"1.5px solid var(--line2)",
@@ -3709,8 +3767,21 @@ function AppInner() {
           })}
         </div>
         <Label text={t('available_equipment_label')}/>
-        <div className="chip-select">
+        <div className="chip-select" style={{marginBottom:20}}>
           {EQUIP.map(v=><Chip key={v} value={v} label={t(EQUIP_KEYS[v])||v} current={profile.equipment} onToggle={toggleEquip}/>)}
+        </div>
+        <Label text={lang==='es'?'ESTILO DE ENTRENAMIENTO':'TRAINING STYLE'}/>
+        <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:4}}>
+          {[
+            {id:'standard', label:lang==='es'?'ESTÁNDAR':'STANDARD'},
+            {id:'superset', label:'SUPERSET'},
+            {id:'active_rest', label:lang==='es'?'DESCANSO ACTIVO':'ACTIVE REST'},
+            {id:'circuit', label:'CIRCUIT'},
+          ].map(style=>(
+            <button key={style.id} onClick={()=>p("trainingStyle", style.id)}
+              className={(profile.trainingStyle||'standard')===style.id?"chip active":"chip"}
+              style={{textAlign:"left"}}>{style.label}</button>
+          ))}
         </div>
       </div>,
 
@@ -3877,6 +3948,7 @@ function AppInner() {
             <div style={{textAlign:"center"}}>
               <div style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:3,color:accentColor}}>{t(DAY_KEYS[day.name])||day.name}</div>
               <div style={{fontFamily:"var(--font-cond)",fontWeight:600,fontSize:13,color:"var(--gray)"}}>{exIdx+1} / {day.exercises.length}</div>
+              {(profile?.trainingStyle||'standard')!=='standard' && <div style={{fontFamily:"var(--font-cond)",fontSize:8,letterSpacing:2,color:"var(--lime)",marginTop:1}}>{({superset:'SUPERSET',circuit:'CIRCUIT',active_rest:'ACTIVE REST'})[profile.trainingStyle]||''}</div>}
             </div>
             <button onClick={()=>setSheet("emergency")} style={{background:"rgba(255,59,48,.12)",border:"none",borderRadius:10,padding:"8px 14px",color:"var(--red)",fontSize:12,fontWeight:700,fontFamily:"var(--font-cond)",letterSpacing:1,cursor:"pointer"}}>{t('stop')}</button>
           </div>
@@ -3928,7 +4000,7 @@ function AppInner() {
                     {ex.wA === "BW" || !ex.wA ? (ex.wA || "—") : displayWeight(ex.wA)}
                   </div>
                   <div style={{fontFamily:"var(--font-cond)",fontSize:8,color:"var(--gray2)",letterSpacing:1,marginTop:2}}>
-                    {lang==='es'?'TOCAR PARA EDITAR':'TAP TO EDIT'}
+                    {getWeightContext(ex.name) ? getWeightContext(ex.name).toUpperCase() : (lang==='es'?'TOCAR PARA EDITAR':'TAP TO EDIT')}
                   </div>
                 </div>
               </div>
@@ -4113,6 +4185,18 @@ function AppInner() {
                     </button>
                   ))}
                 </div>
+                {(profile?.trainingStyle||'standard') === 'active_rest' && (() => {
+                  const ACTIVE_REST_MOVES = lang==='es'
+                    ? ['10 saltos de tijera','Estira el pecho 30s','Camina en el lugar','20 elevaciones de talones','Respira profundo 5x']
+                    : ['10 jumping jacks','Chest stretch 30s','Walk in place','20 calf raises','5 deep breaths'];
+                  const move = ACTIVE_REST_MOVES[exIdx % ACTIVE_REST_MOVES.length];
+                  return (
+                    <div style={{background:"rgba(200,241,53,0.08)",border:"1px solid rgba(200,241,53,0.25)",borderRadius:12,padding:"10px 14px",marginBottom:12}}>
+                      <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--lime)",marginBottom:4}}>{lang==='es'?'DESCANSO ACTIVO':'ACTIVE REST'}</div>
+                      <div style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:14,color:"var(--white)"}}>{move}</div>
+                    </div>
+                  );
+                })()}
                 <button onClick={skipRest} style={{
                   background:"var(--card)",border:`1.5px solid ${accentColor}`,borderRadius:12,
                   padding:"12px 32px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:14,
@@ -4598,9 +4682,10 @@ function AppInner() {
               <div style={{fontFamily:"var(--font-display)",fontSize:32,marginBottom:6}}>
                 {lang==='es'?'AJUSTAR PESO':'ADJUST WEIGHT'}
               </div>
-              <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:2,marginBottom:16}}>
+              <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:2,marginBottom:4}}>
                 {ex.name.toUpperCase()}
               </div>
+              {getWeightContext(ex.name) && <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--lime)",marginBottom:12}}>{getWeightContext(ex.name).toUpperCase()}</div>}
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
                 <input type="number" inputMode="decimal" step="0.5" value={tempWeight}
                   onChange={e=>setTempWeight(e.target.value)}
@@ -4741,9 +4826,9 @@ function AppInner() {
                 ES
               </button>
             </div>
-            <div style={{display:"flex",gap:8,marginBottom:20,alignItems:"center"}}>
+            <div style={{display:"flex",gap:8,marginBottom:12,alignItems:"center",flexWrap:"wrap"}}>
               <span style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginRight:4}}>
-                {lang==='es'?'UNIDADES':'UNITS'}
+                {lang==='es'?'PESO':'WEIGHT'}
               </span>
               {['kg','lbs'].map(unit => (
                 <button key={unit} onClick={()=>p("weightUnit", unit)}
@@ -4761,6 +4846,26 @@ function AppInner() {
                 </button>
               ))}
             </div>
+            <div style={{display:"flex",gap:8,marginBottom:20,alignItems:"center",flexWrap:"wrap"}}>
+              <span style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginRight:4}}>
+                {lang==='es'?'ALTURA':'HEIGHT'}
+              </span>
+              {['cm','ft'].map(unit => (
+                <button key={unit} onClick={()=>p("heightUnit", unit)}
+                  style={{
+                    background: (profile.heightUnit||'cm') === unit ? '#C8F135' : 'transparent',
+                    color: (profile.heightUnit||'cm') === unit ? '#080808' : '#888',
+                    border: '1px solid',
+                    borderColor: (profile.heightUnit||'cm') === unit ? '#C8F135' : '#333',
+                    borderRadius: 20, padding:'6px 14px',
+                    fontFamily:"'Barlow Condensed',sans-serif",
+                    fontWeight:700, fontSize:13, letterSpacing:1, cursor:'pointer',
+                    textTransform:'uppercase'
+                  }}>
+                  {unit.toUpperCase()}
+                </button>
+              ))}
+            </div>
 
             {/* Profile */}
             <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
@@ -4769,7 +4874,7 @@ function AppInner() {
               <div style={{display:"flex",gap:10}}>
                 <div style={{flex:1}}><Input label="WEIGHT" placeholder={weightUnit === 'lbs' ? '176' : '80'} value={settingsWeight} onChange={v=>setSettingsWeight(v)} type="number" unit={weightUnit === 'lbs' ? 'lbs' : 'kg'}/></div>
                 <div style={{flex:1}}><Input label="AGE" placeholder="28" value={settingsAge} onChange={v=>setSettingsAge(v)} type="number"/></div>
-                <div style={{flex:1}}><Input label="HEIGHT" placeholder="175" value={settingsHeight} onChange={v=>setSettingsHeight(v)} type="number" unit="cm"/></div>
+                <div style={{flex:1}}><Input label="HEIGHT" placeholder={(profile.heightUnit||'cm')==='ft'?'5\'10"':"175"} value={settingsHeight} onChange={v=>setSettingsHeight(v)} type="number" unit={profile.heightUnit||'cm'}/></div>
               </div>
               <div style={{marginBottom:14}}>
                 <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>{t('injuries_label')}</div>
@@ -4787,7 +4892,10 @@ function AppInner() {
 
             {/* Training Days */}
             <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
-              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:14}}>{t('training_days_label')}</div>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+                <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)"}}>{t('training_days_label')}</div>
+                <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--lime)"}}>{settingsTD.length} / {settingsN}</span>
+              </div>
               <div style={{display:"flex",gap:6,marginBottom:12}}>
                 {ALL_DAYS_SETTINGS.map(d => {
                   const isSelected = settingsTD.includes(d);
@@ -4796,8 +4904,12 @@ function AppInner() {
                       if (isSelected) {
                         if (settingsTD.length > 1) p("trainingDays", settingsTD.filter(x=>x!==d));
                       } else {
-                        const newDays = settingsTD.length >= settingsN ? [...settingsTD.slice(1), d] : [...settingsTD, d];
-                        p("trainingDays", newDays);
+                        if (settingsTD.length >= settingsN) {
+                          setToast(lang==='es'?`Máximo ${settingsN} días. Deselecciona un día primero.`:`Max ${settingsN} days. Deselect a day first.`);
+                          setTimeout(()=>setToast(null),2500);
+                        } else {
+                          p("trainingDays", [...settingsTD, d].sort((a,b)=>ALL_DAYS_SETTINGS.indexOf(a)-ALL_DAYS_SETTINGS.indexOf(b)));
+                        }
                       }
                     }} style={{
                       flex:1,padding:"8px 0",borderRadius:8,border:isSelected?"1.5px solid var(--lime)":"1.5px solid var(--line2)",
@@ -4808,6 +4920,28 @@ function AppInner() {
                   );
                 })}
               </div>
+            </div>
+
+            {/* Training Style */}
+            <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
+              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:14}}>{lang==='es'?'ESTILO DE ENTRENAMIENTO':'TRAINING STYLE'}</div>
+              {[
+                {id:'standard', label:lang==='es'?'ESTÁNDAR':'STANDARD', desc:lang==='es'?'Completa un ejercicio antes de pasar al siguiente.':'Complete one exercise before moving to the next.'},
+                {id:'superset', label:'SUPERSET', desc:lang==='es'?'Dos ejercicios consecutivos sin descanso.':'Two exercises back-to-back with no rest between them.'},
+                {id:'active_rest', label:lang==='es'?'DESCANSO ACTIVO':'ACTIVE REST', desc:lang==='es'?'Estiramiento o cardio ligero entre series.':'Light stretch or cardio between sets.'},
+                {id:'circuit', label:'CIRCUIT', desc:lang==='es'?'Todos los ejercicios en ronda, luego descansa.':'All exercises in a round, then rest.'},
+              ].map(style=>(
+                <button key={style.id} onClick={()=>p("trainingStyle", style.id)}
+                  style={{width:"100%",textAlign:"left",background:(profile.trainingStyle||'standard')===style.id?"rgba(200,241,53,0.08)":"transparent",
+                    border:`1px solid ${(profile.trainingStyle||'standard')===style.id?'rgba(200,241,53,0.4)':'var(--line)'}`,
+                    borderRadius:12,padding:"12px 14px",marginBottom:8,cursor:"pointer"}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:2}}>
+                    <span style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:1,color:(profile.trainingStyle||'standard')===style.id?'var(--lime)':'var(--white)'}}>{style.label}</span>
+                    {(profile.trainingStyle||'standard')===style.id && <span style={{color:"var(--lime)",fontSize:14}}>✓</span>}
+                  </div>
+                  <div style={{fontFamily:"var(--font-body)",fontSize:12,color:"var(--gray)",lineHeight:1.4}}>{style.desc}</div>
+                </button>
+              ))}
             </div>
 
             {/* Security — Change PIN */}
@@ -5083,7 +5217,7 @@ function AppInner() {
                             <div key={i} onClick={() => {
                               if (activeSession?.isActive && activeSession.dayIdx !== i) setConflictPendingDayIdx(i);
                               else if (activeSession?.isActive && activeSession.dayIdx === i) resumeWorkout();
-                              else startWorkout(i);
+                              else { setSelectedDayIdx(i); setCustomSelectedExercises([]); setCustomPickerFilter('all'); setSheet("day_options"); }
                             }} style={{flexShrink:0,width:130,background:"var(--card)",borderRadius:14,
                               border:`1px solid ${i === todayWorkoutIdx2 ? d.color+'66' : 'var(--line)'}`,
                               padding:"12px 14px",cursor:"pointer",position:"relative",overflow:"hidden"}}>
@@ -5149,6 +5283,7 @@ function AppInner() {
                       <div style={{textAlign:"right"}}>
                         <div style={{fontFamily:"var(--font-display)",fontSize:18,color:d.color}}>{displayWeight(e.wA)}</div>
                         <div style={{fontFamily:"var(--font-display)",fontSize:14,color:"var(--gray2)"}}>{displayWeight(e.wB)}</div>
+                        {getWeightContext(e.name) && <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:1,color:"var(--gray)",marginTop:2}}>{getWeightContext(e.name).toUpperCase()}</div>}
                       </div>
                     </div>
                   ))}
@@ -5412,7 +5547,7 @@ function AppInner() {
             const shareWorkout = (h) => {
               const text = `${h.dayName} — ${h.totalVolume ? (h.totalVolume/1000).toFixed(1)+"t total volume" : h.totalSets+" sets"}`;
               if (navigator.share) {
-                navigator.share({ title:"Stronger", text, url:"https://stronnger.netlify.app" }).catch(()=>{});
+                navigator.share({ title:"Stronnger", text, url:"https://stronnger.netlify.app" }).catch(()=>{});
               } else {
                 navigator.clipboard.writeText(text).catch(()=>{});
               }
@@ -5671,6 +5806,125 @@ function AppInner() {
             </div>
           </div>
         )}
+        {/* CHANGE 5 — Day options sheet */}
+        {sheet === "day_options" && selectedDayIdx !== null && (() => {
+          const selDay = routine[selectedDayIdx];
+          if (!selDay) return null;
+          return (
+            <SheetWrapper onClose={()=>setSheet(null)}>
+              <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:3,color:selDay.color,marginBottom:4}}>{(t(DAY_KEYS[selDay.name])||selDay.name).toUpperCase()}</div>
+              <div style={{fontFamily:"var(--font-display)",fontSize:36,lineHeight:0.92,marginBottom:6}}>{lang==='es'?'OPCIONES DE\nENTRENAMIENTO':'WORKOUT\nOPTIONS'}</div>
+              <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1,marginBottom:20}}>{selDay.exercises.length} {t('exercises_count_label')}</div>
+              <button onClick={()=>{ setSheet(null); startWorkout(selectedDayIdx); }}
+                style={{width:"100%",background:selDay.color,border:"none",borderRadius:14,padding:"17px 0",
+                  fontFamily:"var(--font-cond)",fontWeight:900,fontSize:16,letterSpacing:2,
+                  color:"var(--black)",cursor:"pointer",marginBottom:10}}>
+                {lang==='es'?'INICIAR RUTINA':'START ROUTINE'}
+              </button>
+              <button onClick={()=>{ setCustomSelectedExercises(selDay.exercises.map(e=>e.name)); setCustomPickerFilter('all'); setSheet("custom_picker"); }}
+                style={{width:"100%",background:"var(--card)",border:"1px solid var(--line)",borderRadius:14,padding:"17px 0",
+                  fontFamily:"var(--font-cond)",fontWeight:900,fontSize:16,letterSpacing:2,
+                  color:"var(--white)",cursor:"pointer",marginBottom:10}}>
+                {lang==='es'?'PERSONALIZAR EJERCICIOS':'CUSTOMIZE EXERCISES'}
+              </button>
+              <button onClick={()=>setSheet(null)}
+                style={{width:"100%",background:"transparent",border:"none",padding:"12px 0",
+                  color:"var(--gray)",fontFamily:"var(--font-cond)",fontSize:14,letterSpacing:2,cursor:"pointer"}}>
+                {t('cancel')}
+              </button>
+            </SheetWrapper>
+          );
+        })()}
+
+        {/* CHANGE 5 — Custom exercise picker sheet */}
+        {sheet === "custom_picker" && selectedDayIdx !== null && (() => {
+          const selDay = routine[selectedDayIdx];
+          if (!selDay) return null;
+          const MUSCLE_FILTERS = ['all','chest','back','shoulders','arms','legs','core'];
+          const MUSCLE_LABELS = {all:lang==='es'?'TODOS':'ALL',chest:lang==='es'?'PECHO':'CHEST',back:lang==='es'?'ESPALDA':'BACK',shoulders:lang==='es'?'HOMBROS':'SHOULDERS',arms:lang==='es'?'BRAZOS':'ARMS',legs:lang==='es'?'PIERNAS':'LEGS',core:'CORE'};
+          const LEGS_MUSCLES = ['quads','hamstrings','glutes','calves','legs'];
+          const ARMS_MUSCLES = ['biceps','triceps','arms','forearms'];
+          const availableExercises = Object.entries(EXERCISE_DB).filter(([name, info]) => {
+            const allowed = equipmentAllowed(name, profile?.equipment || []);
+            if (!allowed) return false;
+            if (customPickerFilter === 'all') return true;
+            if (customPickerFilter === 'legs') return info.muscles.some(m => LEGS_MUSCLES.includes(m));
+            if (customPickerFilter === 'arms') return info.muscles.some(m => ARMS_MUSCLES.includes(m));
+            return info.muscles.includes(customPickerFilter);
+          }).map(([name]) => name).sort();
+          const toggleEx = (name) => {
+            setCustomSelectedExercises(prev =>
+              prev.includes(name) ? prev.filter(x=>x!==name) : prev.length < 12 ? [...prev, name] : (setToast(lang==='es'?'Máximo 12 ejercicios':'Max 12 exercises'), setTimeout(()=>setToast(null),2000), prev)
+            );
+          };
+          const handleConfirm = () => {
+            if (customSelectedExercises.length === 0) { setToast(lang==='es'?'Selecciona al menos un ejercicio':'Select at least one exercise'); setTimeout(()=>setToast(null),2000); return; }
+            const baseDay = selDay;
+            const customExercises = customSelectedExercises.map(name => {
+              const existing = baseDay.exercises.find(e=>e.name===name);
+              if (existing) return existing;
+              const dbEntry = EXERCISE_DB[name];
+              return { name, sets:3, reps:'8-12', rest:90, wA:'BW', muscles:(dbEntry?.muscles||[]).join(', ') };
+            });
+            setRoutine(prev => prev.map((d,i) => i !== selectedDayIdx ? d : { ...d, exercises: customExercises }));
+            setSheet(null);
+            setTimeout(() => startWorkout(selectedDayIdx), 100);
+          };
+          return (
+            <SheetWrapper onClose={()=>setSheet("day_options")}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:32,lineHeight:0.92,marginBottom:14}}>{lang==='es'?'ELIGE\nEJERCICIOS':'PICK\nEXERCISES'}</div>
+              <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:8,marginBottom:14}}>
+                {MUSCLE_FILTERS.map(f=>(
+                  <button key={f} onClick={()=>setCustomPickerFilter(f)}
+                    style={{flexShrink:0,background:customPickerFilter===f?'var(--lime)':'var(--card)',
+                      color:customPickerFilter===f?'var(--black)':'var(--gray)',
+                      border:`1px solid ${customPickerFilter===f?'var(--lime)':'var(--line)'}`,
+                      borderRadius:20,padding:'6px 14px',fontFamily:"var(--font-cond)",fontWeight:700,
+                      fontSize:11,letterSpacing:1,cursor:'pointer'}}>
+                    {MUSCLE_LABELS[f]}
+                  </button>
+                ))}
+              </div>
+              <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"var(--gray)",marginBottom:10}}>
+                {customSelectedExercises.length} / 12 {lang==='es'?'SELECCIONADOS':'SELECTED'}
+              </div>
+              <div style={{maxHeight:'45vh',overflowY:'auto',marginBottom:14}}>
+                {availableExercises.map(name=>{
+                  const isSel = customSelectedExercises.includes(name);
+                  const ctx = getWeightContext(name);
+                  return (
+                    <div key={name} onClick={()=>toggleEx(name)}
+                      style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",
+                        background:isSel?"rgba(200,241,53,0.08)":"transparent",
+                        borderRadius:10,border:`1px solid ${isSel?'rgba(200,241,53,0.3)':'transparent'}`,
+                        marginBottom:4,cursor:"pointer"}}>
+                      <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${isSel?'var(--lime)':'var(--line)'}`,
+                        background:isSel?'var(--lime)':'transparent',display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                        {isSel && <span style={{color:"var(--black)",fontSize:12,fontWeight:900}}>✓</span>}
+                      </div>
+                      <div>
+                        <div style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:14,color:"var(--white)"}}>{name}</div>
+                        {ctx && <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:1,color:"var(--gray)",marginTop:1}}>{ctx.toUpperCase()}</div>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <button onClick={handleConfirm}
+                style={{width:"100%",background:"var(--lime)",border:"none",borderRadius:14,padding:"17px 0",
+                  fontFamily:"var(--font-cond)",fontWeight:900,fontSize:16,letterSpacing:2,
+                  color:"var(--black)",cursor:"pointer",marginBottom:10}}>
+                {lang==='es'?`INICIAR CON ${customSelectedExercises.length} EJ.`:`START WITH ${customSelectedExercises.length} EX.`}
+              </button>
+              <button onClick={()=>setSheet("day_options")}
+                style={{width:"100%",background:"transparent",border:"none",padding:"12px 0",
+                  color:"var(--gray)",fontFamily:"var(--font-cond)",fontSize:14,letterSpacing:2,cursor:"pointer"}}>
+                ← {t('back')||'BACK'}
+              </button>
+            </SheetWrapper>
+          );
+        })()}
+
         {/* FIX 2 — Schedule sheet */}
         {sheet === "schedule" && (
           <SheetWrapper onClose={()=>setSheet(null)}>
@@ -5809,7 +6063,10 @@ function AppInner() {
                       <button key={v} className={`chip${rd.daysPerWeek===v?" active":""}`} onClick={()=>{setRd("daysPerWeek",v);setRd("trainingDays",getDayPresetRd(parseInt(v)));}}>{v}</button>
                     ))}
                   </div>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>{t('training_days_upper2')}</div>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                    <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)"}}>{t('training_days_upper2')}</div>
+                    <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--lime)"}}>{(rd.trainingDays||getDayPresetRd(parseInt(rd.daysPerWeek)||3)).length} / {parseInt(rd.daysPerWeek)||3}</span>
+                  </div>
                   <div style={{display:"flex",gap:6}}>
                     {ALL_DAYS_RD.map(d => {
                       const td = rd.trainingDays || getDayPresetRd(parseInt(rd.daysPerWeek)||3);
@@ -5817,7 +6074,14 @@ function AppInner() {
                       const n = parseInt(rd.daysPerWeek)||3;
                       return <button key={d} onClick={()=>{
                         if (isSel) { if(td.length>1) setRd("trainingDays",td.filter(x=>x!==d)); }
-                        else { const nd = td.length>=n ? [...td.slice(1),d] : [...td,d]; setRd("trainingDays",nd); }
+                        else {
+                          if (td.length>=n) {
+                            setToast(lang==='es'?`Máximo ${n} días. Deselecciona un día primero.`:`Max ${n} days. Deselect a day first.`);
+                            setTimeout(()=>setToast(null),2500);
+                          } else {
+                            setRd("trainingDays",[...td,d].sort((a,b)=>ALL_DAYS_RD.indexOf(a)-ALL_DAYS_RD.indexOf(b)));
+                          }
+                        }
                       }} style={{flex:1,padding:"8px 0",borderRadius:8,border:isSel?"1.5px solid var(--lime)":"1.5px solid var(--line2)",background:isSel?"var(--lime)":"var(--dark)",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:9,letterSpacing:0.5,color:isSel?"var(--black)":"var(--gray)",cursor:"pointer",transition:"all .15s"}}>{d}</button>;
                     })}
                   </div>
