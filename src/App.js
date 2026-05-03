@@ -239,23 +239,84 @@ const equipmentAllowed = (exerciseName, userEquipment) => {
 
 /* ─── Alternatives DB for exercise swap ─── */
 const ALTERNATIVES_DB = {
-  "Barbell Bench Press": ["Dumbbell Press","Push-Ups","Cable Chest Press"],
-  "Incline DB Press": ["Incline Barbell Press","Cable Flyes","Machine Press"],
-  "Overhead Press": ["DB Shoulder Press","Arnold Press","Machine Shoulder Press"],
-  "Lateral Raise": ["Cable Lateral Raise","Machine Lateral Raise","Upright Row"],
-  "Tricep Pushdown": ["Skull Crushers","Diamond Push-Ups","Overhead Tricep Extension"],
-  "Deadlift": ["Romanian Deadlift","Trap Bar Deadlift","Good Mornings"],
-  "Pull-Ups": ["Lat Pulldown","Assisted Pull-Ups","Band Pull-Ups"],
-  "Seated Cable Row": ["DB Row","T-Bar Row","Machine Row"],
-  "Barbell Curl": ["Dumbbell Curl","Cable Curl","Preacher Curl"],
-  "Face Pull": ["Band Pull-Apart","Rear Delt Fly","Cable Rear Delt"],
-  "Back Squat": ["Goblet Squat","Leg Press","Bulgarian Split Squat"],
-  "Romanian Deadlift": ["Leg Curl","Good Mornings","Nordic Curl"],
-  "Leg Press": ["Hack Squat","Belt Squat","Front Squat"],
-  "Leg Curl": ["Romanian Deadlift","Nordic Curl","Good Mornings"],
-  "Calf Raise": ["Seated Calf Raise","Single-Leg Calf Raise","Jump Rope"],
-  "Hip Thrust": ["Glute Bridge","Cable Kickback","Bulgarian Split Squat"],
-  "Walking Lunges": ["Reverse Lunges","Step-Ups","Split Squat"],
+  // CHEST
+  "Barbell Bench Press":    ["DB Bench Press","Push-Ups","Cable Fly","Chest Dip","Machine Chest Press","Incline Push-Ups"],
+  "Incline DB Press":       ["Incline Push-Ups","DB Fly","Cable Fly","Machine Chest Press","DB Bench Press","Pike Push-Up"],
+  "DB Bench Press":         ["Push-Ups","Barbell Bench Press","Cable Fly","Machine Chest Press","Chest Dip","DB Fly"],
+  "Cable Fly":              ["DB Fly","Push-Ups","Pec Deck","Chest Dip","Incline Push-Ups","DB Bench Press"],
+  "DB Fly":                 ["Push-Ups","Cable Fly","Pec Deck","Incline Push-Ups","Chest Dip","DB Bench Press"],
+  "Chest Dip":              ["Push-Ups","Diamond Push-Ups","DB Bench Press","Machine Chest Press","Cable Fly","Close-Grip Bench Press"],
+  "Push-Ups":               ["Chest Dip","Diamond Push-Ups","DB Bench Press","Cable Fly","Incline Push-Ups","Machine Chest Press"],
+  "Machine Chest Press":    ["Push-Ups","DB Bench Press","Barbell Bench Press","Cable Fly","Chest Dip","Incline Push-Ups"],
+  "Pec Deck":               ["DB Fly","Push-Ups","Cable Fly","Incline Push-Ups","Chest Dip","Incline DB Press"],
+  "Dumbbell Press":         ["Push-Ups","DB Bench Press","Cable Fly","Chest Dip","Machine Chest Press","Barbell Bench Press"],
+  // SHOULDERS
+  "Overhead Press":         ["DB Shoulder Press","Arnold Press","Pike Push-Up","Machine Shoulder Press","Cable Front Raise","Band Shoulder Press"],
+  "DB Shoulder Press":      ["Arnold Press","Pike Push-Up","Overhead Press","Machine Shoulder Press","Band Shoulder Press","Cable Lateral Raise"],
+  "Arnold Press":           ["DB Shoulder Press","Pike Push-Up","Overhead Press","Machine Shoulder Press","Cable Front Raise","Band Shoulder Press"],
+  "Lateral Raise":          ["Cable Lateral Raise","Machine Lateral Raise","Upright Row","Face Pull","Front Raise","Band Lateral Raise"],
+  "Cable Lateral Raise":    ["Lateral Raise","Machine Lateral Raise","Upright Row","Front Raise","Face Pull","Band Lateral Raise"],
+  "Face Pull":              ["Band Pull-Apart","Rear Delt Fly","Cable Rear Delt","Inverted Row","Band Face Pull","Lateral Raise"],
+  "Front Raise":            ["Lateral Raise","Cable Front Raise","Upright Row","DB Shoulder Press","Band Lateral Raise","Machine Shoulder Press"],
+  "Machine Shoulder Press": ["DB Shoulder Press","Arnold Press","Pike Push-Up","Overhead Press","Band Shoulder Press","Cable Lateral Raise"],
+  "Upright Row":            ["Lateral Raise","Face Pull","Band Pull-Apart","Cable Lateral Raise","Machine Lateral Raise","Rear Delt Fly"],
+  // BACK
+  "Deadlift":               ["Romanian Deadlift","Trap Bar Deadlift","Good Mornings","KB Deadlift","Sumo Deadlift","Glute Bridge"],
+  "Pull-Ups":               ["Inverted Row","Lat Pulldown","Chin-Up","Band Lat Pulldown","Seated Cable Row","Single Arm Row"],
+  "Chin-Up":                ["Inverted Row","Pull-Ups","Lat Pulldown","Band Lat Pulldown","Seated Cable Row","Single Arm Row"],
+  "Lat Pulldown":           ["Inverted Row","Pull-Ups","Chin-Up","Band Lat Pulldown","Seated Cable Row","Single Arm Row"],
+  "Seated Cable Row":       ["Single Arm Row","Inverted Row","Bent-Over Row","Machine Row","Band Row","T-Bar Row"],
+  "Bent-Over Row":          ["Single Arm Row","Inverted Row","Seated Cable Row","T-Bar Row","Band Row","Machine Row"],
+  "Single Arm Row":         ["Inverted Row","Bent-Over Row","Seated Cable Row","Machine Row","Band Row","Chest-Supported Row"],
+  "T-Bar Row":              ["Single Arm Row","Inverted Row","Bent-Over Row","Seated Cable Row","Band Row","Machine Row"],
+  "Machine Row":            ["Single Arm Row","Inverted Row","Seated Cable Row","Bent-Over Row","Band Row","Chest-Supported Row"],
+  "Romanian Deadlift":      ["Glute Bridge","Single Leg RDL","Good Mornings","Leg Curl","Nordic Curl","Band Deadlift"],
+  "Cable Pullover":         ["DB Pullover","Pull-Ups","Straight Arm Lat Pulldown","Inverted Row","Lat Pulldown","Band Lat Pulldown"],
+  "Trap Bar Deadlift":      ["Romanian Deadlift","Deadlift","Goblet Squat","Good Mornings","Leg Press","Sumo Deadlift"],
+  "Inverted Row":           ["Bent-Over Row","Single Arm Row","Pull-Ups","Band Row","Seated Cable Row","Machine Row"],
+  // BICEPS
+  "Barbell Curl":           ["Dumbbell Curl","Hammer Curl","EZ Bar Curl","Cable Curl","Concentration Curl","Band Bicep Curl"],
+  "EZ Bar Curl":            ["Dumbbell Curl","Hammer Curl","Barbell Curl","Cable Curl","Preacher Curl","Band Bicep Curl"],
+  "Dumbbell Curl":          ["Hammer Curl","Barbell Curl","EZ Bar Curl","Cable Curl","Concentration Curl","Band Bicep Curl"],
+  "Hammer Curl":            ["Dumbbell Curl","Barbell Curl","Cable Curl","Band Bicep Curl","EZ Bar Curl","Concentration Curl"],
+  "Cable Curl":             ["Dumbbell Curl","Hammer Curl","Barbell Curl","EZ Bar Curl","Band Bicep Curl","Preacher Curl"],
+  "Preacher Curl":          ["Dumbbell Curl","Concentration Curl","EZ Bar Curl","Cable Curl","Band Bicep Curl","Barbell Curl"],
+  "Concentration Curl":     ["Dumbbell Curl","Hammer Curl","Preacher Curl","Cable Curl","Band Bicep Curl","EZ Bar Curl"],
+  // TRICEPS
+  "Tricep Pushdown":        ["Diamond Push-Ups","Overhead Tricep Extension","Skull Crushers","Tricep Dip","Close-Grip Bench Press","Band Tricep Extension"],
+  "Skull Crushers":         ["Diamond Push-Ups","Overhead Tricep Extension","Tricep Pushdown","Tricep Dip","Close-Grip Bench Press","Band Tricep Extension"],
+  "Overhead Tricep Extension":["Diamond Push-Ups","Skull Crushers","Tricep Pushdown","Tricep Dip","Close-Grip Bench Press","Band Tricep Extension"],
+  "Cable Overhead Tricep":  ["Diamond Push-Ups","Overhead Tricep Extension","Skull Crushers","Tricep Pushdown","Tricep Dip","Band Tricep Extension"],
+  "Tricep Dip":             ["Diamond Push-Ups","Tricep Pushdown","Close-Grip Bench Press","Skull Crushers","Overhead Tricep Extension","Band Tricep Extension"],
+  "Diamond Push-Ups":       ["Tricep Dip","Tricep Pushdown","Close-Grip Bench Press","Skull Crushers","Overhead Tricep Extension","Band Tricep Extension"],
+  "Close-Grip Bench Press": ["Diamond Push-Ups","Tricep Pushdown","Skull Crushers","Tricep Dip","Overhead Tricep Extension","Band Tricep Extension"],
+  // LEGS
+  "Back Squat":             ["Goblet Squat","Bodyweight Squat","Leg Press","Bulgarian Split Squat","Front Squat","Hack Squat"],
+  "Front Squat":            ["Goblet Squat","Bodyweight Squat","Back Squat","Leg Press","Hack Squat","Bulgarian Split Squat"],
+  "Goblet Squat":           ["Bodyweight Squat","Back Squat","Leg Press","Bulgarian Split Squat","Band Squat","Front Squat"],
+  "Leg Press":              ["Goblet Squat","Bodyweight Squat","Back Squat","Hack Squat","Bulgarian Split Squat","Belt Squat"],
+  "Hack Squat":             ["Goblet Squat","Leg Press","Back Squat","Bulgarian Split Squat","Front Squat","Bodyweight Squat"],
+  "Bulgarian Split Squat":  ["Reverse Lunges","Bodyweight Squat","Walking Lunges","Step-Ups","Goblet Squat","Single Leg Press"],
+  "Walking Lunges":         ["Reverse Lunges","Bodyweight Squat","Bulgarian Split Squat","Step-Ups","Lateral Lunge","Band Squat"],
+  "Reverse Lunges":         ["Walking Lunges","Bodyweight Squat","Bulgarian Split Squat","Step-Ups","Lateral Lunge","Band Squat"],
+  "Leg Curl":               ["Glute Bridge","Single Leg RDL","Romanian Deadlift","Good Mornings","Nordic Curl","Band Deadlift"],
+  "Leg Extension":          ["Bodyweight Squat","Wall Sit","Reverse Lunges","Goblet Squat","Band Squat","Step-Ups"],
+  "Hip Thrust":             ["Glute Bridge","Single-Leg Glute Bridge","Romanian Deadlift","Reverse Lunges","Band Hip Thrust","Good Mornings"],
+  "Glute Bridge":           ["Hip Thrust","Single-Leg Glute Bridge","Romanian Deadlift","Reverse Lunges","Band Hip Thrust","Leg Curl"],
+  "Good Mornings":          ["Glute Bridge","Romanian Deadlift","Deadlift","Nordic Curl","Single Leg RDL","Hip Thrust"],
+  "Calf Raise":             ["Seated Calf Raise","Single-Leg Calf Raise","Jump Rope","Tuck Jump","Step-Up","Bodyweight Squat"],
+  "Seated Calf Raise":      ["Calf Raise","Single-Leg Calf Raise","Jump Rope","Tuck Jump","Box Jump","Band Calf Raise"],
+  "Step-Ups":               ["Reverse Lunges","Bodyweight Squat","Walking Lunges","Bulgarian Split Squat","Box Jump","Goblet Squat"],
+  "Box Jump":               ["Jump Squat","Tuck Jump","Step-Ups","Bodyweight Squat","Burpee","Skater Jump"],
+  // CORE
+  "Plank":                  ["Side Plank","Dead Bug","Hollow Body Hold","Mountain Climber","Bird Dog","Ab Wheel Rollout"],
+  "Side Plank":             ["Plank","Dead Bug","Russian Twist","Hollow Body Hold","Bird Dog","Mountain Climber"],
+  "Cable Crunch":           ["Hanging Leg Raise","V-Up","Ab Wheel Rollout","Russian Twist","Bicycle Crunch","Hollow Body Hold"],
+  "Ab Wheel Rollout":       ["Plank","Dead Bug","Hollow Body Hold","Hanging Leg Raise","V-Up","Cable Crunch"],
+  "Hanging Leg Raise":      ["Lying Leg Raise","V-Up","Ab Wheel Rollout","Bicycle Crunch","Hollow Body Hold","Cable Crunch"],
+  "Russian Twist":          ["Side Plank","Bicycle Crunch","V-Up","Hollow Body Hold","Dead Bug","Cable Crunch"],
+  "Dead Bug":               ["Plank","Bird Dog","Hollow Body Hold","Side Plank","Ab Wheel Rollout","Mountain Climber"],
+  "Mountain Climber":       ["Plank","Burpee","Dead Bug","High Knees","Bear Crawl","Side Plank"],
 };
 
 /* ─── Recovery tips for rest days ─── */
@@ -469,13 +530,50 @@ const buildRoutine = (profile, partnerProfile = null, exerciseHistory = {}) => {
     return prioritizeGlutesHams ? [...priorityEx, ...standardEx.filter(e => e.name !== "Romanian Deadlift")] : standardEx;
   })();
 
+  const applySupersets = (exercises) => {
+    if (profile.trainingStyle !== 'superset') return exercises;
+    const ANTAGONIST_PAIRS = [
+      ['chest','back'], ['chest','lats'],
+      ['shoulders','back'],
+      ['triceps','biceps'],
+      ['quads','hamstrings'],
+      ['glutes','quads'],
+      ['chest','core'],
+    ];
+    const result = [...exercises];
+    const paired = new Set();
+    result.forEach((ex, i) => {
+      if (paired.has(i)) return;
+      const exMuscles = (EXERCISE_DB[ex.name]?.muscles || [ex.muscles?.toLowerCase() || '']);
+      let bestMatch = -1;
+      for (let j = i + 1; j < result.length; j++) {
+        if (paired.has(j)) continue;
+        const jMuscles = (EXERCISE_DB[result[j].name]?.muscles || [result[j].muscles?.toLowerCase() || '']);
+        const isAntagonist = ANTAGONIST_PAIRS.some(([a, b]) =>
+          (exMuscles.some(m => m.includes(a)) && jMuscles.some(m => m.includes(b))) ||
+          (exMuscles.some(m => m.includes(b)) && jMuscles.some(m => m.includes(a)))
+        );
+        if (isAntagonist) { bestMatch = j; break; }
+      }
+      if (bestMatch !== -1) {
+        result[i] = { ...result[i], supersetWith: result[bestMatch].name, supersetPairId: `ss${i}` };
+        result[bestMatch] = { ...result[bestMatch], supersetWith: result[i].name, supersetPairId: `ss${i}`, isSupersetB: true };
+        const [partner] = result.splice(bestMatch, 1);
+        result.splice(i + 1, 0, partner);
+        paired.add(i);
+        paired.add(i + 1);
+      }
+    });
+    return result;
+  };
+
   const PUSH = {
-    label: dayLabel(0), name: "Push Day", tag: "CHEST · SHOULDERS · TRIS", color: "#C8F135",
-    exercises: filterEx(PUSH_EXERCISES_BASE),
+    label: dayLabel(0), name: "Push Day", tag: "CHEST · SHOULDERS · TRIS", color: "#A78BFA",
+    exercises: applySupersets(filterEx(PUSH_EXERCISES_BASE)),
   };
   const PULL = {
-    label: dayLabel(1), name: "Pull Day", tag: "BACK · BICEPS · REAR DELT", color: "#0A84FF",
-    exercises: filterEx([
+    label: dayLabel(1), name: "Pull Day", tag: "BACK · BICEPS · REAR DELT", color: "#22D3EE",
+    exercises: applySupersets(filterEx([
       { name: "Deadlift",         muscles: "POSTERIOR CHAIN", sets: beg?3:4, reps: beg?"6–8":"5–6", rest:120, wA:wProgress("Deadlift",1.25),         wB:wB(1.25), rpe:8 },
       { name: "Pull-Ups",         muscles: "LATS",            sets: 3,       reps: "6–10",           rest:90,  wA:"BW",                               wB:"BW",     rpe:7 },
       { name: "Seated Cable Row", muscles: "MID BACK",        sets: 3,       reps: "10–12",          rest:75,  wA:wProgress("Seated Cable Row",0.55),  wB:wB(0.55), rpe:7 },
@@ -485,15 +583,15 @@ const buildRoutine = (profile, partnerProfile = null, exerciseHistory = {}) => {
       { name: "Single Arm Row",   muscles: "LATS",            sets: 3,       reps: "10–12",          rest:60,  wA:wProgress("Single Arm Row",0.32),    wB:wB(0.32), rpe:7 },
       { name: "Cable Rear Delt",  muscles: "REAR DELT",       sets: 3,       reps: "15–20",          rest:45,  wA:wProgress("Cable Rear Delt",0.14),   wB:wB(0.14), rpe:6 },
       { name: "EZ Bar Curl",      muscles: "BICEPS",          sets: 3,       reps: "10–12",          rest:60,  wA:wProgress("EZ Bar Curl",0.28),       wB:wB(0.28), rpe:7 },
-    ]),
+    ])),
   };
   const LEGS = {
-    label: dayLabel(2), name: "Leg Day", tag: "QUADS · HAMSTRINGS · GLUTES", color: "#FF9F0A",
-    exercises: filterEx(LEGS_EXERCISES_BASE),
+    label: dayLabel(2), name: "Leg Day", tag: "QUADS · HAMSTRINGS · GLUTES", color: "#F59E0B",
+    exercises: applySupersets(filterEx(LEGS_EXERCISES_BASE)),
   };
   const ARMS = {
-    label: dayLabel(3), name: "Arms & Core", tag: "BICEPS · TRICEPS · ABS", color: "#BF5AF2",
-    exercises: filterEx([
+    label: dayLabel(3), name: "Arms & Core", tag: "BICEPS · TRICEPS · ABS", color: "#F472B6",
+    exercises: applySupersets(filterEx([
       { name: "EZ Bar Curl",               muscles: "BICEPS",     sets: 4, reps: "10–12", rest:60, wA:wProgress("EZ Bar Curl",0.28),              wB:wB(0.28), rpe:7 },
       { name: "Skull Crushers",            muscles: "TRICEPS",    sets: 4, reps: "10–12", rest:60, wA:wProgress("Skull Crushers",0.22),            wB:wB(0.22), rpe:7 },
       { name: "Hammer Curl",               muscles: "BRACHIALIS", sets: 3, reps: "12–15", rest:45, wA:wProgress("Hammer Curl",0.16),               wB:wB(0.16), rpe:6 },
@@ -501,32 +599,32 @@ const buildRoutine = (profile, partnerProfile = null, exerciseHistory = {}) => {
       { name: "Barbell Curl",              muscles: "BICEPS",     sets: 3, reps: "10–12", rest:60, wA:wProgress("Barbell Curl",0.25),              wB:wB(0.25), rpe:7 },
       { name: "Cable Crunch",              muscles: "ABS",        sets: 3, reps: "15–20", rest:45, wA:wProgress("Cable Crunch",0.35),              wB:wB(0.35), rpe:6 },
       { name: "Hanging Leg Raise",         muscles: "ABS",        sets: 3, reps: "10–15", rest:45, wA:"BW",                                        wB:"BW",     rpe:6 },
-    ]),
+    ])),
   };
   const UPPER = {
-    label: dayLabel(3), name: "Upper Body", tag: "CHEST · BACK · SHOULDERS", color: "#FF375F",
-    exercises: filterEx([
+    label: dayLabel(3), name: "Upper Body", tag: "CHEST · BACK · SHOULDERS", color: "#F87171",
+    exercises: applySupersets(filterEx([
       { name: "DB Bench Press",    muscles: "CHEST",     sets: 3, reps: "10–12", rest:75, wA:wProgress("DB Bench Press",0.36),    wB:wB(0.36), rpe:7 },
       { name: "Bent-Over Row",     muscles: "BACK",      sets: 3, reps: "10–12", rest:75, wA:wProgress("Bent-Over Row",0.60),     wB:wB(0.60), rpe:7 },
       { name: "DB Shoulder Press", muscles: "SHOULDERS", sets: 3, reps: "10–12", rest:60, wA:wProgress("DB Shoulder Press",0.22), wB:wB(0.22), rpe:7 },
       { name: "Tricep Pushdown",   muscles: "TRICEPS",   sets: 3, reps: "12–15", rest:45, wA:wProgress("Tricep Pushdown",0.35),   wB:wB(0.35), rpe:6 },
       { name: "Lat Pulldown",      muscles: "LATS",      sets: 3, reps: "10–12", rest:60, wA:wProgress("Lat Pulldown",0.55),      wB:wB(0.55), rpe:7 },
       { name: "Incline DB Press",  muscles: "UPPER CHEST",sets:3, reps: "10–12", rest:75, wA:wProgress("Incline DB Press",0.28),  wB:wB(0.28), rpe:7 },
-    ]),
+    ])),
   };
   const LOWER2 = {
-    label: dayLabel(4), name: "Lower Focus", tag: "QUADS · GLUTES · CORE", color: "#FF9F0A",
-    exercises: filterEx([
+    label: dayLabel(4), name: "Lower Focus", tag: "QUADS · GLUTES · CORE", color: "#34D399",
+    exercises: applySupersets(filterEx([
       { name: "Front Squat",       muscles: "QUADS",   sets: 3, reps: "8–10",   rest:90, wA:wProgress("Front Squat",0.75),      wB:wB(0.75), rpe:7 },
       { name: "Hip Thrust",        muscles: "GLUTES",  sets: 4, reps: "10–12",  rest:75, wA:wProgress("Hip Thrust",0.90),       wB:wB(0.90), rpe:7 },
       { name: "Walking Lunges",    muscles: "QUADS",   sets: 3, reps: "12–14",  rest:60, wA:wProgress("Walking Lunges",0.22),   wB:wB(0.22), rpe:6 },
       { name: "Leg Curl",          muscles: "HAMSTRINGS",sets:3, reps: "12–15", rest:60, wA:wProgress("Leg Curl",0.40),         wB:wB(0.40), rpe:6 },
       { name: "Plank",             muscles: "CORE",    sets: 3, reps: "45–60s", rest:45, wA:"BW",                               wB:"BW",     rpe:5 },
       { name: "Ab Wheel Rollout",  muscles: "CORE",    sets: 3, reps: "8–12",   rest:60, wA:"BW",                               wB:"BW",     rpe:7 },
-    ]),
+    ])),
   };
   const ACTIVE = {
-    label: dayLabel(5), name: "Active Recovery", tag: "MOBILITY · CORE · STRETCH", color: "#30d158",
+    label: dayLabel(5), name: "Active Recovery", tag: "MOBILITY · CORE · STRETCH", color: "#10B981",
     exercises: filterEx([
       { name: "Foam Rolling",        muscles: "FULL BODY", sets: 1, reps: "5–10 min", rest:0,  wA:"BW", wB:"BW", rpe:3 },
       { name: "Hip Flexor Stretch",  muscles: "HIPS",      sets: 3, reps: "30–45s",   rest:30, wA:"BW", wB:"BW", rpe:3 },
@@ -537,26 +635,26 @@ const buildRoutine = (profile, partnerProfile = null, exerciseHistory = {}) => {
 
   // Full Body days for "Full body" split preference or 2-day routines
   const FULL_A = {
-    label: dayLabel(0), name: "Full Body A", tag: "SQUAT · PRESS · ROW", color: "#C8F135",
-    exercises: filterEx([
+    label: dayLabel(0), name: "Full Body A", tag: "SQUAT · PRESS · ROW", color: "#A78BFA",
+    exercises: applySupersets(filterEx([
       { name: "Back Squat",          muscles: "QUADS",     sets: beg?3:4, reps:"8–10", rest:90,  wA:wProgress("Back Squat",1.00),          wB:wB(1.00), rpe:7 },
       { name: "Barbell Bench Press", muscles: "CHEST",     sets: 3,       reps:"8–10", rest:75,  wA:wProgress("Barbell Bench Press",0.75), wB:wB(0.75), rpe:7 },
       { name: "Bent-Over Row",       muscles: "BACK",      sets: 3,       reps:"8–10", rest:75,  wA:wProgress("Bent-Over Row",0.60),       wB:wB(0.60), rpe:7 },
       { name: "Overhead Press",      muscles: "SHOULDERS", sets: 3,       reps:"8–10", rest:60,  wA:wProgress("Overhead Press",0.45),      wB:wB(0.45), rpe:7 },
       { name: "Hammer Curl",         muscles: "BICEPS",    sets: 3,       reps:"10–12",rest:45,  wA:wProgress("Hammer Curl",0.16),         wB:wB(0.16), rpe:6 },
       { name: "Plank",               muscles: "CORE",      sets: 2,       reps:"45s",  rest:45,  wA:"BW",                                  wB:"BW",     rpe:5 },
-    ]),
+    ])),
   };
   const FULL_B = {
-    label: dayLabel(1), name: "Full Body B", tag: "HINGE · PRESS · PULL", color: "#0A84FF",
-    exercises: filterEx([
+    label: dayLabel(1), name: "Full Body B", tag: "HINGE · PRESS · PULL", color: "#22D3EE",
+    exercises: applySupersets(filterEx([
       { name: "Deadlift",        muscles: "POSTERIOR CHAIN", sets: beg?3:4, reps:"6–8",  rest:120, wA:wProgress("Deadlift",1.25),        wB:wB(1.25), rpe:8 },
       { name: "Incline DB Press",muscles: "UPPER CHEST",     sets: 3,       reps:"10–12",rest:75,  wA:wProgress("Incline DB Press",0.28), wB:wB(0.28), rpe:7 },
       { name: "Pull-Ups",        muscles: "LATS",             sets: 3,       reps:"6–8",  rest:75,  wA:"BW",                              wB:"BW",     rpe:7 },
       { name: "Goblet Squat",    muscles: "QUADS",            sets: 3,       reps:"12–15",rest:60,  wA:wProgress("Goblet Squat",0.30),    wB:wB(0.30), rpe:6 },
       { name: "Tricep Pushdown", muscles: "TRICEPS",          sets: 3,       reps:"12–15",rest:45,  wA:wProgress("Tricep Pushdown",0.35), wB:wB(0.35), rpe:6 },
       { name: "Romanian Deadlift",muscles:"HAMSTRINGS",       sets: 3,       reps:"10–12",rest:90,  wA:wProgress("Romanian Deadlift",0.75),wB:wB(0.75),rpe:7 },
-    ]),
+    ])),
   };
 
   // Full body split generates FULL_A/FULL_B alternating
@@ -630,10 +728,12 @@ const GlobalStyles = () => (
     @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@400;600;700;800;900&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     :root {
-      --black:#080808; --dark:#111; --card:#1a1a1a;
-      --line:rgba(255,255,255,0.08); --line2:rgba(255,255,255,0.14);
-      --lime:#C8F135; --white:#FAFAFA; --gray:#888; --gray2:#555;
-      --red:#FF3B30; --blue:#0A84FF; --orange:#FF9F0A;
+      --black:#0D0F14; --dark:#161B22; --card:#1E2530; --card2:#252D3A;
+      --line:rgba(255,255,255,0.07); --line2:rgba(255,255,255,0.12);
+      --violet:#A78BFA; --violet-dim:#7C3AED; --violet-glow:rgba(167,139,250,0.2);
+      --cyan:#22D3EE; --cyan-dim:#0891B2;
+      --emerald:#10B981; --amber:#F59E0B;
+      --red:#F87171; --white:#F8FAFC; --gray:#94A3B8; --gray2:#64748B;
       --font-display:'Bebas Neue',sans-serif;
       --font-body:'Barlow',sans-serif;
       --font-cond:'Barlow Condensed',sans-serif;
@@ -662,7 +762,7 @@ const GlobalStyles = () => (
       font-family:var(--font-cond); font-weight:700; font-size:13px; letter-spacing:1.5px;
       color:var(--gray); background:var(--card); cursor:pointer; transition:all 0.18s;
     }
-    .chip.active { border-color:var(--lime); color:var(--black); background:var(--lime); }
+    .chip.active { border-color:var(--violet); color:var(--white); background:rgba(167,139,250,0.15); }
     .chip:active { transform: scale(0.95); }
     button:active { transform: scale(0.98); }
     .nav-btn {
@@ -680,10 +780,10 @@ const Btn = ({ children, onClick, full, style = {}, variant = "lime" }) => {
     fontFamily:"var(--font-cond)", fontWeight:900, fontSize:16,
     letterSpacing:2.5, textTransform:"uppercase", padding:"17px 0",
     width: full ? "100%" : "auto", transition:"opacity .15s",
-    ...(variant==="lime"     ? {background:"var(--lime)",color:"var(--black)",boxShadow:"0 0 28px rgba(200,241,53,.25)"} : {}),
+    ...(variant==="lime"     ? {background:"linear-gradient(135deg,#A78BFA 0%,#7C3AED 100%)",color:"#F8FAFC",boxShadow:"0 0 28px rgba(167,139,250,0.3)"} : {}),
     ...(variant==="ghost"    ? {background:"transparent",color:"var(--gray)",border:"1px solid var(--line2)"} : {}),
     ...(variant==="red"      ? {background:"var(--red)",color:"#fff"} : {}),
-    ...(variant==="red-soft" ? {background:"rgba(255,59,48,.1)",color:"var(--red)",border:"1px solid rgba(255,59,48,.25)"} : {}),
+    ...(variant==="red-soft" ? {background:"rgba(248,113,113,.1)",color:"var(--red)",border:"1px solid rgba(248,113,113,.25)"} : {}),
     ...(variant==="dark"     ? {background:"var(--card)",color:"var(--white)",border:"1px solid var(--line)"} : {}),
     ...style,
   };
@@ -721,10 +821,10 @@ const PinDots = ({count, error, shake}) => (
       <div key={i} style={{
         width:18,height:18,borderRadius:99,
         background: error
-          ? (i<count ? "var(--red)" : "rgba(255,59,48,0.25)")
-          : (i<count ? "var(--lime)" : "var(--line2)"),
+          ? (i<count ? "var(--red)" : "rgba(248,113,113,0.25)")
+          : (i<count ? "var(--violet)" : "var(--line2)"),
         transition:"background .15s",
-        boxShadow: i<count && !error ? "0 0 8px rgba(200,241,53,0.6)" : "none",
+        boxShadow: i<count && !error ? "0 0 8px rgba(167,139,250,0.6)" : "none",
       }} />
     ))}
   </div>
@@ -797,14 +897,14 @@ class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div style={{ background:'#080808', minHeight:'100vh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:32, fontFamily:"'Barlow Condensed',sans-serif", textAlign:'center' }}>
-          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:52, color:'#FAFAFA', lineHeight:0.9, marginBottom:16 }}>
+          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:52, color:'#F8FAFC', lineHeight:0.9, marginBottom:16 }}>
             SOMETHING<br/>WENT WRONG
           </div>
           <p style={{ color:'#888', fontSize:15, marginBottom:40, lineHeight:1.6, fontFamily:"'Barlow',sans-serif" }}>
             An error occurred. Your profile and workout history are safe.
           </p>
           <button onClick={this.handleRestart}
-            style={{ background:'#C8F135', border:'none', borderRadius:14, padding:'16px 0',
+            style={{ background:'var(--violet)', border:'none', borderRadius:14, padding:'16px 0',
                      width:'100%', maxWidth:320, fontFamily:"'Barlow Condensed',sans-serif",
                      fontWeight:900, fontSize:16, letterSpacing:2, color:'#080808',
                      cursor:'pointer', marginBottom:12 }}>
@@ -1902,7 +2002,7 @@ function ChatWindow({ partnerProfile, messages, userSlot, onSend, lang }) {
   return (
     <div style={{position:"fixed",bottom:82+kbOffset,right:"calc(50% - 215px + 16px)",width:300,background:"#181818",borderRadius:18,border:"1px solid var(--line)",boxShadow:"0 8px 40px rgba(0,0,0,.6)",zIndex:59,display:"flex",flexDirection:"column",maxHeight:340,overflow:"hidden"}}>
       <div style={{padding:"12px 14px 8px",borderBottom:"1px solid var(--line)",display:"flex",alignItems:"center",gap:8}}>
-        <div style={{width:8,height:8,borderRadius:99,background:"#30d158",animation:"pulse 2s infinite"}}/>
+        <div style={{width:8,height:8,borderRadius:99,background:"#10B981",animation:"pulse 2s infinite"}}/>
         <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--white)"}}>{(partnerProfile.name||"PARTNER").toUpperCase()}</span>
       </div>
       <div style={{flex:1,overflowY:"auto",padding:"10px 12px",display:"flex",flexDirection:"column",gap:6}}>
@@ -1912,7 +2012,7 @@ function ChatWindow({ partnerProfile, messages, userSlot, onSend, lang }) {
         {messages.map((m,i)=>{
           const isMe = m.slot ? m.slot===userSlot : m.from==="me";
           return (
-            <div key={i} style={{alignSelf:isMe?"flex-end":"flex-start",background:isMe?"var(--lime)":"var(--dark)",borderRadius:isMe?"12px 3px 12px 12px":"3px 12px 12px 12px",padding:"8px 12px",maxWidth:"85%"}}>
+            <div key={i} style={{alignSelf:isMe?"flex-end":"flex-start",background:isMe?"var(--violet)":"var(--dark)",borderRadius:isMe?"12px 3px 12px 12px":"3px 12px 12px 12px",padding:"8px 12px",maxWidth:"85%"}}>
               <div style={{fontFamily:"var(--font-body)",fontSize:13,color:isMe?"var(--black)":"var(--white)"}}>{m.text}</div>
             </div>
           );
@@ -2508,7 +2608,7 @@ function AppInner() {
 
   const day         = routine?.[dayIdx];
   const ex          = day?.exercises[exIdx];
-  const accentColor = day?.color || "var(--lime)";
+  const accentColor = day?.color || "var(--violet)";
 
   const completeSet = () => {
     const key = `${exIdx}-${setNum}`;
@@ -2554,7 +2654,10 @@ function AppInner() {
     };
 
     const trainingStyle = profile?.trainingStyle || 'standard';
-    const skipRestBetweenExercises = trainingStyle === 'superset' || trainingStyle === 'circuit';
+    const isSuperset = trainingStyle === 'superset';
+    const skipRestBetweenExercises = trainingStyle === 'circuit';
+    const isPartnerA = isSuperset && ex.supersetWith && !ex.isSupersetB;
+    const isPartnerB = isSuperset && ex.isSupersetB;
 
     if (setNum < ex.sets) {
       setSetNum(s => s + 1);
@@ -2562,7 +2665,13 @@ function AppInner() {
     } else if (exIdx < day.exercises.length - 1) {
       setExIdx(i => i + 1);
       setSetNum(1);
-      if (!skipRestBetweenExercises) startRest(getRestDuration());
+      if (isPartnerA) {
+        startRest(3); // brief 3-second transition to superset partner
+      } else if (isPartnerB || skipRestBetweenExercises) {
+        startRest(getRestDuration()); // full rest after completing a pair or circuit round
+      } else {
+        startRest(getRestDuration());
+      }
       // Ask post-exercise weight check
       const currentKey = `${dayIdx}-${exIdx}`;
       if (weightCheckState[currentKey] === 'confirmed') {
@@ -3265,8 +3374,8 @@ function AppInner() {
   if (screen === "join_room") return (
     <>
       <GlobalStyles />
-      <div style={{background:"#000",minHeight:"100vh",maxWidth:430,margin:"0 auto",display:"flex",flexDirection:"column",padding:"0 28px",paddingTop:"max(env(safe-area-inset-top),48px)",paddingBottom:"max(env(safe-area-inset-bottom),32px)"}}>
-        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:4,color:"rgba(200,241,53,0.6)",marginBottom:32}}>STRONNGER</div>
+      <div style={{background:"var(--black)",minHeight:"100vh",maxWidth:430,margin:"0 auto",display:"flex",flexDirection:"column",padding:"0 28px",paddingTop:"max(env(safe-area-inset-top),48px)",paddingBottom:"max(env(safe-area-inset-bottom),32px)"}}>
+        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:4,color:"rgba(167,139,250,0.6)",marginBottom:32}}>STRONNGER</div>
 
         <div style={{fontFamily:"var(--font-cond)",fontSize:12,letterSpacing:4,color:"var(--gray)",marginBottom:8}}>
           YOUR PARTNER INVITED YOU
@@ -3285,7 +3394,7 @@ function AppInner() {
               ROOM CODE
             </div>
           )}
-          <div style={{fontFamily:"var(--font-display)",fontSize:52,color:"var(--lime)",letterSpacing:4,lineHeight:1}}>
+          <div style={{fontFamily:"var(--font-display)",fontSize:52,color:"var(--violet)",letterSpacing:4,lineHeight:1}}>
             {joinCodeFromUrl}
           </div>
         </div>
@@ -3323,7 +3432,7 @@ function AppInner() {
   if (screen === "pin") return (
     <>
       <GlobalStyles />
-      <div style={{background:"#000",minHeight:"100vh",maxWidth:430,margin:"0 auto",display:"flex",flexDirection:"column",padding:"0 28px",position:"relative"}}>
+      <div style={{background:"var(--black)",minHeight:"100vh",maxWidth:430,margin:"0 auto",display:"flex",flexDirection:"column",padding:"0 28px",position:"relative"}}>
         {/* STRONNGER logo — small, top center */}
         <div style={{paddingTop:"max(env(safe-area-inset-top),32px)",textAlign:"center"}}>
           <span style={{fontFamily:"var(--font-display)",fontSize:20,letterSpacing:6,color:"rgba(255,255,255,0.2)"}}>STRONNGER</span>
@@ -3381,17 +3490,17 @@ function AppInner() {
     <>
       <GlobalStyles />
       <div style={{background:"var(--black)",minHeight:"100vh",maxWidth:430,margin:"0 auto",display:"flex",flexDirection:"column",position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",top:"5%",left:"-8px",fontFamily:"var(--font-display)",fontSize:190,color:"rgba(255,255,255,0.025)",lineHeight:0.88,pointerEvents:"none",userSelect:"none",letterSpacing:-4}}>
+        <div style={{position:"absolute",top:"5%",left:"-8px",fontFamily:"var(--font-display)",fontSize:190,color:"rgba(167,139,250,0.04)",lineHeight:0.88,pointerEvents:"none",userSelect:"none",letterSpacing:-4}}>
           STR<br/>ONG<br/>ER
         </div>
         <div style={{ position:'absolute', top:20, right:20, display:'flex', gap:8, zIndex:10 }}>
           <button
             onClick={() => { setLang('en'); localStorage.setItem('str_lang','en'); }}
             style={{
-              background: lang === 'en' ? '#C8F135' : 'transparent',
+              background: lang === 'en' ? 'var(--violet)' : 'transparent',
               color: lang === 'en' ? '#080808' : '#888',
               border: '1px solid',
-              borderColor: lang === 'en' ? '#C8F135' : '#333',
+              borderColor: lang === 'en' ? 'var(--violet)' : '#333',
               borderRadius: 20, padding:'6px 14px',
               fontFamily:"'Barlow Condensed',sans-serif",
               fontWeight:700, fontSize:13, letterSpacing:1, cursor:'pointer'
@@ -3401,10 +3510,10 @@ function AppInner() {
           <button
             onClick={() => { setLang('es'); localStorage.setItem('str_lang','es'); }}
             style={{
-              background: lang === 'es' ? '#C8F135' : 'transparent',
+              background: lang === 'es' ? 'var(--violet)' : 'transparent',
               color: lang === 'es' ? '#080808' : '#888',
               border: '1px solid',
-              borderColor: lang === 'es' ? '#C8F135' : '#333',
+              borderColor: lang === 'es' ? 'var(--violet)' : '#333',
               borderRadius: 20, padding:'6px 14px',
               fontFamily:"'Barlow Condensed',sans-serif",
               fontWeight:700, fontSize:13, letterSpacing:1, cursor:'pointer'
@@ -3414,7 +3523,7 @@ function AppInner() {
         </div>
         <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"flex-end",padding:"0 28px 56px"}}>
           <div className="fu" style={{marginBottom:44}}>
-            <div style={{display:"inline-flex",background:"var(--lime)",borderRadius:6,padding:"4px 12px",marginBottom:18}}>
+            <div style={{display:"inline-flex",background:"var(--violet)",borderRadius:6,padding:"4px 12px",marginBottom:18}}>
               <span style={{fontFamily:"var(--font-cond)",fontWeight:800,fontSize:11,color:"var(--black)",letterSpacing:3}}>COUPLES TRAINING</span>
             </div>
             <div style={{fontFamily:"var(--font-display)",fontSize:92,lineHeight:0.86,color:"var(--white)",letterSpacing:1}}>STRON<br/>GER</div>
@@ -3459,7 +3568,7 @@ function AppInner() {
       <GlobalStyles />
       <div style={{background:"var(--black)",minHeight:"100vh",maxWidth:430,margin:"0 auto",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,textAlign:"center"}}>
         <div style={{marginBottom:32}}>
-          <div style={{width:72,height:72,border:"3px solid var(--lime)",borderTopColor:"transparent",borderRadius:99,animation:"spin 0.9s linear infinite",margin:"0 auto 28px"}}/>
+          <div style={{width:72,height:72,border:"3px solid var(--violet)",borderTopColor:"transparent",borderRadius:99,animation:"spin 0.9s linear infinite",margin:"0 auto 28px"}}/>
           <div style={{fontFamily:"var(--font-display)",fontSize:48,lineHeight:0.9,marginBottom:12}}>BUILDING<br/>YOUR<br/>ROUTINE</div>
           <p style={{fontFamily:"var(--font-body)",fontSize:14,color:"var(--gray)",lineHeight:1.6}}>
             Analyzing {profile.name||"your"} profile.<br/>
@@ -3468,7 +3577,7 @@ function AppInner() {
         </div>
         <div style={{display:"flex",gap:8}}>
           {["GOALS","LEVELS","VOLUME","RECOVERY"].map((l,i)=>(
-            <div key={l} style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--lime)",background:"rgba(200,241,53,.08)",borderRadius:6,padding:"5px 8px",animation:`pulse 1.5s ${i*0.3}s infinite`}}>{l}</div>
+            <div key={l} style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--violet)",background:"rgba(167,139,250,.08)",borderRadius:6,padding:"5px 8px",animation:`pulse 1.5s ${i*0.3}s infinite`}}>{l}</div>
           ))}
         </div>
       </div>
@@ -3553,7 +3662,7 @@ function AppInner() {
     const stepContent = [
       /* 0 — Name + PIN */
       <div key={0} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
-        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>{t('step_1_of_7')}</div>
+        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--violet)",marginBottom:10}}>{t('step_1_of_7')}</div>
         <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>{t('who_are_you')}</div>
         <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:24}}>{t('just_you_here')}</p>
         <Input label={t('your_name_label')} placeholder="Alex" value={profile.name} onChange={v=>p("name",v)} />
@@ -3609,7 +3718,7 @@ function AppInner() {
 
       /* 1 — Stats */
       <div key={1} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
-        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>{t('step_2_of_7')}</div>
+        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--violet)",marginBottom:10}}>{t('step_2_of_7')}</div>
         <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>{t('your_stats')}</div>
         <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:20}}>{t('calibrate_desc')}</p>
         {/* Unit selector */}
@@ -3622,9 +3731,9 @@ function AppInner() {
                   style={{flex:1,padding:"10px 0",borderRadius:10,
                     fontFamily:"var(--font-cond)",fontWeight:700,fontSize:14,letterSpacing:2,
                     cursor:"pointer",transition:"all .15s",
-                    background:(profile.weightUnit||'lbs')===u?"var(--lime)":"var(--card)",
+                    background:(profile.weightUnit||'lbs')===u?"var(--violet)":"var(--card)",
                     color:(profile.weightUnit||'lbs')===u?"var(--black)":"var(--gray)",
-                    border:`1.5px solid ${(profile.weightUnit||'lbs')===u?"var(--lime)":"var(--line2)"}`}}>
+                    border:`1.5px solid ${(profile.weightUnit||'lbs')===u?"var(--violet)":"var(--line2)"}`}}>
                   {u.toUpperCase()}
                 </button>
               ))}
@@ -3638,9 +3747,9 @@ function AppInner() {
                   style={{flex:1,padding:"10px 0",borderRadius:10,
                     fontFamily:"var(--font-cond)",fontWeight:700,fontSize:14,letterSpacing:2,
                     cursor:"pointer",transition:"all .15s",
-                    background:(profile.heightUnit||'cm')===u?"var(--lime)":"var(--card)",
+                    background:(profile.heightUnit||'cm')===u?"var(--violet)":"var(--card)",
                     color:(profile.heightUnit||'cm')===u?"var(--black)":"var(--gray)",
-                    border:`1.5px solid ${(profile.heightUnit||'cm')===u?"var(--lime)":"var(--line2)"}`}}>
+                    border:`1.5px solid ${(profile.heightUnit||'cm')===u?"var(--violet)":"var(--line2)"}`}}>
                   {u.toUpperCase()}
                 </button>
               ))}
@@ -3660,7 +3769,7 @@ function AppInner() {
 
       /* 2 — Goals & level */
       <div key={2} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
-        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>{t('step_3_of_7')}</div>
+        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--violet)",marginBottom:10}}>{t('step_3_of_7')}</div>
         <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>{t('your_goals')}</div>
         <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:28}}>{t('what_training_for')}, {profile.name||"you"}?</p>
         <Label text={t('primary_goal_label')}/>
@@ -3668,11 +3777,11 @@ function AppInner() {
           {GOALS.map(v=><Chip key={v} value={v} label={t(GOAL_KEYS[v])||v} single currentSingle={profile.goal} onSelect={handleGoalSelect}/>)}
         </div>
         {goalConflict && (
-          <div style={{background:"var(--card)",borderRadius:14,borderLeft:"3px solid var(--lime)",padding:"14px 16px",marginBottom:20,animation:"fadeIn 0.2s ease"}}>
+          <div style={{background:"var(--card)",borderRadius:14,borderLeft:"3px solid var(--violet)",padding:"14px 16px",marginBottom:20,animation:"fadeIn 0.2s ease"}}>
             <p style={{fontFamily:"var(--font-body)",fontSize:14,color:"var(--gray)",lineHeight:1.6,marginBottom:12}}>{goalConflict.explanation}</p>
             <div style={{display:"flex",gap:10}}>
               <button onClick={()=>{ p("goal", goalConflict.pending); setGoalConflict(null); if(goalConflictTimer) clearTimeout(goalConflictTimer); }}
-                style={{flex:1,background:"var(--lime)",border:"none",borderRadius:10,padding:"10px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:12,letterSpacing:1,color:"var(--black)",cursor:"pointer"}}>
+                style={{flex:1,background:"var(--violet)",border:"none",borderRadius:10,padding:"10px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:12,letterSpacing:1,color:"var(--black)",cursor:"pointer"}}>
                 {t('got_it')}
               </button>
               <button onClick={()=>{ setGoalConflict(null); if(goalConflictTimer) clearTimeout(goalConflictTimer); }}
@@ -3690,7 +3799,7 @@ function AppInner() {
 
       /* 3 — Muscle priorities (NEW) */
       <div key={3} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
-        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>{t('step_4_of_7')}</div>
+        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--violet)",marginBottom:10}}>{t('step_4_of_7')}</div>
         <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.88,marginBottom:16}}>{t('what_to_build')}</div>
         <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:24}}>{t('select_focus_areas')}</p>
         <div style={{display:"flex",gap:16,marginBottom:24}}>
@@ -3725,7 +3834,7 @@ function AppInner() {
 
       /* 4 — Schedule + equipment (was 3) */
       <div key={4} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
-        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>{t('step_5_of_7')}</div>
+        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--violet)",marginBottom:10}}>{t('step_5_of_7')}</div>
         <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>{t('your_gym')}</div>
         <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:28}}>{t('when_what_train')}</p>
         <Label text={t('days_per_week_label')}/>
@@ -3737,7 +3846,7 @@ function AppInner() {
         </div>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
           <Label text={t('training_days_label')}/>
-          <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--lime)"}}>{(profile.trainingDays||getDayPreset(parseInt(profile.daysPerWeek)||3)).length} / {parseInt(profile.daysPerWeek)||3}</span>
+          <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--violet)"}}>{(profile.trainingDays||getDayPreset(parseInt(profile.daysPerWeek)||3)).length} / {parseInt(profile.daysPerWeek)||3}</span>
         </div>
         <div style={{display:"flex",gap:6,marginBottom:24}}>
           {ALL_DAYS_LABELS.map(d => {
@@ -3758,8 +3867,8 @@ function AppInner() {
                   }
                 }
               }} style={{
-                flex:1,padding:"8px 0",borderRadius:8,border:isSelected?"1.5px solid var(--lime)":"1.5px solid var(--line2)",
-                background:isSelected?"var(--lime)":"var(--card)",
+                flex:1,padding:"8px 0",borderRadius:8,border:isSelected?"1.5px solid var(--violet)":"1.5px solid var(--line2)",
+                background:isSelected?"var(--violet)":"var(--card)",
                 fontFamily:"var(--font-cond)",fontWeight:700,fontSize:9,letterSpacing:0.5,
                 color:isSelected?"var(--black)":"var(--gray)",cursor:"pointer",transition:"all .15s"
               }}>{d}</button>
@@ -3787,7 +3896,7 @@ function AppInner() {
 
       /* 5 — Injuries (was 4) */
       <div key={5} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
-        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>{t('step_6_of_7')}</div>
+        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--violet)",marginBottom:10}}>{t('step_6_of_7')}</div>
         <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>{t('any_limits')}</div>
         <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:28}}>{t('injuries_desc')}</p>
         <Label text={t('injuries_label2')}/>
@@ -3797,7 +3906,7 @@ function AppInner() {
           style={{width:"100%",background:"var(--card)",border:"1.5px solid var(--line2)",borderRadius:12,padding:14,fontFamily:"var(--font-body)",fontSize:16,color:"var(--white)",resize:"none",marginBottom:24}}
         />
         <div style={{background:"var(--card)",borderRadius:16,border:"1px solid var(--line)",padding:18}}>
-          <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:12}}>{t('your_profile_summary')}</div>
+          <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--violet)",marginBottom:12}}>{t('your_profile_summary')}</div>
           {[
             [profile.name||"You", `${profile.goal||"—"} · ${profile.level||"—"}`],
             [t('schedule_label'), `${profile.daysPerWeek} ${t('days_week_suffix')}`],
@@ -3813,7 +3922,7 @@ function AppInner() {
 
       /* 6 — Partner connection (was 5) */
       <div key={6} className="sr" style={{display:"flex",flexDirection:"column",flex:1}}>
-        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--lime)",marginBottom:10}}>{t('step_7_of_7')}</div>
+        <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--violet)",marginBottom:10}}>{t('step_7_of_7')}</div>
         <div style={{fontFamily:"var(--font-display)",fontSize:58,lineHeight:0.88,marginBottom:16}}>{t('connect_partner')}</div>
         <p style={{fontFamily:"var(--font-body)",fontSize:15,color:"var(--gray)",lineHeight:1.6,marginBottom:28}}>
           {t('connect_partner_desc')}
@@ -3831,7 +3940,7 @@ function AppInner() {
                   placeholder="STR-XXXX"
                   style={{flex:1,background:"var(--dark)",border:"1.5px solid var(--line2)",borderRadius:10,padding:"12px 14px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:16,letterSpacing:2,color:"var(--white)",outline:"none"}}
                 />
-                <button onClick={handleJoin} style={{background:"var(--lime)",border:"none",borderRadius:10,padding:"12px 18px",fontFamily:"var(--font-cond)",fontWeight:900,fontSize:13,letterSpacing:2,color:"var(--black)",cursor:"pointer"}}>{t('join_btn')}</button>
+                <button onClick={handleJoin} style={{background:"var(--violet)",border:"none",borderRadius:10,padding:"12px 18px",fontFamily:"var(--font-cond)",fontWeight:900,fontSize:13,letterSpacing:2,color:"var(--black)",cursor:"pointer"}}>{t('join_btn')}</button>
               </div>
               {joinError && <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--red)",marginTop:8}}>{joinError}</div>}
             </div>
@@ -3840,10 +3949,10 @@ function AppInner() {
         ) : waitingForPartner ? (
           <div style={{textAlign:"center"}}>
             <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--gray)",marginBottom:12}}>{t('your_room_code_label')}</div>
-            <div style={{fontFamily:"var(--font-display)",fontSize:72,color:"var(--lime)",letterSpacing:4,marginBottom:20,lineHeight:1}}>{roomCode}</div>
+            <div style={{fontFamily:"var(--font-display)",fontSize:72,color:"var(--violet)",letterSpacing:4,marginBottom:20,lineHeight:1}}>{roomCode}</div>
             <Btn full onClick={handleCopyLink} style={{marginBottom:20}}>{copied?t('copied'):t('copy_code')}</Btn>
             <div style={{display:"flex",alignItems:"center",gap:10,justifyContent:"center",marginBottom:24}}>
-              <div style={{width:9,height:9,borderRadius:99,background:"var(--lime)",animation:"pulse 1.5s infinite"}}/>
+              <div style={{width:9,height:9,borderRadius:99,background:"var(--violet)",animation:"pulse 1.5s infinite"}}/>
               <span style={{fontFamily:"var(--font-cond)",fontSize:12,letterSpacing:2,color:"var(--gray)"}}>{t('waiting_for_partner_label')}</span>
             </div>
             <Btn full variant="ghost" onClick={finishOnboarding}>{t('continue_solo')}</Btn>
@@ -3857,7 +3966,7 @@ function AppInner() {
         <GlobalStyles/>
         <div style={{background:"var(--black)",minHeight:"100vh",maxWidth:430,margin:"0 auto",display:"flex",flexDirection:"column"}}>
           <div style={{height:3,background:"var(--line)",position:"relative"}}>
-            <div style={{position:"absolute",top:0,left:0,height:"100%",width:`${progress}%`,background:"var(--lime)",transition:"width 0.4s cubic-bezier(.4,0,.2,1)",borderRadius:"0 99px 99px 0"}}/>
+            <div style={{position:"absolute",top:0,left:0,height:"100%",width:`${progress}%`,background:"var(--violet)",transition:"width 0.4s cubic-bezier(.4,0,.2,1)",borderRadius:"0 99px 99px 0"}}/>
           </div>
           <div style={{padding:"16px 24px 0"}}>
             <button onClick={prevStep} style={{background:"none",border:"none",color:"var(--gray)",fontFamily:"var(--font-cond)",fontSize:13,letterSpacing:2,cursor:"pointer",padding:0}}>
@@ -3903,7 +4012,7 @@ function AppInner() {
         <GlobalStyles/>
         {/* Feature 4A — PR notification banner */}
         {prNotification && (
-          <div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",background:"var(--lime)",color:"var(--black)",borderRadius:12,padding:"10px 18px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,zIndex:100,animation:"slideIn 0.3s ease",display:"flex",alignItems:"center",gap:8,maxWidth:380,whiteSpace:"nowrap"}}>
+          <div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",background:"var(--violet)",color:"var(--black)",borderRadius:12,padding:"10px 18px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,zIndex:100,animation:"slideIn 0.3s ease",display:"flex",alignItems:"center",gap:8,maxWidth:380,whiteSpace:"nowrap"}}>
             🏆 {t('personal_record')} — {prNotification.exerciseName.toUpperCase()} {displayWeight(prNotification.weight)}
           </div>
         )}
@@ -3911,7 +4020,7 @@ function AppInner() {
         {postExerciseCheck && (
           <div style={{position:"fixed",top:0,left:"50%",transform:"translateX(-50%)",
             width:"100%",maxWidth:430,zIndex:150,
-            background:"#181818",borderTop:`3px solid ${day?.color||"var(--lime)"}`,
+            background:"#181818",borderTop:`3px solid ${day?.color||"var(--violet)"}`,
             padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",
             boxShadow:"0 4px 24px rgba(0,0,0,0.6)"}}>
             <div>
@@ -3924,9 +4033,9 @@ function AppInner() {
             </div>
             <div style={{display:"flex",gap:8,flexShrink:0,marginLeft:12}}>
               <button onClick={()=>setPostExerciseCheck(null)}
-                style={{background:"rgba(200,241,53,0.15)",border:`1px solid ${day?.color||"var(--lime)"}`,
+                style={{background:"rgba(167,139,250,0.15)",border:`1px solid ${day?.color||"var(--violet)"}`,
                   borderRadius:8,padding:"8px 12px",fontFamily:"var(--font-cond)",fontWeight:700,
-                  fontSize:12,color:day?.color||"var(--lime)",cursor:"pointer"}}>
+                  fontSize:12,color:day?.color||"var(--violet)",cursor:"pointer"}}>
                 ✓ {lang==='es'?'SÍ':'YES'}
               </button>
               <button onClick={()=>{
@@ -3934,7 +4043,7 @@ function AppInner() {
                 setTempWeight(String(isNaN(_rawKgPEC) ? '' : (weightUnit === 'lbs' ? Math.round(_rawKgPEC * KG_TO_LBS * 2) / 2 : _rawKgPEC)));
                 setEditingWeight(true);
                 setPostExerciseCheck(null);
-              }} style={{background:"rgba(255,59,48,0.1)",border:"1px solid rgba(255,59,48,0.3)",
+              }} style={{background:"rgba(248,113,113,0.1)",border:"1px solid rgba(248,113,113,0.3)",
                 borderRadius:8,padding:"8px 12px",fontFamily:"var(--font-cond)",fontWeight:700,
                 fontSize:12,color:"var(--red)",cursor:"pointer"}}>
                 ✗ {lang==='es'?'NO':'NO'}
@@ -3948,9 +4057,9 @@ function AppInner() {
             <div style={{textAlign:"center"}}>
               <div style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:3,color:accentColor}}>{t(DAY_KEYS[day.name])||day.name}</div>
               <div style={{fontFamily:"var(--font-cond)",fontWeight:600,fontSize:13,color:"var(--gray)"}}>{exIdx+1} / {day.exercises.length}</div>
-              {(profile?.trainingStyle||'standard')!=='standard' && <div style={{fontFamily:"var(--font-cond)",fontSize:8,letterSpacing:2,color:"var(--lime)",marginTop:1}}>{({superset:'SUPERSET',circuit:'CIRCUIT',active_rest:'ACTIVE REST'})[profile.trainingStyle]||''}</div>}
+              {(profile?.trainingStyle||'standard')!=='standard' && <div style={{fontFamily:"var(--font-cond)",fontSize:8,letterSpacing:2,color:"var(--violet)",marginTop:1}}>{({superset:'SUPERSET',circuit:'CIRCUIT',active_rest:'ACTIVE REST'})[profile.trainingStyle]||''}</div>}
             </div>
-            <button onClick={()=>setSheet("emergency")} style={{background:"rgba(255,59,48,.12)",border:"none",borderRadius:10,padding:"8px 14px",color:"var(--red)",fontSize:12,fontWeight:700,fontFamily:"var(--font-cond)",letterSpacing:1,cursor:"pointer"}}>{t('stop')}</button>
+            <button onClick={()=>setSheet("emergency")} style={{background:"rgba(248,113,113,.12)",border:"none",borderRadius:10,padding:"8px 14px",color:"var(--red)",fontSize:12,fontWeight:700,fontFamily:"var(--font-cond)",letterSpacing:1,cursor:"pointer"}}>{t('stop')}</button>
           </div>
           <div style={{padding:"14px 20px 0"}}>
             <div style={{height:3,background:"var(--line)",borderRadius:99,overflow:"hidden"}}>
@@ -3960,6 +4069,19 @@ function AppInner() {
           <div style={{flex:1,overflowY:"auto",padding:"20px 20px 130px"}}>
             <div className="fu" style={{marginBottom:20}}>
               <div style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:3,color:"var(--gray)",marginBottom:6}}>{(t(MUSCLE_LABEL_KEYS[ex.muscles?.toLowerCase()])||ex.muscles||"").toUpperCase()} · RPE {ex.rpe}</div>
+              {ex.supersetWith && profile?.trainingStyle === 'superset' && (
+                <div style={{display:"inline-flex",alignItems:"center",gap:6,
+                  background:"rgba(245,158,11,0.12)",border:"1px solid rgba(245,158,11,0.3)",
+                  borderRadius:8,padding:"4px 10px",marginBottom:10}}>
+                  <div style={{width:6,height:6,borderRadius:99,background:"var(--amber)"}}/>
+                  <span style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:10,
+                    letterSpacing:2,color:"var(--amber)"}}>
+                    {ex.isSupersetB
+                      ? (lang==='es'?`SUPERSET B — DESCANSA DESPUÉS`:`SUPERSET B — REST AFTER`)
+                      : (lang==='es'?`SUPERSET A → ${ex.supersetWith.toUpperCase()}`:`SUPERSET A → ${ex.supersetWith.toUpperCase()}`)}
+                  </span>
+                </div>
+              )}
               <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:14}}>
                 <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.92,color:"var(--white)",flex:1}}>
                   {ex.name.toUpperCase()}
@@ -3996,7 +4118,7 @@ function AppInner() {
                   <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--gray)",marginBottom:4}}>
                     {t('weight')}
                   </div>
-                  <div style={{fontFamily:"var(--font-display)",fontSize:24,color:day.color||"var(--lime)"}}>
+                  <div style={{fontFamily:"var(--font-display)",fontSize:24,color:day.color||"var(--violet)"}}>
                     {ex.wA === "BW" || !ex.wA ? (ex.wA || "—") : displayWeight(ex.wA)}
                   </div>
                   <div style={{fontFamily:"var(--font-cond)",fontSize:8,color:"var(--gray2)",letterSpacing:1,marginTop:2}}>
@@ -4009,8 +4131,8 @@ function AppInner() {
               </div>
             </div>
             {/* Feature 4C — Weight progression suggestion */}
-            <div style={{background:"rgba(200,241,53,0.06)",borderRadius:10,
-              border:"1px solid rgba(200,241,53,0.15)",padding:"10px 14px",
+            <div style={{background:"rgba(167,139,250,0.06)",borderRadius:10,
+              border:"1px solid rgba(167,139,250,0.15)",padding:"10px 14px",
               marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <div>
                 <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,
@@ -4027,13 +4149,13 @@ function AppInner() {
               </div>
               {prs[ex.name] && (
                 <div style={{fontFamily:"var(--font-display)",fontSize:22,
-                  color:"var(--lime)",flexShrink:0,marginLeft:12}}>
+                  color:"var(--violet)",flexShrink:0,marginLeft:12}}>
                   +2.5%
                 </div>
               )}
             </div>
             {weightCheckState[`${dayIdx}-${exIdx}`] === 'pending' && ex?.wA && ex.wA !== 'BW' && (
-              <div style={{background:"rgba(200,241,53,0.06)",borderRadius:14,
+              <div style={{background:"rgba(167,139,250,0.06)",borderRadius:14,
                 border:`1px dashed ${day.color}66`,padding:16,marginBottom:14}}>
                 <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,
                   color:"var(--gray)",marginBottom:4,textAlign:"center"}}>
@@ -4052,7 +4174,7 @@ function AppInner() {
                 <div style={{display:"flex",gap:10}}>
                   <button onClick={()=>{
                     setWeightCheckState(prev=>({...prev,[`${dayIdx}-${exIdx}`]:'confirmed'}));
-                  }} style={{flex:1,background:"rgba(200,241,53,0.15)",border:`1px solid ${day.color}`,
+                  }} style={{flex:1,background:"rgba(167,139,250,0.15)",border:`1px solid ${day.color}`,
                     borderRadius:12,padding:"13px 0",fontFamily:"var(--font-cond)",fontWeight:700,
                     fontSize:13,letterSpacing:1,color:day.color,cursor:"pointer"}}>
                     ✓ {lang==='es'?'SÍ, PUEDO':'YES, I CAN'}
@@ -4062,7 +4184,7 @@ function AppInner() {
                     setTempWeight(String(isNaN(_rawKgWC) ? '' : (weightUnit === 'lbs' ? Math.round(_rawKgWC * KG_TO_LBS * 2) / 2 : _rawKgWC)));
                     setWeightCheckState(prev=>({...prev,[`${dayIdx}-${exIdx}`]:'adjusting'}));
                     setEditingWeight(true);
-                  }} style={{flex:1,background:"rgba(255,59,48,0.08)",border:"1px solid rgba(255,59,48,0.3)",
+                  }} style={{flex:1,background:"rgba(248,113,113,0.08)",border:"1px solid rgba(248,113,113,0.3)",
                     borderRadius:12,padding:"13px 0",fontFamily:"var(--font-cond)",fontWeight:700,
                     fontSize:13,letterSpacing:1,color:"var(--red)",cursor:"pointer"}}>
                     ✗ {lang==='es'?'AJUSTAR':'ADJUST'}
@@ -4121,7 +4243,7 @@ function AppInner() {
                   <div>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
                       <div style={{display:"flex",alignItems:"center",gap:6}}>
-                        <div style={{width:6,height:6,borderRadius:99,background:isActive?"#30d158":"#333"}}/>
+                        <div style={{width:6,height:6,borderRadius:99,background:isActive?"#10B981":"#333"}}/>
                         <span style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:2,color:"var(--gray)"}}>{pName}</span>
                       </div>
                       {isActive
@@ -4156,7 +4278,23 @@ function AppInner() {
                 })}
               </div>
             </div>
-            {resting && (
+            {resting && restMax <= 5 && ex?.supersetWith && profile?.trainingStyle === 'superset' && (
+              <div className="fu" style={{background:"rgba(245,158,11,0.08)",borderRadius:20,border:"1px solid rgba(245,158,11,0.25)",padding:28,marginBottom:16,textAlign:"center"}}>
+                <div style={{fontFamily:"var(--font-display)",fontSize:18,color:"var(--amber)",marginBottom:4}}>
+                  {lang==='es'?'SUPERSET — SIGUIENTE EJERCICIO':'SUPERSET — NEXT EXERCISE'}
+                </div>
+                <div style={{fontFamily:"var(--font-display)",fontSize:28,color:"var(--white)",marginBottom:8}}>
+                  {day.exercises[exIdx + 1]?.name?.toUpperCase()}
+                </div>
+                <div style={{fontFamily:"var(--font-display)",fontSize:64,color:"var(--amber)",lineHeight:1}}>{restSec}</div>
+                <button onClick={skipRest} style={{background:"var(--amber)",border:"none",borderRadius:10,
+                  padding:"10px 28px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,
+                  letterSpacing:2,color:"var(--black)",cursor:"pointer",marginTop:12}}>
+                  {lang==='es'?'IR AHORA →':'GO NOW →'}
+                </button>
+              </div>
+            )}
+            {resting && !(restMax <= 5 && ex?.supersetWith && profile?.trainingStyle === 'superset') && (
               <div className="fu" style={{background:"var(--card)",borderRadius:20,border:"1px solid var(--line)",padding:28,marginBottom:16,textAlign:"center"}}>
                 <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:20}}>REST</div>
                 <div style={{position:"relative",width:130,height:130,margin:"0 auto 20px"}}>
@@ -4191,8 +4329,8 @@ function AppInner() {
                     : ['10 jumping jacks','Chest stretch 30s','Walk in place','20 calf raises','5 deep breaths'];
                   const move = ACTIVE_REST_MOVES[exIdx % ACTIVE_REST_MOVES.length];
                   return (
-                    <div style={{background:"rgba(200,241,53,0.08)",border:"1px solid rgba(200,241,53,0.25)",borderRadius:12,padding:"10px 14px",marginBottom:12}}>
-                      <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--lime)",marginBottom:4}}>{lang==='es'?'DESCANSO ACTIVO':'ACTIVE REST'}</div>
+                    <div style={{background:"rgba(167,139,250,0.08)",border:"1px solid rgba(167,139,250,0.25)",borderRadius:12,padding:"10px 14px",marginBottom:12}}>
+                      <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--violet)",marginBottom:4}}>{lang==='es'?'DESCANSO ACTIVO':'ACTIVE REST'}</div>
                       <div style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:14,color:"var(--white)"}}>{move}</div>
                     </div>
                   );
@@ -4207,7 +4345,7 @@ function AppInner() {
           </div>
           {!resting && (
             <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,padding:"12px 20px 34px",background:"linear-gradient(transparent,var(--black) 35%)"}}>
-              <button onClick={completeSet} style={{width:"100%",background:accentColor,border:"none",borderRadius:16,padding:"18px 0",fontFamily:"var(--font-cond)",fontWeight:900,fontSize:18,letterSpacing:3,color:"var(--black)",cursor:"pointer",marginBottom:10,textTransform:"uppercase",boxShadow:`0 0 30px ${accentColor}44`}}>
+              <button onClick={completeSet} style={{width:"100%",background:`linear-gradient(135deg,${accentColor} 0%,${accentColor}CC 100%)`,border:"none",borderRadius:16,padding:"18px 0",fontFamily:"var(--font-cond)",fontWeight:900,fontSize:18,letterSpacing:3,color:"var(--black)",cursor:"pointer",marginBottom:10,textTransform:"uppercase",boxShadow:`0 4px 24px ${accentColor}44`}}>
                 {setNum<ex.sets?`${t('complete_set')} ${setNum}`:exIdx<day.exercises.length-1?t('next_exercise'):t('finish_workout')}
               </button>
               <div style={{display:"flex",gap:10}}>
@@ -4238,7 +4376,7 @@ function AppInner() {
                         <div>
                           <div style={{fontFamily:"var(--font-display)",fontSize:28}}>{(partnerProfile.name||"PARTNER").toUpperCase()}</div>
                           {partnerProfile._activeSession && (Date.now() - (partnerProfile._activeSession.startedAt || 0)) < 7_200_000
-                            ? <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:7,height:7,borderRadius:99,background:"#30d158",animation:"pulse 2s infinite"}}/><span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"#30d158"}}>{t('training_now')}</span></div>
+                            ? <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:7,height:7,borderRadius:99,background:"#10B981",animation:"pulse 2s infinite"}}/><span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"#10B981"}}>{t('training_now')}</span></div>
                             : <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)"}}>{t('not_training')}</div>
                           }
                         </div>
@@ -4277,28 +4415,68 @@ function AppInner() {
                   </div>
                 </>}
                 {/* Feature 4B — Swap sheet */}
-                {sheet==="swap" && swapExercise && (
-                  <div>
-                    <div style={{fontFamily:"var(--font-display)",fontSize:32,marginBottom:4}}>{t('swap_exercise')}</div>
-                    <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",marginBottom:20}}>{t('for_today_only')}</div>
-                    {(ALTERNATIVES_DB[swapExercise.name] || ["No alternatives"]).map(alt => (
-                      <button key={alt} onClick={() => {
-                        setRoutine(prev => {
-                          const newRoutine = prev.map((d,di) => di !== dayIdx ? d : {
-                            ...d,
-                            exercises: d.exercises.map((e,ei) => ei !== exIdx ? e : { ...e, name: alt })
-                          });
-                          return newRoutine;
-                        });
-                        setSheet(null);
-                        setSwapExercise(null);
-                      }} style={{width:"100%",background:"var(--dark)",border:"1px solid var(--line2)",borderRadius:12,padding:"14px 16px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:15,letterSpacing:1,color:"var(--white)",cursor:"pointer",marginBottom:8,textAlign:"left"}}>
-                        {alt}
-                      </button>
-                    ))}
-                    <Btn variant="ghost" full onClick={()=>{setSheet(null);setSwapExercise(null);}}>{t('cancel')}</Btn>
-                  </div>
-                )}
+                {sheet==="swap" && swapExercise && (() => {
+                  const doSwap = (alt) => {
+                    setRoutine(prev => prev.map((d,di) => di !== dayIdx ? d : {
+                      ...d, exercises: d.exercises.map((e,ei) => ei !== exIdx ? e : { ...e, name: alt })
+                    }));
+                    setSheet(null);
+                    setSwapExercise(null);
+                  };
+                  const alts = ALTERNATIVES_DB[swapExercise.name] || [];
+                  const immediate = alts.slice(0, 2);
+                  const more = alts.slice(2);
+                  return (
+                    <div>
+                      <div style={{fontFamily:"var(--font-display)",fontSize:32,marginBottom:4}}>{t('swap_exercise')}</div>
+                      <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",marginBottom:20}}>{t('for_today_only')}</div>
+                      {immediate.length > 0 && (
+                        <>
+                          <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:3,color:"var(--emerald)",marginBottom:8}}>
+                            {lang==='es'?'✓ DISPONIBLE AHORA (SIN MÁQUINA)':'✓ AVAILABLE NOW (NO MACHINE NEEDED)'}
+                          </div>
+                          {immediate.map(alt => (
+                            <button key={alt} onClick={()=>doSwap(alt)}
+                              style={{width:"100%",background:"rgba(16,185,129,0.08)",border:"1px solid rgba(16,185,129,0.3)",
+                                borderRadius:12,padding:"13px 16px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:14,
+                                letterSpacing:1,color:"var(--white)",cursor:"pointer",marginBottom:8,textAlign:"left",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                              {alt}
+                              <span style={{fontFamily:"var(--font-cond)",fontSize:10,color:"var(--emerald)",letterSpacing:1}}>
+                                {EXERCISE_DB[alt]?.equipment?.[0]||'bodyweight'}
+                              </span>
+                            </button>
+                          ))}
+                        </>
+                      )}
+                      {more.length > 0 && (
+                        <>
+                          <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:3,color:"var(--gray)",marginTop:12,marginBottom:8}}>
+                            {lang==='es'?'MÁS ALTERNATIVAS':'MORE ALTERNATIVES'}
+                          </div>
+                          {more.map(alt => (
+                            <button key={alt} onClick={()=>doSwap(alt)}
+                              style={{width:"100%",background:"var(--dark)",border:"1px solid var(--line2)",
+                                borderRadius:12,padding:"13px 16px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:14,
+                                letterSpacing:1,color:"var(--white)",cursor:"pointer",marginBottom:8,textAlign:"left",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                              {alt}
+                              <span style={{fontFamily:"var(--font-cond)",fontSize:10,color:"var(--gray2)",letterSpacing:1}}>
+                                {EXERCISE_DB[alt]?.equipment?.[0]||'bodyweight'}
+                              </span>
+                            </button>
+                          ))}
+                        </>
+                      )}
+                      {alts.length === 0 && (
+                        <div style={{fontFamily:"var(--font-body)",fontSize:14,color:"var(--gray)",padding:"20px 0",textAlign:"center"}}>
+                          {lang==='es'
+                            ? 'Usa el botón MOVER para reordenar tu rutina mientras esperas la máquina.'
+                            : 'Use the MOVE button to reorder your routine while waiting for the machine.'}
+                        </div>
+                      )}
+                      <Btn variant="ghost" full onClick={()=>{setSheet(null);setSwapExercise(null);}}>{t('cancel')}</Btn>
+                    </div>
+                  );
+                })()}
                 {sheet==="reorder" && (
                   <>
                     <div style={{fontFamily:"var(--font-display)",fontSize:32,marginBottom:4}}>
@@ -4346,7 +4524,7 @@ function AppInner() {
                               {e.sets} × {e.reps} · {e.muscles}
                             </div>
                           </div>
-                          <div style={{fontFamily:"var(--font-display)",fontSize:14,color:"var(--lime)"}}>
+                          <div style={{fontFamily:"var(--font-display)",fontSize:14,color:"var(--violet)"}}>
                             → {lang==='es'?'SIGUIENTE':'NEXT'}
                           </div>
                         </button>
@@ -4376,7 +4554,7 @@ function AppInner() {
                     </div>
                     {/* FIX 5 — Cool-down buffer when partner is still training */}
                     {partnerSession?.isActive && !bufferActivity && (
-                      <div style={{background:"#111",borderRadius:16,padding:18,marginBottom:18,border:"1px solid var(--line)",textAlign:"left"}}>
+                      <div style={{background:"var(--dark)",borderRadius:16,padding:18,marginBottom:18,border:"1px solid var(--line)",textAlign:"left"}}>
                         <div style={{fontFamily:"var(--font-cond)",fontSize:10,color:accentColor,letterSpacing:2,marginBottom:4}}>
                           {(partnerProfile?.name||'PARTNER').toUpperCase()} {t('partner_still_training')||'STILL TRAINING'}
                         </div>
@@ -4436,7 +4614,7 @@ function AppInner() {
                     color:"var(--gray)",marginBottom:2}}>
                     {lang==='es'?'TU ENTRENAMIENTO':'YOUR WORKOUT'}
                   </div>
-                  <div style={{fontFamily:"var(--font-display)",fontSize:20,color:"var(--lime)"}}>
+                  <div style={{fontFamily:"var(--font-display)",fontSize:20,color:"var(--violet)"}}>
                     ✓ {lang==='es'?'COMPLETADO':'COMPLETE'}
                   </div>
                 </div>
@@ -4458,7 +4636,7 @@ function AppInner() {
                 const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
                 const isActive = ps?.isActive && (ps.lastActivityAt || ps.startedAt || 0) > twoHoursAgo;
                 const pName = (ps?.userName || partnerProfile?.name || 'PARTNER').toUpperCase();
-                const pColor = ps?.dayColor || '#0A84FF';
+                const pColor = ps?.dayColor || 'var(--cyan)';
                 const pCompleted = Object.keys(ps?.completedSets || {}).length;
                 const pTotal = ps?.totalSetsInRoutine || 0;
                 const pRemaining = Math.max(0, pTotal - pCompleted);
@@ -4470,7 +4648,7 @@ function AppInner() {
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:isActive?10:0}}>
                       <div style={{display:"flex",alignItems:"center",gap:8}}>
                         <div style={{width:8,height:8,borderRadius:99,
-                          background:isActive?"#30d158":"#444",
+                          background:isActive?"#10B981":"#444",
                           animation:isActive?"pulse 1.5s infinite":undefined}}/>
                         <span style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,
                           letterSpacing:2,color:isActive?"var(--white)":"var(--gray)"}}>
@@ -4479,7 +4657,7 @@ function AppInner() {
                       </div>
                       {isActive ? (
                         <span style={{fontFamily:"var(--font-cond)",fontSize:11,
-                          color:"#30d158",letterSpacing:1}}>
+                          color:"#10B981",letterSpacing:1}}>
                           {lang==='es'?'ENTRENANDO':'TRAINING NOW'}
                         </span>
                       ) : (
@@ -4536,7 +4714,7 @@ function AppInner() {
 
               {/* Progress bar for buffer activity */}
               <div style={{height:3,background:"var(--line)",borderRadius:99,marginBottom:20,overflow:"hidden"}}>
-                <div style={{height:"100%",borderRadius:99,background:"var(--lime)",
+                <div style={{height:"100%",borderRadius:99,background:"var(--violet)",
                   width:`${Math.min(100,(bufferExIdx/bufferActivity.exercises.length)*100)}%`,
                   transition:"width 0.4s"}}/>
               </div>
@@ -4556,9 +4734,9 @@ function AppInner() {
                           <div key={side} style={{
                             padding:"6px 20px",borderRadius:99,fontFamily:"var(--font-cond)",
                             fontWeight:700,fontSize:12,letterSpacing:2,
-                            background:bufferSide===side?"var(--lime)":"var(--card)",
+                            background:bufferSide===side?"var(--violet)":"var(--card)",
                             color:bufferSide===side?"var(--black)":"var(--gray)",
-                            border:`1px solid ${bufferSide===side?"var(--lime)":"var(--line)"}`,
+                            border:`1px solid ${bufferSide===side?"var(--violet)":"var(--line)"}`,
                           }}>
                             {lang==='es'
                               ? (side==='left'?'IZQUIERDA':'DERECHA')
@@ -4577,7 +4755,7 @@ function AppInner() {
                         <svg width="140" height="140" style={{position:"absolute",top:0,left:0,transform:"rotate(-90deg)"}}>
                           <circle cx="70" cy="70" r="60" fill="none" stroke="var(--line)" strokeWidth="5"/>
                           <circle cx="70" cy="70" r="60" fill="none"
-                            stroke={hasSides && bufferSide==='right' ? "#0A84FF" : "var(--lime)"}
+                            stroke={hasSides && bufferSide==='right' ? "var(--cyan)" : "var(--violet)"}
                             strokeWidth="5"
                             strokeDasharray={circumference}
                             strokeDashoffset={circumference*(1-progress)}
@@ -4596,7 +4774,7 @@ function AppInner() {
                       </div>
                     ) : (
                       <div style={{margin:"20px 0"}}>
-                        <div style={{fontFamily:"var(--font-display)",fontSize:72,color:"var(--lime)",lineHeight:1}}>
+                        <div style={{fontFamily:"var(--font-display)",fontSize:72,color:"var(--violet)",lineHeight:1}}>
                           {bEx.sets}
                         </div>
                         <div style={{fontFamily:"var(--font-cond)",fontSize:13,color:"var(--gray)",letterSpacing:2,marginBottom:4}}>
@@ -4619,9 +4797,9 @@ function AppInner() {
                       )}
                       {isTimedEx && !bufferRunning && bufferTimer > 0 && (
                         <button onClick={()=>setBufferRunning(true)}
-                          style={{flex:1,background:"var(--dark)",border:"1px solid var(--lime)",
+                          style={{flex:1,background:"var(--dark)",border:"1px solid var(--violet)",
                             borderRadius:14,padding:"14px 0",fontFamily:"var(--font-cond)",
-                            fontWeight:700,fontSize:13,letterSpacing:2,color:"var(--lime)",cursor:"pointer"}}>
+                            fontWeight:700,fontSize:13,letterSpacing:2,color:"var(--violet)",cursor:"pointer"}}>
                           ▶ {lang==='es'?'REANUDAR':'RESUME'}
                         </button>
                       )}
@@ -4636,7 +4814,7 @@ function AppInner() {
                           setBufferSide('left');
                           setBufferExIdx(i => i + 1);
                         }
-                      }} style={{flex:2,background:"var(--lime)",border:"none",borderRadius:14,
+                      }} style={{flex:2,background:"var(--violet)",border:"none",borderRadius:14,
                         padding:"14px 0",fontFamily:"var(--font-cond)",fontWeight:900,
                         fontSize:14,letterSpacing:2,color:"var(--black)",cursor:"pointer"}}>
                         {hasSides && isTimedEx && bufferSide === 'left'
@@ -4651,7 +4829,7 @@ function AppInner() {
               })() : (
                 <div style={{textAlign:"center",padding:"40px 0"}}>
                   <div style={{fontSize:56,marginBottom:12}}>🙌</div>
-                  <div style={{fontFamily:"var(--font-display)",fontSize:40,color:"var(--lime)",marginBottom:8}}>
+                  <div style={{fontFamily:"var(--font-display)",fontSize:40,color:"var(--violet)",marginBottom:8}}>
                     {lang==='es'?'¡BUEN TRABAJO!':'GREAT WORK!'}
                   </div>
                   <div style={{fontFamily:"var(--font-cond)",fontSize:13,color:"var(--gray)",
@@ -4677,7 +4855,7 @@ function AppInner() {
         {editingWeight && (
           <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",zIndex:200,
             display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
-            <div style={{background:"#111",borderRadius:"20px 20px 0 0",padding:24,
+            <div style={{background:"var(--dark)",borderRadius:"20px 20px 0 0",padding:24,
               width:"100%",maxWidth:430,paddingBottom:"max(24px,env(safe-area-inset-bottom))"}}>
               <div style={{fontFamily:"var(--font-display)",fontSize:32,marginBottom:6}}>
                 {lang==='es'?'AJUSTAR PESO':'ADJUST WEIGHT'}
@@ -4685,7 +4863,7 @@ function AppInner() {
               <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:2,marginBottom:4}}>
                 {ex.name.toUpperCase()}
               </div>
-              {getWeightContext(ex.name) && <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--lime)",marginBottom:12}}>{getWeightContext(ex.name).toUpperCase()}</div>}
+              {getWeightContext(ex.name) && <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--violet)",marginBottom:12}}>{getWeightContext(ex.name).toUpperCase()}</div>}
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
                 <input type="number" inputMode="decimal" step="0.5" value={tempWeight}
                   onChange={e=>setTempWeight(e.target.value)}
@@ -4738,10 +4916,10 @@ function AppInner() {
               position:"fixed",
               bottom:82, right:"calc(50% - 215px + 16px)",
               width:52, height:52,
-              background:"var(--lime)", border:"none", borderRadius:99,
+              background:"var(--violet)", border:"none", borderRadius:99,
               display:"flex", alignItems:"center", justifyContent:"center",
               cursor:"pointer", zIndex:60,
-              boxShadow:"0 4px 20px rgba(200,241,53,.35)",
+              boxShadow:"0 4px 20px rgba(167,139,250,.35)",
               fontSize:22,
             }}
           >
@@ -4788,7 +4966,7 @@ function AppInner() {
         <GlobalStyles/>
         {/* Toast inside settings */}
         {toast && (
-          <div style={{position:"fixed",top:24,left:"50%",transform:"translateX(-50%)",background:"var(--lime)",color:"var(--black)",borderRadius:12,padding:"10px 20px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,zIndex:200,whiteSpace:"nowrap"}}>
+          <div style={{position:"fixed",top:24,left:"50%",transform:"translateX(-50%)",background:"var(--violet)",color:"var(--black)",borderRadius:12,padding:"10px 20px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,zIndex:200,whiteSpace:"nowrap"}}>
             {toast}
           </div>
         )}
@@ -4802,10 +4980,10 @@ function AppInner() {
               <button
                 onClick={() => { setLang('en'); localStorage.setItem('str_lang','en'); }}
                 style={{
-                  background: lang === 'en' ? '#C8F135' : 'transparent',
+                  background: lang === 'en' ? 'var(--violet)' : 'transparent',
                   color: lang === 'en' ? '#080808' : '#888',
                   border: '1px solid',
-                  borderColor: lang === 'en' ? '#C8F135' : '#333',
+                  borderColor: lang === 'en' ? 'var(--violet)' : '#333',
                   borderRadius: 20, padding:'6px 14px',
                   fontFamily:"'Barlow Condensed',sans-serif",
                   fontWeight:700, fontSize:13, letterSpacing:1, cursor:'pointer'
@@ -4815,10 +4993,10 @@ function AppInner() {
               <button
                 onClick={() => { setLang('es'); localStorage.setItem('str_lang','es'); }}
                 style={{
-                  background: lang === 'es' ? '#C8F135' : 'transparent',
+                  background: lang === 'es' ? 'var(--violet)' : 'transparent',
                   color: lang === 'es' ? '#080808' : '#888',
                   border: '1px solid',
-                  borderColor: lang === 'es' ? '#C8F135' : '#333',
+                  borderColor: lang === 'es' ? 'var(--violet)' : '#333',
                   borderRadius: 20, padding:'6px 14px',
                   fontFamily:"'Barlow Condensed',sans-serif",
                   fontWeight:700, fontSize:13, letterSpacing:1, cursor:'pointer'
@@ -4833,10 +5011,10 @@ function AppInner() {
               {['kg','lbs'].map(unit => (
                 <button key={unit} onClick={()=>p("weightUnit", unit)}
                   style={{
-                    background: weightUnit === unit ? '#C8F135' : 'transparent',
+                    background: weightUnit === unit ? 'var(--violet)' : 'transparent',
                     color: weightUnit === unit ? '#080808' : '#888',
                     border: '1px solid',
-                    borderColor: weightUnit === unit ? '#C8F135' : '#333',
+                    borderColor: weightUnit === unit ? 'var(--violet)' : '#333',
                     borderRadius: 20, padding:'6px 14px',
                     fontFamily:"'Barlow Condensed',sans-serif",
                     fontWeight:700, fontSize:13, letterSpacing:1, cursor:'pointer',
@@ -4853,10 +5031,10 @@ function AppInner() {
               {['cm','ft'].map(unit => (
                 <button key={unit} onClick={()=>p("heightUnit", unit)}
                   style={{
-                    background: (profile.heightUnit||'cm') === unit ? '#C8F135' : 'transparent',
+                    background: (profile.heightUnit||'cm') === unit ? 'var(--violet)' : 'transparent',
                     color: (profile.heightUnit||'cm') === unit ? '#080808' : '#888',
                     border: '1px solid',
-                    borderColor: (profile.heightUnit||'cm') === unit ? '#C8F135' : '#333',
+                    borderColor: (profile.heightUnit||'cm') === unit ? 'var(--violet)' : '#333',
                     borderRadius: 20, padding:'6px 14px',
                     fontFamily:"'Barlow Condensed',sans-serif",
                     fontWeight:700, fontSize:13, letterSpacing:1, cursor:'pointer',
@@ -4894,7 +5072,7 @@ function AppInner() {
             <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
                 <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)"}}>{t('training_days_label')}</div>
-                <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--lime)"}}>{settingsTD.length} / {settingsN}</span>
+                <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--violet)"}}>{settingsTD.length} / {settingsN}</span>
               </div>
               <div style={{display:"flex",gap:6,marginBottom:12}}>
                 {ALL_DAYS_SETTINGS.map(d => {
@@ -4912,8 +5090,8 @@ function AppInner() {
                         }
                       }
                     }} style={{
-                      flex:1,padding:"8px 0",borderRadius:8,border:isSelected?"1.5px solid var(--lime)":"1.5px solid var(--line2)",
-                      background:isSelected?"var(--lime)":"var(--dark)",
+                      flex:1,padding:"8px 0",borderRadius:8,border:isSelected?"1.5px solid var(--violet)":"1.5px solid var(--line2)",
+                      background:isSelected?"var(--violet)":"var(--dark)",
                       fontFamily:"var(--font-cond)",fontWeight:700,fontSize:9,letterSpacing:0.5,
                       color:isSelected?"var(--black)":"var(--gray)",cursor:"pointer",transition:"all .15s"
                     }}>{d}</button>
@@ -4932,12 +5110,12 @@ function AppInner() {
                 {id:'circuit', label:'CIRCUIT', desc:lang==='es'?'Todos los ejercicios en ronda, luego descansa.':'All exercises in a round, then rest.'},
               ].map(style=>(
                 <button key={style.id} onClick={()=>p("trainingStyle", style.id)}
-                  style={{width:"100%",textAlign:"left",background:(profile.trainingStyle||'standard')===style.id?"rgba(200,241,53,0.08)":"transparent",
-                    border:`1px solid ${(profile.trainingStyle||'standard')===style.id?'rgba(200,241,53,0.4)':'var(--line)'}`,
+                  style={{width:"100%",textAlign:"left",background:(profile.trainingStyle||'standard')===style.id?"rgba(167,139,250,0.08)":"transparent",
+                    border:`1px solid ${(profile.trainingStyle||'standard')===style.id?'rgba(167,139,250,0.4)':'var(--line)'}`,
                     borderRadius:12,padding:"12px 14px",marginBottom:8,cursor:"pointer"}}>
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:2}}>
-                    <span style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:1,color:(profile.trainingStyle||'standard')===style.id?'var(--lime)':'var(--white)'}}>{style.label}</span>
-                    {(profile.trainingStyle||'standard')===style.id && <span style={{color:"var(--lime)",fontSize:14}}>✓</span>}
+                    <span style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:1,color:(profile.trainingStyle||'standard')===style.id?'var(--violet)':'var(--white)'}}>{style.label}</span>
+                    {(profile.trainingStyle||'standard')===style.id && <span style={{color:"var(--violet)",fontSize:14}}>✓</span>}
                   </div>
                   <div style={{fontFamily:"var(--font-body)",fontSize:12,color:"var(--gray)",lineHeight:1.4}}>{style.desc}</div>
                 </button>
@@ -5028,7 +5206,7 @@ function AppInner() {
         {trainTogetherBanner && (
           <div onClick={()=>{ setTab('today'); setTrainTogetherBanner(null); }}
             style={{position:'fixed',top:0,left:'50%',transform:'translateX(-50%)',
-              width:'100%',maxWidth:430,zIndex:500,background:'#C8F135',
+              width:'100%',maxWidth:430,zIndex:500,background:'var(--violet)',
               padding:'14px 20px',cursor:'pointer',
               fontFamily:"var(--font-cond)",fontWeight:700,fontSize:14,
               color:'#080808',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
@@ -5049,8 +5227,8 @@ function AppInner() {
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             {partnerProfile && (
               <button onClick={()=>setTab("partner")} style={{display:"flex",alignItems:"center",gap:5,background:"rgba(48,209,88,.08)",borderRadius:99,padding:"5px 11px",border:"1px solid rgba(48,209,88,.18)",cursor:"pointer"}}>
-                <div style={{width:7,height:7,borderRadius:99,background:"#30d158",animation:"pulse 2s infinite"}}/>
-                <span style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"#30d158"}}>{(partnerProfile.name||"PARTNER").toUpperCase()}</span>
+                <div style={{width:7,height:7,borderRadius:99,background:"#10B981",animation:"pulse 2s infinite"}}/>
+                <span style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"#10B981"}}>{(partnerProfile.name||"PARTNER").toUpperCase()}</span>
               </button>
             )}
             <button onClick={()=>{ setSettingsName(profile?.name||""); const _rawW=parseFloat(profile?.weight||'0'); setSettingsWeight(_rawW>0?String(toDisplay(_rawW)):""); setSettingsAge(profile?.age||""); setSettingsHeight(profile?.height||""); setSettingsInjuries(profile?.injuries||""); setShowChangePinFlow(false); setScreen("settings"); }} style={{background:"none",border:"none",fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)",cursor:"pointer",padding:"4px 8px"}}>{t('settings')}</button>
@@ -5101,8 +5279,8 @@ function AppInner() {
             return (
             <div style={{display:"flex",flexDirection:"column",gap:14}}>
               {aiSummary && (
-                <div className="fu" style={{background:"var(--card)",borderRadius:18,border:"1px solid rgba(200,241,53,.2)",padding:20}}>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:8}}>{t('ai_coach_note')}</div>
+                <div className="fu" style={{background:"var(--card)",borderRadius:18,border:"1px solid rgba(167,139,250,.2)",padding:20}}>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--violet)",marginBottom:8}}>{t('ai_coach_note')}</div>
                   <p style={{fontFamily:"var(--font-body)",fontSize:14,color:"#ccc",lineHeight:1.65}}>{aiSummary}</p>
                 </div>
               )}
@@ -5113,19 +5291,19 @@ function AppInner() {
                     const isCompleted = completedDayOfWeeks.includes(WEEK_DAYS_SHORT[i]);
                     const isToday = d === todayLabel;
                     const completedEntry = completedDayMap[WEEK_DAYS_SHORT[i]];
-                    const barColor = completedEntry?.color || "var(--lime)";
+                    const barColor = completedEntry?.color || "var(--violet)";
                     return (
                       <div key={i} style={{flex:1,textAlign:"center"}}>
                         {isTraining && isCompleted
                           ? <div style={{height:4,borderRadius:99,background:barColor,marginBottom:5}}/>
                           : isTraining && isToday
-                            ? <div style={{height:4,borderRadius:99,background:"var(--lime)",marginBottom:5,animation:"pulse 1.5s infinite"}}/>
+                            ? <div style={{height:4,borderRadius:99,background:"var(--violet)",marginBottom:5,animation:"pulse 1.5s infinite"}}/>
                             : isTraining
-                              ? <div style={{height:4,borderRadius:99,border:"1px solid rgba(200,241,53,0.4)",background:"transparent",marginBottom:5}}/>
+                              ? <div style={{height:4,borderRadius:99,border:"1px solid rgba(167,139,250,0.4)",background:"transparent",marginBottom:5}}/>
                               : <div style={{height:2,borderRadius:99,background:"var(--line)",marginBottom:7}}/>
                         }
-                        <div style={{fontFamily:"var(--font-cond)",fontSize:9,fontWeight:700,color:isTraining?"var(--lime)":"var(--gray2)"}}>{WEEK_DAYS_DISPLAY[i]}</div>
-                        {isToday && isTraining && <div style={{width:4,height:4,borderRadius:99,background:"var(--lime)",margin:"3px auto 0"}}/>}
+                        <div style={{fontFamily:"var(--font-cond)",fontSize:9,fontWeight:700,color:isTraining?"var(--violet)":"var(--gray2)"}}>{WEEK_DAYS_DISPLAY[i]}</div>
+                        {isToday && isTraining && <div style={{width:4,height:4,borderRadius:99,background:"var(--violet)",margin:"3px auto 0"}}/>}
                       </div>
                     );
                   })}
@@ -5136,13 +5314,13 @@ function AppInner() {
                 <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1,marginTop:6}}>{t('week1_label')} · {routine?.length||3} {t('days_week_plan')}</div>
               </div>
               {activeSession?.isActive && (
-                <div className="fu" style={{background:"var(--card)",borderRadius:18,border:"1px solid rgba(200,241,53,.25)",borderLeft:"4px solid var(--lime)",padding:18,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <div className="fu" style={{background:"var(--card)",borderRadius:18,border:"1px solid rgba(167,139,250,.25)",borderLeft:"4px solid var(--violet)",padding:18,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                   <div>
-                    <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:4}}>{t('active_session')}</div>
+                    <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--violet)",marginBottom:4}}>{t('active_session')}</div>
                     <div style={{fontFamily:"var(--font-display)",fontSize:24,lineHeight:1}}>{(t(DAY_KEYS[routine?.[activeSession.dayIdx]?.name])||routine?.[activeSession.dayIdx]?.name||"WORKOUT").toUpperCase()}</div>
                     <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1,marginTop:2}}>{Object.keys(activeSession.completedSets||{}).length} {t('sets_completed_label')}</div>
                   </div>
-                  <button onClick={resumeWorkout} style={{background:"var(--lime)",border:"none",borderRadius:12,padding:"12px 18px",fontFamily:"var(--font-cond)",fontWeight:800,fontSize:13,letterSpacing:2,color:"var(--black)",cursor:"pointer"}}>{t('resume')}</button>
+                  <button onClick={resumeWorkout} style={{background:"var(--violet)",border:"none",borderRadius:12,padding:"12px 18px",fontFamily:"var(--font-cond)",fontWeight:800,fontSize:13,letterSpacing:2,color:"var(--black)",cursor:"pointer"}}>{t('resume')}</button>
                 </div>
               )}
               {/* FIX 3 — Today-first schedule display */}
@@ -5193,7 +5371,7 @@ function AppInner() {
                         <p style={{fontFamily:"var(--font-body)",fontSize:14,color:"var(--gray)",lineHeight:1.7,marginBottom:16}}>
                           {RECOVERY_TIPS[new Date().getDate() % 10]}
                         </p>
-                        <button onClick={()=>setSheet("stretching")} style={{width:"100%",background:"rgba(200,241,53,0.1)",border:"1px solid rgba(200,241,53,0.3)",borderRadius:12,padding:"14px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,color:"var(--lime)",cursor:"pointer"}}>
+                        <button onClick={()=>setSheet("stretching")} style={{width:"100%",background:"rgba(167,139,250,0.1)",border:"1px solid rgba(167,139,250,0.3)",borderRadius:12,padding:"14px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,color:"var(--violet)",cursor:"pointer"}}>
                           {t('light_stretching')}
                         </button>
                       </div>
@@ -5231,6 +5409,11 @@ function AppInner() {
                               <div style={{fontFamily:"var(--font-cond)",fontSize:10,color:"var(--gray)",letterSpacing:1}}>
                                 {d.exercises.length} {t('exercises_count_label')}
                               </div>
+                              {profile?.trainingStyle === 'superset' && (
+                                <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:1,color:"var(--amber)",marginTop:4}}>
+                                  ⚡ {lang==='es'?'~30% menos tiempo':'~30% less time'}
+                                </div>
+                              )}
                             </div>
                           );
                         })}
@@ -5254,8 +5437,8 @@ function AppInner() {
             <div style={{display:"flex",flexDirection:"column",gap:16}}>
               <div className="fu" style={{background:"var(--card)",borderRadius:18,padding:20,border:"1px solid var(--line)"}}>
                 <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:6}}>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)"}}>{t('ai_generated_month1')}</div>
-                  <button onClick={openRebuildModal} style={{background:"rgba(200,241,53,.12)",border:"1px solid rgba(200,241,53,.3)",borderRadius:8,padding:"5px 12px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:10,letterSpacing:2,color:"var(--lime)",cursor:"pointer"}}>{t('customize_btn')}</button>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--violet)"}}>{t('ai_generated_month1')}</div>
+                  <button onClick={openRebuildModal} style={{background:"rgba(167,139,250,.12)",border:"1px solid rgba(167,139,250,.3)",borderRadius:8,padding:"5px 12px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:10,letterSpacing:2,color:"var(--violet)",cursor:"pointer"}}>{t('customize_btn')}</button>
                 </div>
                 <div style={{fontFamily:"var(--font-display)",fontSize:36,lineHeight:0.9,marginBottom:8}}>{t('your_routine_title')}</div>
                 <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",lineHeight:1.6,marginBottom:16}}>
@@ -5264,10 +5447,10 @@ function AppInner() {
                 <button
                   onClick={regenerateRoutine}
                   disabled={regenerating}
-                  style={{background:"rgba(200,241,53,.1)",border:"1.5px solid rgba(200,241,53,.3)",borderRadius:10,padding:"10px 20px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:12,letterSpacing:2,color:regenerating?"var(--gray)":"var(--lime)",cursor:regenerating?"not-allowed":"pointer",display:"flex",alignItems:"center",gap:8}}
+                  style={{background:"rgba(167,139,250,.1)",border:"1.5px solid rgba(167,139,250,.3)",borderRadius:10,padding:"10px 20px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:12,letterSpacing:2,color:regenerating?"var(--gray)":"var(--violet)",cursor:regenerating?"not-allowed":"pointer",display:"flex",alignItems:"center",gap:8}}
                 >
                   {regenerating
-                    ? <><div style={{width:12,height:12,border:"2px solid var(--lime)",borderTopColor:"transparent",borderRadius:99,animation:"spin .8s linear infinite"}}/> REGENERATING...</>
+                    ? <><div style={{width:12,height:12,border:"2px solid var(--violet)",borderTopColor:"transparent",borderRadius:99,animation:"spin .8s linear infinite"}}/> REGENERATING...</>
                     : `↺ ${t('regenerate')}`}
                 </button>
               </div>
@@ -5309,7 +5492,7 @@ function AppInner() {
                     setWaitingForPartner(false);
                     if (supaSubRef.current) { try { supaSubRef.current.unsubscribe(); } catch {} supaSubRef.current = null; }
                     setToast(t('room_closed')); setTimeout(() => setToast(null), 2000);
-                  }} style={{background:"rgba(255,59,48,.1)",border:"1px solid rgba(255,59,48,.25)",borderRadius:8,padding:"6px 14px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:2,color:"var(--red)",cursor:"pointer"}}>{t('close_room')}</button>
+                  }} style={{background:"rgba(248,113,113,.1)",border:"1px solid rgba(248,113,113,.25)",borderRadius:8,padding:"6px 14px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:2,color:"var(--red)",cursor:"pointer"}}>{t('close_room')}</button>
                 </div>
               )}
               {!partnerProfile ? (
@@ -5322,17 +5505,17 @@ function AppInner() {
                     {roomCode ? (
                       <>
                         <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>{t('your_room_code')}</div>
-                        <div style={{fontFamily:"var(--font-display)",fontSize:56,color:"var(--lime)",letterSpacing:4,marginBottom:16,lineHeight:1}}>{roomCode}</div>
+                        <div style={{fontFamily:"var(--font-display)",fontSize:56,color:"var(--violet)",letterSpacing:4,marginBottom:16,lineHeight:1}}>{roomCode}</div>
                         <Btn full onClick={handleCopyLink} style={{marginBottom:10}}>{copied?t('copied'):t('copy_code')}</Btn>
                         <div style={{fontFamily:"var(--font-cond)",fontSize:10,color:"var(--gray2)",letterSpacing:1,marginBottom:16}}>stronnger.netlify.app/join/{roomCode}</div>
                         {isSupabaseConfigured ? (
                           <div style={{display:"flex",alignItems:"center",gap:8,justifyContent:"center"}}>
-                            <div style={{width:8,height:8,borderRadius:99,background:"var(--lime)",animation:"pulse 1.5s infinite"}}/>
+                            <div style={{width:8,height:8,borderRadius:99,background:"var(--violet)",animation:"pulse 1.5s infinite"}}/>
                             <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--gray)"}}>{t('waiting_for_partner')}</span>
                           </div>
                         ) : (
-                          <div style={{background:"rgba(200,241,53,0.08)",border:"1px solid rgba(200,241,53,0.2)",borderRadius:12,padding:"14px 16px",textAlign:"left",marginTop:4}}>
-                            <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:6}}>{t('how_to_connect_label')}</div>
+                          <div style={{background:"rgba(167,139,250,0.08)",border:"1px solid rgba(167,139,250,0.2)",borderRadius:12,padding:"14px 16px",textAlign:"left",marginTop:4}}>
+                            <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--violet)",marginBottom:6}}>{t('how_to_connect_label')}</div>
                             <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",lineHeight:1.6}}>
                               {t('how_to_connect_desc')}
                             </div>
@@ -5352,7 +5535,7 @@ function AppInner() {
                         placeholder="STR-XXXX"
                         style={{flex:1,background:"var(--dark)",border:"1.5px solid var(--line2)",borderRadius:10,padding:"12px 14px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:16,letterSpacing:2,color:"var(--white)",outline:"none"}}
                       />
-                      <button onClick={handleJoin} style={{background:"var(--lime)",border:"none",borderRadius:10,padding:"12px 18px",fontFamily:"var(--font-cond)",fontWeight:900,fontSize:13,letterSpacing:2,color:"var(--black)",cursor:"pointer"}}>{t('join_btn')}</button>
+                      <button onClick={handleJoin} style={{background:"var(--violet)",border:"none",borderRadius:10,padding:"12px 18px",fontFamily:"var(--font-cond)",fontWeight:900,fontSize:13,letterSpacing:2,color:"var(--black)",cursor:"pointer"}}>{t('join_btn')}</button>
                     </div>
                     {joinError && <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--red)",marginTop:8}}>{joinError}</div>}
                   </div>
@@ -5371,7 +5554,7 @@ function AppInner() {
                     : (pSession?.lastActivityAt || 0) > oneDayAgo || pLastWorkout?.date === new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"})
                       ? t('last_seen_today')
                       : t('not_training');
-                const statusColor = partnerStatus === 'TRAINING NOW' ? '#C8F135' : partnerStatus === 'LAST SEEN TODAY' ? '#FF9F0A' : '#555';
+                const statusColor = partnerStatus === 'TRAINING NOW' ? 'var(--violet)' : partnerStatus === 'LAST SEEN TODAY' ? 'var(--amber)' : '#555';
                 const fmtElapsed = (s) => {
                   const m = Math.floor(s / 60);
                   const sec = s % 60;
@@ -5401,7 +5584,7 @@ function AppInner() {
                     {/* Partner header */}
                     <div className="fu" style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20}}>
                       <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:16}}>
-                        <div style={{width:52,height:52,borderRadius:99,background:"var(--lime)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-display)",fontSize:24,color:"var(--black)",flexShrink:0}}>{(partnerProfile.name||"?").slice(0,2).toUpperCase()}</div>
+                        <div style={{width:52,height:52,borderRadius:99,background:"var(--violet)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-display)",fontSize:24,color:"var(--black)",flexShrink:0}}>{(partnerProfile.name||"?").slice(0,2).toUpperCase()}</div>
                         <div style={{flex:1}}>
                           <div style={{fontFamily:"var(--font-display)",fontSize:28,lineHeight:1}}>{(partnerProfile.name||"PARTNER").toUpperCase()}</div>
                           <div style={{display:"flex",alignItems:"center",gap:6,marginTop:4}}>
@@ -5409,19 +5592,19 @@ function AppInner() {
                             <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:statusColor}}>{partnerStatus}</span>
                           </div>
                           {partnerStatus === 'TRAINING NOW' && pSession && (
-                            <div style={{fontSize:13,color:"#888",fontFamily:"var(--font-cond)",marginTop:4}}>
+                            <div style={{fontSize:13,color:"var(--gray)",fontFamily:"var(--font-cond)",marginTop:4}}>
                               NOW: <span style={{color:"var(--white)"}}>{pSession.dayName?.toUpperCase()}</span>
                               {' · '}{Object.keys(pSession.completedSets||{}).length} / {pSession.totalSetsInRoutine} SETS
                             </div>
                           )}
                         </div>
-                        <button onClick={handleLeaveRoom} style={{background:"rgba(255,59,48,.1)",border:"1px solid rgba(255,59,48,.25)",borderRadius:8,padding:"6px 12px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:10,letterSpacing:2,color:"var(--red)",cursor:"pointer",flexShrink:0}}>{t('leave')}</button>
+                        <button onClick={handleLeaveRoom} style={{background:"rgba(248,113,113,.1)",border:"1px solid rgba(248,113,113,.25)",borderRadius:8,padding:"6px 12px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:10,letterSpacing:2,color:"var(--red)",cursor:"pointer",flexShrink:0}}>{t('leave')}</button>
                       </div>
 
                       {isPartnerActive ? (
                         /* ── Active session view ── */
                         <div>
-                          <div style={{fontFamily:"var(--font-display)",fontSize:42,lineHeight:0.9,marginBottom:8,color:pSession.dayColor||pSession.color||"var(--lime)"}}>{(pSession.exerciseName||"TRAINING").toUpperCase()}</div>
+                          <div style={{fontFamily:"var(--font-display)",fontSize:42,lineHeight:0.9,marginBottom:8,color:pSession.dayColor||pSession.color||"var(--violet)"}}>{(pSession.exerciseName||"TRAINING").toUpperCase()}</div>
                           {/* Exercise progress */}
                           <div style={{marginBottom:12}}>
                             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
@@ -5429,7 +5612,7 @@ function AppInner() {
                               <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:1,color:"var(--white)"}}>{completedExCount} / {pSession.totalExercises}</span>
                             </div>
                             <div style={{height:4,background:"var(--line)",borderRadius:99}}>
-                              <div style={{height:"100%",borderRadius:99,background:pSession.dayColor||pSession.color||"var(--lime)",width:`${(completedExCount/(pSession.totalExercises||1))*100}%`,transition:"width .4s"}}/>
+                              <div style={{height:"100%",borderRadius:99,background:pSession.dayColor||pSession.color||"var(--violet)",width:`${(completedExCount/(pSession.totalExercises||1))*100}%`,transition:"width .4s"}}/>
                             </div>
                           </div>
                           {/* Set progress — total sets from partner's own session data */}
@@ -5441,7 +5624,7 @@ function AppInner() {
                             <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
                               {Array.from({length: pSession.totalSetsInRoutine||0}).map((_,i)=>{
                                 const done = i < Object.keys(pSession.completedSets||{}).length;
-                                const c = pSession.dayColor||pSession.color||"var(--lime)";
+                                const c = pSession.dayColor||pSession.color||"var(--violet)";
                                 return <div key={i} style={{width:10,height:10,borderRadius:99,background:done?c:"var(--line)",border:`1.5px solid ${done?c:"var(--line2)"}`}}/>;
                               })}
                             </div>
@@ -5453,7 +5636,7 @@ function AppInner() {
                             </div>
                             <div style={{flex:1,background:"var(--dark)",borderRadius:12,padding:"10px 14px",textAlign:"center"}}>
                               <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--gray)",marginBottom:3}}>{t('elapsed_label')}</div>
-                              <div style={{fontFamily:"var(--font-display)",fontSize:22,color:"var(--lime)"}}>{fmtElapsed(partnerElapsedSecs)}</div>
+                              <div style={{fontFamily:"var(--font-display)",fontSize:22,color:"var(--violet)"}}>{fmtElapsed(partnerElapsedSecs)}</div>
                             </div>
                           </div>
                           <Btn full onClick={()=>sendQuickMsg("You've got this!")}>{t('cheer_on_btn')}</Btn>
@@ -5464,7 +5647,7 @@ function AppInner() {
                           {pLastWorkout ? (
                             <div style={{background:"var(--dark)",borderRadius:12,padding:14,marginBottom:14}}>
                               <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:6}}>{t('last_workout_label')}</div>
-                              <div style={{fontFamily:"var(--font-display)",fontSize:24,marginBottom:4,color:pLastWorkout.color||"var(--lime)"}}>{(pLastWorkout.dayName||"").toUpperCase()}</div>
+                              <div style={{fontFamily:"var(--font-display)",fontSize:24,marginBottom:4,color:pLastWorkout.color||"var(--violet)"}}>{(pLastWorkout.dayName||"").toUpperCase()}</div>
                               <div style={{display:"flex",gap:14}}>
                                 <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>{pLastWorkout.date}</span>
                                 <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>{pLastWorkout.duration}m</span>
@@ -5557,7 +5740,7 @@ function AppInner() {
               <div style={{display:"flex",flexDirection:"column",gap:14}}>
                 {storageMB > 4 && (
                   <div style={{background:"rgba(255,159,10,.12)",border:"1px solid rgba(255,159,10,.3)",borderRadius:14,padding:"12px 16px"}}>
-                    <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"#FF9F0A",marginBottom:3}}>{t('storage_warning_label')}</div>
+                    <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--amber)",marginBottom:3}}>{t('storage_warning_label')}</div>
                     <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",lineHeight:1.5}}>{t('storage_full_desc')}</div>
                   </div>
                 )}
@@ -5566,7 +5749,7 @@ function AppInner() {
                 <div className="fu" style={{display:"flex",gap:10}}>
                   {statCards.map(({label,value,unit})=>(
                     <div key={label} style={{flex:1,background:"var(--card)",borderRadius:14,border:"1px solid var(--line)",padding:"14px 10px",textAlign:"center"}}>
-                      <div style={{fontFamily:"var(--font-display)",fontSize:26,color:"var(--lime)",lineHeight:1}}>{value}{unit}</div>
+                      <div style={{fontFamily:"var(--font-display)",fontSize:26,color:"var(--violet)",lineHeight:1}}>{value}{unit}</div>
                       <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--gray)",marginTop:4}}>{label}</div>
                     </div>
                   ))}
@@ -5576,7 +5759,7 @@ function AppInner() {
                 <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:2}}>
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:weightLog.length>0?16:0}}>
                     <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:3,color:"var(--gray)"}}>{t('body_weight_label')}</div>
-                    <button onClick={()=>{const _rawWL=parseFloat(profile?.weight||'0');setWeightInput(_rawWL>0?String(toDisplay(_rawWL)):"");setShowWeightModal(true);}} style={{background:"rgba(200,241,53,0.1)",border:"1px solid rgba(200,241,53,0.3)",borderRadius:8,padding:"6px 12px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:2,color:"var(--lime)",cursor:"pointer"}}>{t('log_weight')}</button>
+                    <button onClick={()=>{const _rawWL=parseFloat(profile?.weight||'0');setWeightInput(_rawWL>0?String(toDisplay(_rawWL)):"");setShowWeightModal(true);}} style={{background:"rgba(167,139,250,0.1)",border:"1px solid rgba(167,139,250,0.3)",borderRadius:8,padding:"6px 12px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:2,color:"var(--violet)",cursor:"pointer"}}>{t('log_weight')}</button>
                   </div>
                   {weightLog.length >= 2 && (
                     (() => {
@@ -5592,11 +5775,11 @@ function AppInner() {
                       }).join(" ");
                       return (
                         <svg width="100%" height={h} viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
-                          <polyline points={pts} fill="none" stroke="var(--lime)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <polyline points={pts} fill="none" stroke="var(--violet)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                           {entries.map((e,i)=>{
                             const x = (i/(entries.length-1))*w;
                             const y = h - ((e.weight-min)/(max-min))*h;
-                            return <circle key={i} cx={x} cy={y} r="3" fill="var(--lime)"/>;
+                            return <circle key={i} cx={x} cy={y} r="3" fill="var(--violet)"/>;
                           })}
                         </svg>
                       );
@@ -5641,7 +5824,7 @@ function AppInner() {
                           </div>
                         </div>
                         <div style={{fontFamily:"var(--font-display)",fontSize:18,
-                          color:trend?"var(--lime)":"var(--red)"}}>
+                          color:trend?"var(--violet)":"var(--red)"}}>
                           {trend ? (lang==='es'?'SUBIENDO':'IMPROVING') : (lang==='es'?'BAJANDO':'DECLINING')}
                         </div>
                       </div>
@@ -5650,12 +5833,12 @@ function AppInner() {
                           <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
                             <div style={{
                               width:"100%",borderRadius:"4px 4px 0 0",
-                              background: i === 3 ? "var(--lime)" : "var(--line2)",
+                              background: i === 3 ? "var(--violet)" : "var(--line2)",
                               height: `${Math.max(4, (d.volume/maxVol)*52)}px`,
                               transition:"height 0.4s",
                             }}/>
                             <div style={{fontFamily:"var(--font-cond)",fontSize:8,letterSpacing:1,
-                              color:i===3?"var(--lime)":"var(--gray)",textAlign:"center",lineHeight:1.2}}>
+                              color:i===3?"var(--violet)":"var(--gray)",textAlign:"center",lineHeight:1.2}}>
                               {d.label}
                             </div>
                           </div>
@@ -5684,7 +5867,7 @@ function AppInner() {
                           </div>
                           <div style={{fontFamily:"var(--font-display)",fontSize:34,lineHeight:0.9,color:h.color||"var(--white)"}}>{(h.dayName||"WORKOUT").toUpperCase()}</div>
                         </div>
-                        <div style={{fontFamily:"var(--font-display)",fontSize:28,color:"var(--lime)"}}>{h.duration}m</div>
+                        <div style={{fontFamily:"var(--font-display)",fontSize:28,color:"var(--violet)"}}>{h.duration}m</div>
                       </div>
                       {/* Stats row */}
                       <div style={{display:"flex",gap:0,borderTop:"1px solid var(--line)",borderBottom:photo?"1px solid var(--line)":"none"}}>
@@ -5753,7 +5936,7 @@ function AppInner() {
           {[["today",t('today')],["routine",t('routine')],["partner",t('partner')],["progress",t('progress')]].map(([k,l])=>(
             <button key={k} onClick={()=>setTab(k)} className="nav-btn" style={{color:tab===k?"var(--white)":"var(--gray2)"}}>
               {l}
-              {tab===k && <div style={{width:20,height:2,background:"var(--lime)",borderRadius:99,margin:"4px auto 0"}}/>}
+              {tab===k && <div style={{width:20,height:2,background:"var(--violet)",borderRadius:99,margin:"4px auto 0"}}/>}
             </button>
           ))}
         </div>
@@ -5876,9 +6059,9 @@ function AppInner() {
               <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:8,marginBottom:14}}>
                 {MUSCLE_FILTERS.map(f=>(
                   <button key={f} onClick={()=>setCustomPickerFilter(f)}
-                    style={{flexShrink:0,background:customPickerFilter===f?'var(--lime)':'var(--card)',
+                    style={{flexShrink:0,background:customPickerFilter===f?'var(--violet)':'var(--card)',
                       color:customPickerFilter===f?'var(--black)':'var(--gray)',
-                      border:`1px solid ${customPickerFilter===f?'var(--lime)':'var(--line)'}`,
+                      border:`1px solid ${customPickerFilter===f?'var(--violet)':'var(--line)'}`,
                       borderRadius:20,padding:'6px 14px',fontFamily:"var(--font-cond)",fontWeight:700,
                       fontSize:11,letterSpacing:1,cursor:'pointer'}}>
                     {MUSCLE_LABELS[f]}
@@ -5895,11 +6078,11 @@ function AppInner() {
                   return (
                     <div key={name} onClick={()=>toggleEx(name)}
                       style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",
-                        background:isSel?"rgba(200,241,53,0.08)":"transparent",
-                        borderRadius:10,border:`1px solid ${isSel?'rgba(200,241,53,0.3)':'transparent'}`,
+                        background:isSel?"rgba(167,139,250,0.08)":"transparent",
+                        borderRadius:10,border:`1px solid ${isSel?'rgba(167,139,250,0.3)':'transparent'}`,
                         marginBottom:4,cursor:"pointer"}}>
-                      <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${isSel?'var(--lime)':'var(--line)'}`,
-                        background:isSel?'var(--lime)':'transparent',display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                      <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${isSel?'var(--violet)':'var(--line)'}`,
+                        background:isSel?'var(--violet)':'transparent',display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                         {isSel && <span style={{color:"var(--black)",fontSize:12,fontWeight:900}}>✓</span>}
                       </div>
                       <div>
@@ -5911,7 +6094,7 @@ function AppInner() {
                 })}
               </div>
               <button onClick={handleConfirm}
-                style={{width:"100%",background:"var(--lime)",border:"none",borderRadius:14,padding:"17px 0",
+                style={{width:"100%",background:"var(--violet)",border:"none",borderRadius:14,padding:"17px 0",
                   fontFamily:"var(--font-cond)",fontWeight:900,fontSize:16,letterSpacing:2,
                   color:"var(--black)",cursor:"pointer",marginBottom:10}}>
                 {lang==='es'?`INICIAR CON ${customSelectedExercises.length} EJ.`:`START WITH ${customSelectedExercises.length} EX.`}
@@ -5972,7 +6155,7 @@ function AppInner() {
               ].map((ex,i)=>(
                 <div key={i} style={{background:"var(--dark)",borderRadius:12,padding:"14px 16px",marginBottom:10,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                   <div style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:15,color:"var(--white)"}}>{ex.name}</div>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:12,color:"var(--lime)",letterSpacing:1}}>{ex.duration}</div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:12,color:"var(--violet)",letterSpacing:1}}>{ex.duration}</div>
                 </div>
               ))}
               <Btn full variant="ghost" onClick={()=>setSheet(null)} style={{marginTop:8}}>{t('close')}</Btn>
@@ -6001,7 +6184,7 @@ function AppInner() {
 
         {/* Rebuild success toast */}
         {rebuildSuccess && (
-          <div style={{position:"fixed",top:24,left:"50%",transform:"translateX(-50%)",background:"var(--lime)",color:"var(--black)",borderRadius:12,padding:"10px 20px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,zIndex:200,animation:"slideIn 0.3s ease",whiteSpace:"nowrap"}}>
+          <div style={{position:"fixed",top:24,left:"50%",transform:"translateX(-50%)",background:"var(--violet)",color:"var(--black)",borderRadius:12,padding:"10px 20px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,zIndex:200,animation:"slideIn 0.3s ease",whiteSpace:"nowrap"}}>
             {t('routine_rebuilt')}
           </div>
         )}
@@ -6043,12 +6226,12 @@ function AppInner() {
               <div style={{width:"100%",maxWidth:430,padding:"max(env(safe-area-inset-top),22px) 22px 140px"}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:24}}>
                   <button onClick={()=>{setShowRebuildModal(false);setRebuildDraft(null);setRebuildPreview(null);setShowRebuildPreview(false);setRebuildConflict(null);}} style={{background:"none",border:"none",color:"var(--gray)",fontFamily:"var(--font-cond)",fontSize:13,letterSpacing:2,cursor:"pointer",padding:0}}>{t('cancel_arrow')}</button>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)"}}>{t('customize_label')}</div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--violet)"}}>{t('customize_label')}</div>
                 </div>
                 <div style={{fontFamily:"var(--font-display)",fontSize:48,lineHeight:0.88,marginBottom:24}}>REBUILD<br/>ROUTINE</div>
 
                 {activeSession?.isActive && (
-                  <div style={{background:"rgba(255,59,48,.1)",border:"1px solid rgba(255,59,48,.3)",borderRadius:14,padding:"12px 16px",marginBottom:20}}>
+                  <div style={{background:"rgba(248,113,113,.1)",border:"1px solid rgba(248,113,113,.3)",borderRadius:14,padding:"12px 16px",marginBottom:20}}>
                     <div style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--red)",marginBottom:4}}>{t('active_workout_label')}</div>
                     <div style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",lineHeight:1.5}}>{t('active_workout_desc')}</div>
                   </div>
@@ -6056,7 +6239,7 @@ function AppInner() {
 
                 {/* A — Training Days */}
                 <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>{t('section_training_days')}</div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--violet)",marginBottom:14}}>{t('section_training_days')}</div>
                   <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>{t('days_per_week_upper')}</div>
                   <div className="chip-select" style={{marginBottom:16}}>
                     {DAYS_COUNT_RD.map(v=>(
@@ -6065,7 +6248,7 @@ function AppInner() {
                   </div>
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
                     <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)"}}>{t('training_days_upper2')}</div>
-                    <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--lime)"}}>{(rd.trainingDays||getDayPresetRd(parseInt(rd.daysPerWeek)||3)).length} / {parseInt(rd.daysPerWeek)||3}</span>
+                    <span style={{fontFamily:"var(--font-cond)",fontSize:11,letterSpacing:2,color:"var(--violet)"}}>{(rd.trainingDays||getDayPresetRd(parseInt(rd.daysPerWeek)||3)).length} / {parseInt(rd.daysPerWeek)||3}</span>
                   </div>
                   <div style={{display:"flex",gap:6}}>
                     {ALL_DAYS_RD.map(d => {
@@ -6082,14 +6265,14 @@ function AppInner() {
                             setRd("trainingDays",[...td,d].sort((a,b)=>ALL_DAYS_RD.indexOf(a)-ALL_DAYS_RD.indexOf(b)));
                           }
                         }
-                      }} style={{flex:1,padding:"8px 0",borderRadius:8,border:isSel?"1.5px solid var(--lime)":"1.5px solid var(--line2)",background:isSel?"var(--lime)":"var(--dark)",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:9,letterSpacing:0.5,color:isSel?"var(--black)":"var(--gray)",cursor:"pointer",transition:"all .15s"}}>{d}</button>;
+                      }} style={{flex:1,padding:"8px 0",borderRadius:8,border:isSel?"1.5px solid var(--violet)":"1.5px solid var(--line2)",background:isSel?"var(--violet)":"var(--dark)",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:9,letterSpacing:0.5,color:isSel?"var(--black)":"var(--gray)",cursor:"pointer",transition:"all .15s"}}>{d}</button>;
                     })}
                   </div>
                 </div>
 
                 {/* B — Muscle Focus */}
                 <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>{t('section_muscle_focus')}</div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--violet)",marginBottom:14}}>{t('section_muscle_focus')}</div>
                   <div style={{display:"flex",gap:14,marginBottom:16}}>
                     <div style={{flex:1}}>
                       <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:3,color:"var(--gray)",marginBottom:8}}>{t('upper_body_upper')}</div>
@@ -6118,17 +6301,17 @@ function AppInner() {
 
                 {/* C — Goal */}
                 <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>{t('section_primary_goal')}</div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--violet)",marginBottom:14}}>{t('section_primary_goal')}</div>
                   <div className="chip-select" style={{marginBottom:rebuildConflict?12:0}}>
                     {GOALS_RD.map(v=>(
                       <button key={v} className={`chip${rd.goal===v?" active":""}`} onClick={()=>handleRdGoal(v)}>{t(GOAL_KEYS[v])||v}</button>
                     ))}
                   </div>
                   {rebuildConflict && (
-                    <div style={{background:"var(--dark)",borderRadius:12,borderLeft:"3px solid var(--lime)",padding:"12px 14px",marginTop:12,animation:"fadeIn 0.2s ease"}}>
+                    <div style={{background:"var(--dark)",borderRadius:12,borderLeft:"3px solid var(--violet)",padding:"12px 14px",marginTop:12,animation:"fadeIn 0.2s ease"}}>
                       <p style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",lineHeight:1.6,marginBottom:10}}>{rebuildConflict.explanation}</p>
                       <div style={{display:"flex",gap:8}}>
-                        <button onClick={()=>{setRd("goal",rebuildConflict.pending);setRebuildConflict(null);if(rebuildConflictTimer)clearTimeout(rebuildConflictTimer);}} style={{flex:1,background:"var(--lime)",border:"none",borderRadius:8,padding:"9px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:1,color:"var(--black)",cursor:"pointer"}}>{t('got_it')}</button>
+                        <button onClick={()=>{setRd("goal",rebuildConflict.pending);setRebuildConflict(null);if(rebuildConflictTimer)clearTimeout(rebuildConflictTimer);}} style={{flex:1,background:"var(--violet)",border:"none",borderRadius:8,padding:"9px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:1,color:"var(--black)",cursor:"pointer"}}>{t('got_it')}</button>
                         <button onClick={()=>{setRebuildConflict(null);if(rebuildConflictTimer)clearTimeout(rebuildConflictTimer);}} style={{flex:1,background:"transparent",border:"1px solid var(--line2)",borderRadius:8,padding:"9px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:1,color:"var(--gray)",cursor:"pointer"}}>{t('keep_goal')} {rd.goal}</button>
                       </div>
                     </div>
@@ -6137,7 +6320,7 @@ function AppInner() {
 
                 {/* D — Level */}
                 <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>{t('section_training_level')}</div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--violet)",marginBottom:14}}>{t('section_training_level')}</div>
                   <div className="chip-select" style={{marginBottom:12}}>
                     {LEVELS_RD.map(v=>(
                       <button key={v} className={`chip${(rd.level||"").toLowerCase()===v.toLowerCase()?" active":""}`} onClick={()=>setRd("level",v.toLowerCase())}>{t(LEVEL_KEYS[v])||v}</button>
@@ -6150,7 +6333,7 @@ function AppInner() {
 
                 {/* E — Equipment */}
                 <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
-                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>{t('section_equipment')}</div>
+                  <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--violet)",marginBottom:14}}>{t('section_equipment')}</div>
                   <div className="chip-select" style={{marginBottom:equipWarning?12:0}}>
                     {EQUIP_RD.map(v=>(
                       <button key={v} className={`chip${(rd.equipment||[]).includes(v)?" active":""}`} onClick={()=>toggleRdArr("equipment",v)}>{t(EQUIP_KEYS[v])||v}</button>
@@ -6158,7 +6341,7 @@ function AppInner() {
                   </div>
                   {equipWarning && (
                     <div style={{background:"rgba(255,159,10,.1)",border:"1px solid rgba(255,159,10,.25)",borderRadius:10,padding:"10px 12px",marginTop:12}}>
-                      <div style={{fontFamily:"var(--font-body)",fontSize:12,color:"#FF9F0A",lineHeight:1.5}}>⚠ {equipWarning}</div>
+                      <div style={{fontFamily:"var(--font-body)",fontSize:12,color:"var(--amber)",lineHeight:1.5}}>⚠ {equipWarning}</div>
                     </div>
                   )}
                 </div>
@@ -6166,7 +6349,7 @@ function AppInner() {
                 {/* Preview diff */}
                 {showRebuildPreview && rebuildPreview && (
                   <div style={{background:"var(--card)",borderRadius:18,border:"1px solid var(--line)",padding:20,marginBottom:14}}>
-                    <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--lime)",marginBottom:14}}>{t('routine_preview_label')}</div>
+                    <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--violet)",marginBottom:14}}>{t('routine_preview_label')}</div>
                     {rebuildPreview.removed.length > 0 && (
                       <div style={{marginBottom:12}}>
                         <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--red)",marginBottom:6}}>{t('removed_label')}</div>
@@ -6175,8 +6358,8 @@ function AppInner() {
                     )}
                     {rebuildPreview.added.length > 0 && (
                       <div style={{marginBottom:12}}>
-                        <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--lime)",marginBottom:6}}>{t('new_label')}</div>
-                        {rebuildPreview.added.map(n=><div key={n} style={{fontFamily:"var(--font-cond)",fontSize:13,color:"var(--lime)",padding:"5px 0",borderBottom:"1px solid var(--line)"}}>+ {n}</div>)}
+                        <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--violet)",marginBottom:6}}>{t('new_label')}</div>
+                        {rebuildPreview.added.map(n=><div key={n} style={{fontFamily:"var(--font-cond)",fontSize:13,color:"var(--violet)",padding:"5px 0",borderBottom:"1px solid var(--line)"}}>+ {n}</div>)}
                       </div>
                     )}
                     {rebuildPreview.unchanged.length > 0 && (
@@ -6193,7 +6376,7 @@ function AppInner() {
               {/* Bottom actions */}
               <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"rgba(8,8,8,.97)",backdropFilter:"blur(20px)",borderTop:"1px solid var(--line)",padding:"16px 20px max(env(safe-area-inset-bottom),20px)",display:"flex",flexDirection:"column",gap:10,zIndex:151}}>
                 <Btn full onClick={handleRebuildConfirm}>{t('rebuild_my_routine')}</Btn>
-                <button onClick={()=>{const prev=computePreview(rebuildDraft);setRebuildPreview(prev);setShowRebuildPreview(true);}} style={{width:"100%",background:"transparent",border:"1.5px solid rgba(200,241,53,.3)",borderRadius:14,padding:"14px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:14,letterSpacing:2,color:"var(--lime)",cursor:"pointer"}}>{t('preview_changes')}</button>
+                <button onClick={()=>{const prev=computePreview(rebuildDraft);setRebuildPreview(prev);setShowRebuildPreview(true);}} style={{width:"100%",background:"transparent",border:"1.5px solid rgba(167,139,250,.3)",borderRadius:14,padding:"14px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:14,letterSpacing:2,color:"var(--violet)",cursor:"pointer"}}>{t('preview_changes')}</button>
               </div>
             </div>
           );
@@ -6207,10 +6390,10 @@ function AppInner() {
               position:"fixed",
               bottom:82, right:"calc(50% - 215px + 16px)",
               width:52, height:52,
-              background:"var(--lime)", border:"none", borderRadius:99,
+              background:"var(--violet)", border:"none", borderRadius:99,
               display:"flex", alignItems:"center", justifyContent:"center",
               cursor:"pointer", zIndex:60,
-              boxShadow:"0 4px 20px rgba(200,241,53,.35)",
+              boxShadow:"0 4px 20px rgba(167,139,250,.35)",
               fontSize:22,
             }}
           >
