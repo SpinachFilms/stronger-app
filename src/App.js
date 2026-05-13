@@ -319,6 +319,15 @@ const ALTERNATIVES_DB = {
   "Mountain Climber":       ["Plank","Burpee","Dead Bug","High Knees","Bear Crawl","Side Plank"],
 };
 
+const ACTIVE_REST_MOVEMENTS = [
+  { en: 'JUMPING JACKS',    es: 'JUMPING JACKS' },
+  { en: 'MARCH IN PLACE',   es: 'MARCHA EN SITIO' },
+  { en: 'JUMP ROPE',        es: 'SALTAR LA CUERDA' },
+  { en: 'WALK AROUND',      es: 'CAMINAR' },
+  { en: 'HIGH KNEES',       es: 'RODILLAS ALTAS' },
+  { en: 'LIGHT STRETCHING', es: 'ESTIRAMIENTOS LIGEROS' },
+];
+
 /* ─── Recovery tips for rest days ─── */
 const RECOVERY_TIPS = [
   "Get 7–9 hours of sleep tonight — it's when your muscles actually grow.",
@@ -2242,6 +2251,12 @@ function AppInner() {
   const [bufferSide, setBufferSide] = useState('left');
   const bufferTimerRef = useRef(null);
 
+  // Training mode state
+  const [supersetRound, setSupersetRound] = useState(1);
+  const [circuitRound, setCircuitRound] = useState(1);
+  const [activeRestMovement, setActiveRestMovement] = useState(null);
+  const [trainingStyleLabel, setTrainingStyleLabel] = useState(null);
+
   // Custom exercise picker
   const [selectedDayIdx, setSelectedDayIdx] = useState(null);
   const [customSelectedExercises, setCustomSelectedExercises] = useState([]);
@@ -2473,6 +2488,9 @@ function AppInner() {
           restingRef.current = false;
           setResting(false);
           playBeep();
+          if (profile?.trainingStyle !== 'superset') {
+            setActiveRestMovement(null);
+          }
           return 0;
         }
         return s - 1;
@@ -2610,42 +2628,83 @@ function AppInner() {
   const ex          = day?.exercises[exIdx];
   const accentColor = day?.color || "var(--violet)";
 
+  const finishWorkoutFlow = (finalCompletedSets) => {
+    setSheet('complete');
+    if (timerRef.current) clearInterval(timerRef.current);
+    setResting(false);
+    setActiveRestMovement(null);
+    setTrainingStyleLabel(null);
+
+    const durationMin = workoutStartRef.current
+      ? Math.max(1, Math.round((Date.now() - workoutStartRef.current) / 60000))
+      : 45;
+    const totalSets = day.exercises.reduce((a, e) => a + e.sets, 0);
+    const totalVolume = Math.round(day.exercises.reduce((sum, e) => {
+      const w = parseFloat(e.wA) || 0;
+      const reps = parseInt((e.reps || '8').split(/[-–]/)[0]) || 8;
+      return sum + e.sets * reps * w;
+    }, 0));
+    const maxWeight = Math.max(...day.exercises.map(e => parseFloat(e.wA) || 0));
+    const entry = {
+      id: Date.now(),
+      timestamp: Date.now(),
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      dayOfWeek: new Date().toLocaleDateString('en-US', { weekday: 'short' }),
+      dayName: day.name,
+      totalSets,
+      duration: durationMin,
+      exercises: day.exercises.length,
+      totalVolume,
+      maxWeight,
+      color: day.color,
+      note: workoutNote || '',
+      trainingStyle: profile?.trainingStyle || 'standard',
+    };
+    setWorkoutHistory(prev => [entry, ...prev].slice(0, 20));
+    setWorkoutNote('');
+    localStorage.removeItem('str_active_session');
+    updateExerciseHistory(day.exercises, finalCompletedSets);
+    if (roomCode && supabase) {
+      const col = userSlot === 'a' ? 'user_a' : 'user_b';
+      supabase.from('rooms')
+        .update({ [col]: { ...(profile || {}), _activeSession: null, _lastWorkout: entry } })
+        .eq('room_code', roomCode)
+        .catch(e => console.warn('Could not sync workout end:', e));
+    }
+  };
+
   const completeSet = () => {
+    const style = profile?.trainingStyle || 'standard';
     const key = `${exIdx}-${setNum}`;
     const newCompletedSets = { ...completedSets, [key]: true };
     setCompletedSets(newCompletedSets);
 
-    // Push to Supabase immediately with fresh (non-stale) data
+    // ── Supabase session sync ──
     if (roomCode && supabase && workoutStartRef.current && day) {
       const totalSetsInRoutine = day.exercises.reduce((s, e) => s + e.sets, 0);
       const sessionUpdate = {
-        isActive: true,
-        dayIdx, exIdx, setNum,
-        completedSets: newCompletedSets,
-        totalSetsInRoutine,
-        lastActivityAt: Date.now(),
-        startedAt: workoutStartRef.current,
-        dayName: day.name,
-        dayColor: day.color,
-        userName: profile?.name || "",
-        exerciseName: ex?.name || "",
-        currentWeight: ex?.wA || "",
-        totalExercises: day.exercises.length,
+        isActive: true, dayIdx, exIdx, setNum,
+        completedSets: newCompletedSets, totalSetsInRoutine,
+        lastActivityAt: Date.now(), startedAt: workoutStartRef.current,
+        dayName: day.name, dayColor: day.color,
+        userName: profile?.name || '', exerciseName: ex?.name || '',
+        currentWeight: ex?.wA || '', totalExercises: day.exercises.length,
       };
       localStorage.setItem('str_active_session', JSON.stringify(sessionUpdate));
-      broadcastSessionUpdate(sessionUpdate);   // real-time delivery to partner
-      persistSessionToSupabase(sessionUpdate); // persisted for Partner tab / reconnect
+      broadcastSessionUpdate(sessionUpdate);
+      persistSessionToSupabase(sessionUpdate);
     }
 
-    // Feature 4A — Check for PR
-    const currentWeight = parseFloat(ex.wA) || 0;
-    const currentReps = parseInt((ex.reps||"8").split("–")[0]) || 8;
-    const existingPR = prs[ex.name];
-    if (currentWeight > 0 && (!existingPR || currentWeight > existingPR.weight)) {
-      const newPRs = { ...prs, [ex.name]: { weight: currentWeight, reps: currentReps, date: new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"}) }};
-      setPrs(newPRs);
-      setPrNotification({ exerciseName: ex.name, weight: ex.wA });
-      setTimeout(() => setPrNotification(null), 3000);
+    // ── PR check ──
+    const currentWeightKg = parseFloat(ex.wA) || 0;
+    if (currentWeightKg > 0) {
+      const existingPR = prs[ex.name];
+      if (!existingPR || currentWeightKg > existingPR.weight) {
+        const newPRs = { ...prs, [ex.name]: { weight: currentWeightKg, date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) } };
+        setPrs(newPRs);
+        setPrNotification({ exerciseName: ex.name, weight: ex.wA });
+        setTimeout(() => setPrNotification(null), 3000);
+      }
     }
 
     const getRestDuration = () => {
@@ -2653,72 +2712,157 @@ function AppInner() {
       return saved || ex.rest || 90;
     };
 
-    const trainingStyle = profile?.trainingStyle || 'standard';
-    const isSuperset = trainingStyle === 'superset';
-    const skipRestBetweenExercises = trainingStyle === 'circuit';
-    const isPartnerA = isSuperset && ex.supersetWith && !ex.isSupersetB;
-    const isPartnerB = isSuperset && ex.isSupersetB;
+    const isLastExercise = exIdx >= day.exercises.length - 1;
 
+    // ════════════════════════════════════════════
+    // SUPERSET MODE
+    // ════════════════════════════════════════════
+    if (style === 'superset') {
+      const isPartnerA = !!(ex.supersetWith && !ex.isSupersetB);
+      const isPartnerB = !!ex.isSupersetB;
+
+      if (isPartnerA) {
+        const nextEx = day.exercises[exIdx + 1];
+        if (nextEx && nextEx.isSupersetB) {
+          setExIdx(i => i + 1);
+          setSetNum(supersetRound);
+          setTrainingStyleLabel(
+            lang === 'es'
+              ? `SUPERSET → MUEVETE A ${nextEx.name.split(' ')[0].toUpperCase()}`
+              : `SUPERSET → MOVE TO ${nextEx.name.split(' ')[0].toUpperCase()}`
+          );
+          startRest(5);
+        } else {
+          if (setNum < ex.sets) { setSetNum(s => s + 1); startRest(getRestDuration()); }
+          else if (!isLastExercise) { setExIdx(i => i + 1); setSetNum(1); startRest(getRestDuration()); }
+          else { finishWorkoutFlow(newCompletedSets); }
+        }
+        return;
+      }
+
+      if (isPartnerB) {
+        const totalRounds = ex.sets;
+        const partnerAIdx = exIdx - 1;
+        if (supersetRound < totalRounds) {
+          const nextRound = supersetRound + 1;
+          setSupersetRound(nextRound);
+          setExIdx(partnerAIdx);
+          setSetNum(nextRound);
+          setTrainingStyleLabel(
+            lang === 'es'
+              ? `RONDA ${nextRound} DE ${totalRounds} — DESCANSA`
+              : `ROUND ${nextRound} OF ${totalRounds} — REST`
+          );
+          startRest(getRestDuration());
+        } else {
+          setSupersetRound(1);
+          setTrainingStyleLabel(lang === 'es' ? '✓ SUPERSET COMPLETADO' : '✓ SUPERSET COMPLETE');
+          setTimeout(() => setTrainingStyleLabel(null), 2000);
+          const afterPairIdx = exIdx + 1;
+          if (afterPairIdx >= day.exercises.length) {
+            finishWorkoutFlow(newCompletedSets);
+          } else {
+            setExIdx(afterPairIdx);
+            setSetNum(1);
+            startRest(getRestDuration());
+          }
+        }
+        return;
+      }
+
+      // Unpaired exercise in superset mode — standard behavior
+      if (setNum < ex.sets) { setSetNum(s => s + 1); startRest(getRestDuration()); }
+      else if (!isLastExercise) { setSupersetRound(1); setExIdx(i => i + 1); setSetNum(1); startRest(getRestDuration()); }
+      else { finishWorkoutFlow(newCompletedSets); }
+      return;
+    }
+
+    // ════════════════════════════════════════════
+    // CIRCUIT MODE
+    // ════════════════════════════════════════════
+    if (style === 'circuit') {
+      const CIRCUIT_SIZE = 4;
+      const circuitGroupStart = Math.floor(exIdx / CIRCUIT_SIZE) * CIRCUIT_SIZE;
+      const circuitGroupEnd = Math.min(circuitGroupStart + CIRCUIT_SIZE - 1, day.exercises.length - 1);
+      const isLastInCircuit = exIdx === circuitGroupEnd;
+      const totalCircuitRounds = ex.sets;
+
+      if (!isLastInCircuit) {
+        const nextEx = day.exercises[exIdx + 1];
+        setExIdx(i => i + 1);
+        setSetNum(circuitRound);
+        setTrainingStyleLabel(
+          lang === 'es'
+            ? `CIRCUITO ${circuitRound}/${totalCircuitRounds} → ${nextEx?.name?.split(' ')[0]?.toUpperCase() || ''}`
+            : `CIRCUIT ${circuitRound}/${totalCircuitRounds} → ${nextEx?.name?.split(' ')[0]?.toUpperCase() || ''}`
+        );
+        startRest(10);
+        return;
+      }
+
+      if (circuitRound < totalCircuitRounds) {
+        const nextRound = circuitRound + 1;
+        setCircuitRound(nextRound);
+        setExIdx(circuitGroupStart);
+        setSetNum(nextRound);
+        setTrainingStyleLabel(lang === 'es' ? '✓ CIRCUITO COMPLETO — DESCANSA' : '✓ CIRCUIT DONE — REST');
+        startRest(Math.round(getRestDuration() * 1.5));
+        return;
+      }
+
+      setCircuitRound(1);
+      const nextGroupStart = circuitGroupEnd + 1;
+      if (nextGroupStart >= day.exercises.length) {
+        finishWorkoutFlow(newCompletedSets);
+      } else {
+        setExIdx(nextGroupStart);
+        setSetNum(1);
+        setTrainingStyleLabel(lang === 'es' ? '✓ GRUPO COMPLETADO — SIGUIENTE CIRCUITO' : '✓ GROUP DONE — NEXT CIRCUIT');
+        startRest(Math.round(getRestDuration() * 2));
+      }
+      return;
+    }
+
+    // ════════════════════════════════════════════
+    // ACTIVE REST MODE
+    // ════════════════════════════════════════════
+    if (style === 'active_rest') {
+      const movement = ACTIVE_REST_MOVEMENTS[exIdx % ACTIVE_REST_MOVEMENTS.length];
+      const movementLabel = lang === 'es' ? movement.es : movement.en;
+
+      if (setNum < ex.sets) {
+        setSetNum(s => s + 1);
+        setActiveRestMovement(movementLabel);
+        startRest(getRestDuration());
+      } else if (!isLastExercise) {
+        const nextMovement = ACTIVE_REST_MOVEMENTS[(exIdx + 1) % ACTIVE_REST_MOVEMENTS.length];
+        setExIdx(i => i + 1);
+        setSetNum(1);
+        setActiveRestMovement(lang === 'es' ? nextMovement.es : nextMovement.en);
+        startRest(getRestDuration());
+      } else {
+        setActiveRestMovement(null);
+        finishWorkoutFlow(newCompletedSets);
+      }
+      return;
+    }
+
+    // ════════════════════════════════════════════
+    // STANDARD MODE
+    // ════════════════════════════════════════════
     if (setNum < ex.sets) {
       setSetNum(s => s + 1);
       startRest(getRestDuration());
-    } else if (exIdx < day.exercises.length - 1) {
+    } else if (!isLastExercise) {
       setExIdx(i => i + 1);
       setSetNum(1);
-      if (isPartnerA) {
-        startRest(3); // brief 3-second transition to superset partner
-      } else if (isPartnerB || skipRestBetweenExercises) {
-        startRest(getRestDuration()); // full rest after completing a pair or circuit round
-      } else {
-        startRest(getRestDuration());
-      }
-      // Ask post-exercise weight check
+      startRest(getRestDuration());
       const currentKey = `${dayIdx}-${exIdx}`;
       if (weightCheckState[currentKey] === 'confirmed') {
         setPostExerciseCheck({ dayIdx, exIdx, exerciseName: ex.name, weight: ex.wA });
       }
     } else {
-      // Workout complete — save exercise history for progressive overload
-      updateExerciseHistory(day.exercises, newCompletedSets);
-      // Show completion sheet IMMEDIATELY, then persist async
-      setSheet("complete");
-
-      const durationMin = workoutStartRef.current
-        ? Math.round((Date.now() - workoutStartRef.current) / 60000)
-        : 45;
-      const totalSets = day.exercises.reduce((a, e) => a + e.sets, 0);
-      const totalVolume = Math.round(day.exercises.reduce((sum, e) => {
-        const w = parseFloat(e.wA) || 0;
-        const reps = parseInt((e.reps||"8").split("–")[0]) || 8;
-        return sum + e.sets * reps * w;
-      }, 0));
-      const maxWeight = Math.max(...day.exercises.map(e => parseFloat(e.wA) || 0));
-      const entry = {
-        id: Date.now(),
-        timestamp: Date.now(),
-        date: new Date().toLocaleDateString("en-US", {month:"short", day:"numeric"}),
-        dayOfWeek: new Date().toLocaleDateString("en-US", {weekday:"short"}),
-        dayName: day.name,
-        totalSets,
-        duration: durationMin,
-        exercises: day.exercises.length,
-        totalVolume,
-        maxWeight,
-        color: day.color,
-        note: workoutNote || "",
-      };
-      // Save locally immediately — never block on Supabase
-      setWorkoutHistory(prev => [entry, ...prev].slice(0, 20));
-      setWorkoutNote("");
-      localStorage.removeItem("str_active_session");
-      // Background Supabase sync — failure does not affect UX
-      if (roomCode && supabase) {
-        const col = userSlot === "a" ? "user_a" : "user_b";
-        supabase.from("rooms")
-          .update({ [col]: { ...(profile || {}), _activeSession: null, _lastWorkout: entry } })
-          .eq("room_code", roomCode)
-          .then(() => {}).catch(e => console.warn("Could not sync workout end:", e));
-      }
+      finishWorkoutFlow(newCompletedSets);
     }
   };
 
@@ -3137,6 +3281,10 @@ function AppInner() {
     setBufferSide('left');
     clearInterval(bufferTimerRef.current);
     if (timerRef.current) clearInterval(timerRef.current);
+    setSupersetRound(1);
+    setCircuitRound(1);
+    setActiveRestMovement(null);
+    setTrainingStyleLabel(null);
     workoutStartRef.current = now;
     const session = { isActive:true, dayIdx:idx, exIdx:0, setNum:1, completedSets:{}, startedAt:now, lastActivityAt:now, restMax:90, resting:false, restSecondsLeft:0 };
     localStorage.setItem("str_active_session", JSON.stringify(session));
@@ -3165,6 +3313,9 @@ function AppInner() {
       const remaining = Math.max(0, restSecondsLeft - elapsed);
       if (remaining > 0) { startRest(remaining); }
     }
+    setSupersetRound(1);
+    setCircuitRound(1);
+    setActiveRestMovement(null);
     setConflictPendingDayIdx(null);
     setScreen("workout");
   };
@@ -4069,19 +4220,20 @@ function AppInner() {
           <div style={{flex:1,overflowY:"auto",padding:"20px 20px 130px"}}>
             <div className="fu" style={{marginBottom:20}}>
               <div style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:3,color:"var(--gray)",marginBottom:6}}>{(t(MUSCLE_LABEL_KEYS[ex.muscles?.toLowerCase()])||ex.muscles||"").toUpperCase()} · RPE {ex.rpe}</div>
-              {ex.supersetWith && profile?.trainingStyle === 'superset' && (
-                <div style={{display:"inline-flex",alignItems:"center",gap:6,
-                  background:"rgba(245,158,11,0.12)",border:"1px solid rgba(245,158,11,0.3)",
-                  borderRadius:8,padding:"4px 10px",marginBottom:10}}>
-                  <div style={{width:6,height:6,borderRadius:99,background:"var(--amber)"}}/>
-                  <span style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:10,
-                    letterSpacing:2,color:"var(--amber)"}}>
-                    {ex.isSupersetB
-                      ? (lang==='es'?`SUPERSET B — DESCANSA DESPUÉS`:`SUPERSET B — REST AFTER`)
-                      : (lang==='es'?`SUPERSET A → ${ex.supersetWith.toUpperCase()}`:`SUPERSET A → ${ex.supersetWith.toUpperCase()}`)}
-                  </span>
-                </div>
-              )}
+              {trainingStyleLabel && (() => {
+                const style = profile?.trainingStyle || 'standard';
+                return (
+                  <div style={{display:"inline-flex",alignItems:"center",gap:6,
+                    background:style==='superset'?'rgba(245,158,11,0.12)':style==='circuit'?'rgba(34,211,238,0.12)':'rgba(16,185,129,0.12)',
+                    border:`1px solid ${style==='superset'?'rgba(245,158,11,0.3)':style==='circuit'?'rgba(34,211,238,0.3)':'rgba(16,185,129,0.3)'}`,
+                    borderRadius:8,padding:"4px 10px",marginBottom:10}}>
+                    <span style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:10,letterSpacing:2,
+                      color:style==='superset'?'var(--amber)':style==='circuit'?'var(--cyan)':'var(--emerald)'}}>
+                      {trainingStyleLabel}
+                    </span>
+                  </div>
+                );
+              })()}
               <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:14}}>
                 <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:0.92,color:"var(--white)",flex:1}}>
                   {ex.name.toUpperCase()}
@@ -4268,8 +4420,14 @@ function AppInner() {
               <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--gray)",marginBottom:12}}>{t('sets')}</div>
               <div style={{display:"flex",gap:8}}>
                 {Array.from({length:ex.sets}).map((_,i)=>{
-                  const done = completedSets[`${exIdx}-${i+1}`];
-                  const cur  = i+1===setNum;
+                  const tStyle = profile?.trainingStyle || 'standard';
+                  const roundNum = tStyle === 'superset' ? supersetRound : tStyle === 'circuit' ? circuitRound : setNum;
+                  const done = tStyle === 'superset' || tStyle === 'circuit'
+                    ? i + 1 < roundNum
+                    : !!completedSets[`${exIdx}-${i+1}`];
+                  const cur  = tStyle === 'superset' || tStyle === 'circuit'
+                    ? i + 1 === roundNum
+                    : i+1===setNum;
                   return (
                     <div key={i} style={{flex:1,height:48,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",background:done?accentColor:cur?`${accentColor}22`:"var(--black)",border:cur?`1.5px solid ${accentColor}`:"1.5px solid var(--line)",fontFamily:"var(--font-cond)",fontWeight:800,fontSize:16,color:done?"var(--black)":cur?accentColor:"var(--gray2)",transition:"all .2s"}}>
                       {done?"✓":i+1}
@@ -4278,19 +4436,19 @@ function AppInner() {
                 })}
               </div>
             </div>
-            {resting && restMax <= 5 && ex?.supersetWith && profile?.trainingStyle === 'superset' && (
-              <div className="fu" style={{background:"rgba(245,158,11,0.08)",borderRadius:20,border:"1px solid rgba(245,158,11,0.25)",padding:28,marginBottom:16,textAlign:"center"}}>
-                <div style={{fontFamily:"var(--font-display)",fontSize:18,color:"var(--amber)",marginBottom:4}}>
-                  {lang==='es'?'SUPERSET — SIGUIENTE EJERCICIO':'SUPERSET — NEXT EXERCISE'}
+            {resting && profile?.trainingStyle === 'superset' && restMax <= 5 && (
+              <div className="fu" style={{background:"rgba(245,158,11,0.08)",borderRadius:20,border:"1px solid rgba(245,158,11,0.3)",padding:28,marginBottom:16,textAlign:"center"}}>
+                <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--amber)",marginBottom:8}}>
+                  {lang==='es'?'SUPERSET — MUEVETE A LA SIGUIENTE ESTACIÓN':'SUPERSET — MOVE TO NEXT STATION'}
                 </div>
-                <div style={{fontFamily:"var(--font-display)",fontSize:28,color:"var(--white)",marginBottom:8}}>
-                  {day.exercises[exIdx + 1]?.name?.toUpperCase()}
+                <div style={{fontFamily:"var(--font-display)",fontSize:28,color:"var(--white)",marginBottom:4,lineHeight:1}}>
+                  {day.exercises[exIdx]?.name?.toUpperCase() || ''}
                 </div>
-                <div style={{fontFamily:"var(--font-display)",fontSize:64,color:"var(--amber)",lineHeight:1}}>{restSec}</div>
-                <button onClick={skipRest} style={{background:"var(--amber)",border:"none",borderRadius:10,
-                  padding:"10px 28px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,
-                  letterSpacing:2,color:"var(--black)",cursor:"pointer",marginTop:12}}>
-                  {lang==='es'?'IR AHORA →':'GO NOW →'}
+                <div style={{fontFamily:"var(--font-display)",fontSize:80,color:"var(--amber)",lineHeight:1,marginBottom:8}}>{restSec}</div>
+                <button onClick={skipRest} style={{background:"var(--amber)",border:"none",borderRadius:12,
+                  padding:"12px 32px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:14,
+                  letterSpacing:2,color:"var(--black)",cursor:"pointer"}}>
+                  {lang==='es'?'LISTO →':'READY →'}
                 </button>
               </div>
             )}
@@ -4323,18 +4481,16 @@ function AppInner() {
                     </button>
                   ))}
                 </div>
-                {(profile?.trainingStyle||'standard') === 'active_rest' && (() => {
-                  const ACTIVE_REST_MOVES = lang==='es'
-                    ? ['10 saltos de tijera','Estira el pecho 30s','Camina en el lugar','20 elevaciones de talones','Respira profundo 5x']
-                    : ['10 jumping jacks','Chest stretch 30s','Walk in place','20 calf raises','5 deep breaths'];
-                  const move = ACTIVE_REST_MOVES[exIdx % ACTIVE_REST_MOVES.length];
-                  return (
-                    <div style={{background:"rgba(167,139,250,0.08)",border:"1px solid rgba(167,139,250,0.25)",borderRadius:12,padding:"10px 14px",marginBottom:12}}>
-                      <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:2,color:"var(--violet)",marginBottom:4}}>{lang==='es'?'DESCANSO ACTIVO':'ACTIVE REST'}</div>
-                      <div style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:14,color:"var(--white)"}}>{move}</div>
+                {profile?.trainingStyle === 'active_rest' && activeRestMovement && (
+                  <div style={{background:"rgba(16,185,129,0.08)",border:"1px solid rgba(16,185,129,0.2)",borderRadius:12,padding:"12px 16px",textAlign:"center",marginBottom:12}}>
+                    <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:"var(--emerald)",marginBottom:6}}>
+                      {lang==='es'?'DESCANSO ACTIVO — MANTENTE MOVIÉNDOTE':'ACTIVE REST — KEEP MOVING'}
                     </div>
-                  );
-                })()}
+                    <div style={{fontFamily:"var(--font-display)",fontSize:32,color:"var(--white)",lineHeight:1}}>
+                      {activeRestMovement}
+                    </div>
+                  </div>
+                )}
                 <button onClick={skipRest} style={{
                   background:"var(--card)",border:`1.5px solid ${accentColor}`,borderRadius:12,
                   padding:"12px 32px",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:14,
@@ -4346,7 +4502,31 @@ function AppInner() {
           {!resting && (
             <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,padding:"12px 20px 34px",background:"linear-gradient(transparent,var(--black) 35%)"}}>
               <button onClick={completeSet} style={{width:"100%",background:`linear-gradient(135deg,${accentColor} 0%,${accentColor}CC 100%)`,border:"none",borderRadius:16,padding:"18px 0",fontFamily:"var(--font-cond)",fontWeight:900,fontSize:18,letterSpacing:3,color:"var(--black)",cursor:"pointer",marginBottom:10,textTransform:"uppercase",boxShadow:`0 4px 24px ${accentColor}44`}}>
-                {setNum<ex.sets?`${t('complete_set')} ${setNum}`:exIdx<day.exercises.length-1?t('next_exercise'):t('finish_workout')}
+                {(() => {
+                  const tStyle = profile?.trainingStyle || 'standard';
+                  const isLastExercise = exIdx >= day.exercises.length - 1;
+                  if (tStyle === 'superset') {
+                    const isPartnerA = !!(ex.supersetWith && !ex.isSupersetB);
+                    const isPartnerB = !!ex.isSupersetB;
+                    if (isPartnerA) return lang==='es'?'SUPERSET → SIGUIENTE':'SUPERSET → NEXT';
+                    if (isPartnerB && supersetRound < ex.sets) return lang==='es'?`RONDA ${supersetRound + 1} DE ${ex.sets}`:`ROUND ${supersetRound + 1} OF ${ex.sets}`;
+                    if (isPartnerB && !isLastExercise) return t('next_exercise');
+                    if (isLastExercise) return t('finish_workout');
+                  }
+                  if (tStyle === 'circuit') {
+                    const CIRCUIT_SIZE = 4;
+                    const circuitGroupStart = Math.floor(exIdx / CIRCUIT_SIZE) * CIRCUIT_SIZE;
+                    const circuitGroupEnd = Math.min(circuitGroupStart + CIRCUIT_SIZE - 1, day.exercises.length - 1);
+                    const isLastInCircuit = exIdx === circuitGroupEnd;
+                    const totalCircuitRounds = ex.sets;
+                    if (!isLastInCircuit) return lang==='es'?`CIRCUITO → ${day.exercises[exIdx+1]?.name?.split(' ')[0]?.toUpperCase()||''}`:  `CIRCUIT → ${day.exercises[exIdx+1]?.name?.split(' ')[0]?.toUpperCase()||''}`;
+                    if (circuitRound < totalCircuitRounds) return lang==='es'?`RONDA ${circuitRound + 1} DE ${totalCircuitRounds}`:`ROUND ${circuitRound + 1} OF ${totalCircuitRounds}`;
+                    if (!isLastExercise) return t('next_exercise');
+                  }
+                  if (setNum < ex.sets) return `${t('complete_set')} ${setNum}`;
+                  if (!isLastExercise) return t('next_exercise');
+                  return t('finish_workout');
+                })()}
               </button>
               <div style={{display:"flex",gap:10}}>
                 <button onClick={()=>{setSheet("ai");fetchAI(`I'm doing ${ex.name}, ${ex.reps} reps at ${ex.wA}. Give me 3 form cues and tell me if I should adjust if I'm struggling.`);}} style={{flex:1,background:"var(--card)",border:"1px solid var(--line)",borderRadius:14,padding:"14px 0",fontFamily:"var(--font-cond)",fontWeight:700,fontSize:13,letterSpacing:2,color:"var(--white)",cursor:"pointer"}}>{t('ai_coach')}</button>
@@ -5363,6 +5543,18 @@ function AppInner() {
                             <span style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:1}}>~{40+todayDay2.exercises.length*3} {t('min_label')}</span>
                             <span style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,color:todayDay2.color,letterSpacing:1,marginLeft:"auto"}}>▶ {t('start_workout')}</span>
                           </div>
+                          {profile?.trainingStyle && profile.trainingStyle !== 'standard' && (
+                            <div style={{display:"inline-flex",alignItems:"center",gap:5,marginTop:10,
+                              background:profile.trainingStyle==='superset'?'rgba(245,158,11,0.1)':profile.trainingStyle==='circuit'?'rgba(34,211,238,0.1)':'rgba(16,185,129,0.1)',
+                              borderRadius:8,padding:"4px 10px"}}>
+                              <span style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:10,letterSpacing:2,
+                                color:profile.trainingStyle==='superset'?'var(--amber)':profile.trainingStyle==='circuit'?'var(--cyan)':'var(--emerald)'}}>
+                                {profile.trainingStyle==='superset'?(lang==='es'?'⚡ MODO SUPERSET':'⚡ SUPERSET MODE')
+                                  :profile.trainingStyle==='circuit'?(lang==='es'?'⚡ MODO CIRCUITO':'⚡ CIRCUIT MODE')
+                                  :(lang==='es'?'⚡ DESCANSO ACTIVO':'⚡ ACTIVE REST')}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ) : (
@@ -5409,9 +5601,16 @@ function AppInner() {
                               <div style={{fontFamily:"var(--font-cond)",fontSize:10,color:"var(--gray)",letterSpacing:1}}>
                                 {d.exercises.length} {t('exercises_count_label')}
                               </div>
-                              {profile?.trainingStyle === 'superset' && (
-                                <div style={{fontFamily:"var(--font-cond)",fontSize:9,letterSpacing:1,color:"var(--amber)",marginTop:4}}>
-                                  ⚡ {lang==='es'?'~30% menos tiempo':'~30% less time'}
+                              {profile?.trainingStyle && profile.trainingStyle !== 'standard' && (
+                                <div style={{display:"inline-flex",alignItems:"center",gap:4,
+                                  background:profile.trainingStyle==='superset'?'rgba(245,158,11,0.1)':profile.trainingStyle==='circuit'?'rgba(34,211,238,0.1)':'rgba(16,185,129,0.1)',
+                                  borderRadius:6,padding:"3px 8px",marginTop:6}}>
+                                  <span style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:9,letterSpacing:2,
+                                    color:profile.trainingStyle==='superset'?'var(--amber)':profile.trainingStyle==='circuit'?'var(--cyan)':'var(--emerald)'}}>
+                                    {profile.trainingStyle==='superset'?(lang==='es'?'⚡ SUPERSET':'⚡ SUPERSET')
+                                      :profile.trainingStyle==='circuit'?(lang==='es'?'⚡ CIRCUITO':'⚡ CIRCUIT')
+                                      :(lang==='es'?'⚡ DESCANSO ACTIVO':'⚡ ACTIVE REST')}
+                                  </span>
                                 </div>
                               )}
                             </div>
