@@ -542,37 +542,76 @@ const buildRoutine = (profile, partnerProfile = null, exerciseHistory = {}) => {
   const applySupersets = (exercises) => {
     if (profile.trainingStyle !== 'superset') return exercises;
     const ANTAGONIST_PAIRS = [
-      ['chest','back'], ['chest','lats'],
-      ['shoulders','back'],
-      ['triceps','biceps'],
-      ['quads','hamstrings'],
-      ['glutes','quads'],
-      ['chest','core'],
+      ['chest', 'back'],    ['chest', 'lats'],
+      ['shoulders', 'back'], ['shoulders', 'lats'],
+      ['triceps', 'biceps'],
+      ['quads', 'hamstrings'],
+      ['quads', 'glutes'],
+      ['chest', 'core'],    ['back', 'core'],
+      ['shoulders', 'core'], ['triceps', 'core'],
+      ['biceps', 'core'],   ['quads', 'core'],
     ];
-    const result = [...exercises];
-    const paired = new Set();
-    result.forEach((ex, i) => {
-      if (paired.has(i)) return;
-      const exMuscles = (EXERCISE_DB[ex.name]?.muscles || [ex.muscles?.toLowerCase() || '']);
-      let bestMatch = -1;
-      for (let j = i + 1; j < result.length; j++) {
-        if (paired.has(j)) continue;
-        const jMuscles = (EXERCISE_DB[result[j].name]?.muscles || [result[j].muscles?.toLowerCase() || '']);
+
+    // PASS 1: Find all valid antagonist pairs greedily
+    const used = new Set();
+    const pairs = [];
+
+    for (let i = 0; i < exercises.length; i++) {
+      if (used.has(i)) continue;
+      const aMuscles = (EXERCISE_DB[exercises[i].name]?.muscles || [exercises[i].muscles?.toLowerCase() || '']);
+      let bestJ = -1;
+      for (let j = i + 1; j < exercises.length; j++) {
+        if (used.has(j)) continue;
+        const bMuscles = (EXERCISE_DB[exercises[j].name]?.muscles || [exercises[j].muscles?.toLowerCase() || '']);
         const isAntagonist = ANTAGONIST_PAIRS.some(([a, b]) =>
-          (exMuscles.some(m => m.includes(a)) && jMuscles.some(m => m.includes(b))) ||
-          (exMuscles.some(m => m.includes(b)) && jMuscles.some(m => m.includes(a)))
+          (aMuscles.some(m => m.includes(a)) && bMuscles.some(m => m.includes(b))) ||
+          (aMuscles.some(m => m.includes(b)) && bMuscles.some(m => m.includes(a)))
         );
-        if (isAntagonist) { bestMatch = j; break; }
+        if (isAntagonist) { bestJ = j; break; }
       }
-      if (bestMatch !== -1) {
-        result[i] = { ...result[i], supersetWith: result[bestMatch].name, supersetPairId: `ss${i}` };
-        result[bestMatch] = { ...result[bestMatch], supersetWith: result[i].name, supersetPairId: `ss${i}`, isSupersetB: true };
-        const [partner] = result.splice(bestMatch, 1);
-        result.splice(i + 1, 0, partner);
-        paired.add(i);
-        paired.add(i + 1);
+      if (bestJ !== -1) {
+        pairs.push([i, bestJ]);
+        used.add(i);
+        used.add(bestJ);
       }
-    });
+    }
+
+    // PASS 2: Pair remaining unpaired exercises together as generic supersets
+    const unpaired = exercises.map((_, i) => i).filter(i => !used.has(i));
+    for (let k = 0; k + 1 < unpaired.length; k += 2) {
+      pairs.push([unpaired[k], unpaired[k + 1]]);
+      used.add(unpaired[k]);
+      used.add(unpaired[k + 1]);
+    }
+
+    // PASS 3: Rebuild exercise array with each pair adjacent [A, B, A, B, ...]
+    const pairId = (idx) => {
+      for (let p = 0; p < pairs.length; p++) {
+        if (pairs[p][0] === idx) return { pairIdx: p, isB: false };
+        if (pairs[p][1] === idx) return { pairIdx: p, isB: true };
+      }
+      return null;
+    };
+
+    const result = [];
+    const addedIndices = new Set();
+    for (let i = 0; i < exercises.length; i++) {
+      if (addedIndices.has(i)) continue;
+      const info = pairId(i);
+      if (info && !info.isB) {
+        const partnerOrigIdx = pairs[info.pairIdx][1];
+        const pairLabel = `ss${info.pairIdx}`;
+        result.push({ ...exercises[i], supersetWith: exercises[partnerOrigIdx].name, supersetPairId: pairLabel, isSupersetB: false });
+        result.push({ ...exercises[partnerOrigIdx], supersetWith: exercises[i].name, supersetPairId: pairLabel, isSupersetB: true });
+        addedIndices.add(i);
+        addedIndices.add(partnerOrigIdx);
+      } else if (!info) {
+        result.push({ ...exercises[i] });
+        addedIndices.add(i);
+      }
+      // B exercises are added when their A is processed — skip here
+    }
+
     return result;
   };
 
@@ -2112,6 +2151,22 @@ function AppInner() {
     return null;
   };
 
+  const isTimedExercise = (exercise) => {
+    if (!exercise) return false;
+    const reps = String(exercise.reps || '');
+    return /s$|sec|min|\d+s/.test(reps) || reps.includes('min');
+  };
+
+  const getExerciseDuration = (exercise) => {
+    if (!exercise) return 0;
+    const reps = String(exercise.reps || '');
+    const match = reps.match(/(\d+)/);
+    if (!match) return 0;
+    const num = parseInt(match[1]);
+    if (reps.includes('min')) return num * 60;
+    return num;
+  };
+
   // PIN auth (session-only state)
   const [pinEntry, setPinEntry]       = useState("");
   const [pinAttempts, setPinAttempts] = useState(0);
@@ -2256,6 +2311,12 @@ function AppInner() {
   const [circuitRound, setCircuitRound] = useState(1);
   const [activeRestMovement, setActiveRestMovement] = useState(null);
   const [trainingStyleLabel, setTrainingStyleLabel] = useState(null);
+
+  // Exercise execution timer (for timed exercises like Plank, Side Plank, etc.)
+  const [exerciseTimerActive, setExerciseTimerActive] = useState(false);
+  const [exerciseTimerSec, setExerciseTimerSec] = useState(0);
+  const [exerciseTimerMax, setExerciseTimerMax] = useState(0);
+  const exerciseTimerRef = useRef(null);
 
   // Custom exercise picker
   const [selectedDayIdx, setSelectedDayIdx] = useState(null);
@@ -2499,6 +2560,34 @@ function AppInner() {
     return () => clearInterval(timerRef.current);
   }, [resting]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  /* ─── Exercise execution timer (for timed exercises like Plank) ─── */
+  useEffect(() => {
+    clearInterval(exerciseTimerRef.current);
+    if (!exerciseTimerActive) return;
+    exerciseTimerRef.current = setInterval(() => {
+      setExerciseTimerSec(s => {
+        if (s <= 1) {
+          clearInterval(exerciseTimerRef.current);
+          setExerciseTimerActive(false);
+          playBeep();
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(exerciseTimerRef.current);
+  }, [exerciseTimerActive]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ─── Auto-start exercise timer when navigating to a timed exercise ─── */
+  useEffect(() => {
+    if (!day || !ex) return;
+    stopExerciseTimer();
+    if (isTimedExercise(ex) && !resting) {
+      const duration = getExerciseDuration(ex);
+      if (duration > 0) startExerciseTimer(duration);
+    }
+  }, [exIdx, setNum, resting]); // eslint-disable-line react-hooks/exhaustive-deps
+
   /* ─── Buffer exercise timer — start/reset on exercise change ─── */
   useEffect(() => {
     if (!bufferActivity) return;
@@ -2623,6 +2712,19 @@ function AppInner() {
     if (savePreference) saveRestPreference(s);
   };
   const skipRest  = () => { clearInterval(timerRef.current); setResting(false); setRestSec(0); };
+
+  const startExerciseTimer = (durationSecs) => {
+    clearInterval(exerciseTimerRef.current);
+    setExerciseTimerMax(durationSecs);
+    setExerciseTimerSec(durationSecs);
+    setExerciseTimerActive(true);
+  };
+
+  const stopExerciseTimer = () => {
+    clearInterval(exerciseTimerRef.current);
+    setExerciseTimerActive(false);
+    setExerciseTimerSec(0);
+  };
 
   const day         = routine?.[dayIdx];
   const ex          = day?.exercises[exIdx];
@@ -3281,6 +3383,9 @@ function AppInner() {
     setBufferSide('left');
     clearInterval(bufferTimerRef.current);
     if (timerRef.current) clearInterval(timerRef.current);
+    clearInterval(exerciseTimerRef.current);
+    setExerciseTimerActive(false);
+    setExerciseTimerSec(0);
     setSupersetRound(1);
     setCircuitRound(1);
     setActiveRestMovement(null);
@@ -3369,6 +3474,9 @@ function AppInner() {
       console.warn("Could not sync session end:", e);
     } finally {
       if (timerRef.current) clearInterval(timerRef.current);
+      clearInterval(exerciseTimerRef.current);
+      setExerciseTimerActive(false);
+      setExerciseTimerSec(0);
       setResting(false);
       setSheet(null);
       clearActiveSession();
@@ -4254,7 +4362,10 @@ function AppInner() {
                 </div>
               </div>
               <div style={{display:"flex",gap:8}}>
-                {[{l:t('sets'),v:ex.sets},{l:t('reps'),v:ex.reps}].map(({l,v})=>(
+                {[
+                  {l:t('sets'), v:ex.sets},
+                  {l:t('reps'), v: isTimedExercise(ex) ? `${getExerciseDuration(ex)}s` : ex.reps},
+                ].map(({l,v})=>(
                   <div key={l} style={{flex:1,background:"var(--card)",borderRadius:12,padding:"12px 0",textAlign:"center",border:"1px solid var(--line)"}}>
                     <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:2,color:"var(--gray)",marginBottom:4}}>{l}</div>
                     <div style={{fontFamily:"var(--font-cond)",fontWeight:800,fontSize:22,color:"var(--white)"}}>{v}</div>
@@ -4344,18 +4455,83 @@ function AppInner() {
                 </div>
               </div>
             )}
+            {isTimedExercise(ex) && !resting && (
+              <div className="fu1" style={{background:"var(--card)",borderRadius:20,border:`1px solid ${accentColor}44`,padding:24,marginBottom:16,textAlign:"center"}}>
+                <div style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:3,color:accentColor,marginBottom:16}}>
+                  {lang==='es'?'MANTÉN LA POSICIÓN':'HOLD POSITION'}
+                </div>
+                <div style={{position:"relative",width:140,height:140,margin:"0 auto 20px"}}>
+                  <svg width="140" height="140" style={{position:"absolute",top:0,left:0,transform:"rotate(-90deg)"}}>
+                    <circle cx="70" cy="70" r="60" fill="none" stroke="var(--line)" strokeWidth="5"/>
+                    <circle cx="70" cy="70" r="60" fill="none" stroke={accentColor} strokeWidth="5"
+                      strokeDasharray={String(2 * Math.PI * 60)}
+                      strokeDashoffset={exerciseTimerMax > 0
+                        ? (2 * Math.PI * 60) * (1 - exerciseTimerSec / exerciseTimerMax)
+                        : 0}
+                      strokeLinecap="round"
+                      style={{transition:"stroke-dashoffset 1s linear"}}/>
+                  </svg>
+                  <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+                    <div style={{fontFamily:"var(--font-display)",fontSize:52,lineHeight:1,
+                      color:exerciseTimerSec <= 5 && exerciseTimerSec > 0 ? "var(--red)" : "var(--white)",
+                      transition:"color 0.3s"}}>
+                      {exerciseTimerSec}
+                    </div>
+                    <div style={{fontFamily:"var(--font-cond)",fontSize:11,color:"var(--gray)",letterSpacing:2}}>
+                      {lang==='es'?'SEG':'SEC'}
+                    </div>
+                  </div>
+                </div>
+                <div style={{display:"flex",gap:10,justifyContent:"center",marginBottom:16}}>
+                  {exerciseTimerActive ? (
+                    <button onClick={()=>{ clearInterval(exerciseTimerRef.current); setExerciseTimerActive(false); }}
+                      style={{background:"var(--dark)",border:`1px solid ${accentColor}`,borderRadius:12,
+                        padding:"10px 24px",fontFamily:"var(--font-cond)",fontWeight:700,
+                        fontSize:13,letterSpacing:2,color:accentColor,cursor:"pointer"}}>
+                      ⏸ {lang==='es'?'PAUSA':'PAUSE'}
+                    </button>
+                  ) : (
+                    <button onClick={()=>setExerciseTimerActive(true)}
+                      style={{background:`${accentColor}22`,border:`1px solid ${accentColor}`,borderRadius:12,
+                        padding:"10px 24px",fontFamily:"var(--font-cond)",fontWeight:700,
+                        fontSize:13,letterSpacing:2,color:accentColor,cursor:"pointer"}}>
+                      ▶ {lang==='es'?'REANUDAR':'RESUME'}
+                    </button>
+                  )}
+                  <button onClick={()=>{ stopExerciseTimer(); startExerciseTimer(getExerciseDuration(ex)); }}
+                    style={{background:"transparent",border:"1px solid var(--line2)",borderRadius:12,
+                      padding:"10px 24px",fontFamily:"var(--font-cond)",fontWeight:700,
+                      fontSize:13,letterSpacing:2,color:"var(--gray)",cursor:"pointer"}}>
+                    ↺ {lang==='es'?'REINICIAR':'RESET'}
+                  </button>
+                </div>
+                {exerciseTimerSec === 0 && !exerciseTimerActive && exerciseTimerMax > 0 && (
+                  <div>
+                    <div style={{fontFamily:"var(--font-display)",fontSize:24,color:"var(--emerald)",marginBottom:6}}>
+                      {lang==='es'?'✓ TIEMPO COMPLETADO':'✓ TIME COMPLETE'}
+                    </div>
+                    <p style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--gray)",lineHeight:1.5}}>
+                      {lang==='es'?'Pulsa "Completar serie" para continuar':'Tap Complete Set to continue'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="fu1" style={{background:"var(--card)",borderRadius:16,border:"1px solid var(--line)",padding:16,marginBottom:16}}>
               {/* ── MY all-sets progress ── */}
               {(() => {
-                const totalSetsInRoutine = day.exercises.reduce((s, e) => s + e.sets, 0);
+                const totalSetsInRoutine = (day?.exercises || []).reduce((s, e) => s + (e.sets || 0), 0);
                 const totalCompletedSets = Object.keys(completedSets).length;
                 const allDots = [];
-                day.exercises.forEach((exercise, eIdx) => {
+                (day?.exercises || []).forEach((exercise, eIdx) => {
                   for (let s = 1; s <= exercise.sets; s++) {
                     allDots.push({
                       key: `${eIdx}-${s}`,
                       done: !!completedSets[`${eIdx}-${s}`],
                       current: eIdx === exIdx && s === setNum,
+                      isSupersetA: !!(exercise.supersetWith && !exercise.isSupersetB),
+                      isSupersetB: !!exercise.isSupersetB,
+                      pairId: exercise.supersetPairId,
                     });
                   }
                 });
@@ -4366,17 +4542,32 @@ function AppInner() {
                         <div style={{width:6,height:6,borderRadius:99,background:accentColor}}/>
                         <span style={{fontFamily:"var(--font-cond)",fontWeight:700,fontSize:11,letterSpacing:2,color:"var(--white)"}}>{profile.name?.toUpperCase()||"YOU"}</span>
                       </div>
-                      <span style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:1,color:"var(--gray)"}}>{totalCompletedSets} / {totalSetsInRoutine} SETS</span>
+                      <span style={{fontFamily:"var(--font-cond)",fontSize:10,letterSpacing:1,color:"var(--gray)"}}>
+                        {totalCompletedSets} / {totalSetsInRoutine} SETS
+                        {profile?.trainingStyle === 'superset' && (
+                          <span style={{color:"var(--amber)",marginLeft:6}}>· {Math.floor(totalCompletedSets / 2)} {lang==='es'?'RONDAS':'ROUNDS'}</span>
+                        )}
+                      </span>
                     </div>
                     <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
-                      {allDots.map(dot => (
-                        <div key={dot.key} style={{
-                          width:10, height:10, borderRadius:"50%",
-                          background: dot.done ? accentColor : dot.current ? `${accentColor}66` : "#2a2a2a",
-                          border: dot.current ? `1.5px solid ${accentColor}` : "none",
-                          transition:"background 0.3s",
-                        }}/>
-                      ))}
+                      {allDots.map((dot, idx) => {
+                        const prevDot = idx > 0 ? allDots[idx - 1] : null;
+                        const isNewPair = dot.isSupersetA && prevDot && prevDot.pairId !== dot.pairId;
+                        return (
+                          <React.Fragment key={dot.key}>
+                            {isNewPair && <div style={{width:"100%",height:0}}/>}
+                            <div style={{
+                              width:10, height:10, borderRadius:"50%",
+                              background: dot.done
+                                ? (dot.isSupersetA ? accentColor : `${accentColor}CC`)
+                                : dot.current ? `${accentColor}66` : "#2a2a2a",
+                              border: dot.current ? `1.5px solid ${accentColor}` : "none",
+                              opacity: dot.isSupersetB && !dot.done ? 0.7 : 1,
+                              transition:"background 0.3s",
+                            }}/>
+                          </React.Fragment>
+                        );
+                      })}
                     </div>
                   </div>
                 );
